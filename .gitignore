@@ -1,0 +1,11 @@
+venv
+db.slqite3
+
+src/game/migrations/*
+src/user/migrations/*
+!src/game/migrations/__init__.py
+!src/user/migrations/__init__.py
+
+.idea
+
+__pycache__
