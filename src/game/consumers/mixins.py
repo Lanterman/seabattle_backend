@@ -1,18 +1,6 @@
-from channels.db import database_sync_to_async
+class RefreshBoardMixin:
 
-from .. import models
-
-
-class RefreshBoard:
-
-    @database_sync_to_async
-    def get_map(board_id: int) -> models.Map:
-        """Get map for update"""
-
-        query: models.Map = models.Map.objects.get(id=board_id) 
-        return query
-
-    async def refresh_board(self, board_id: int, board: list) -> tuple:
+    async def refresh_board(self, board: list) -> tuple:
         """Refresh board and get list of filled field names"""
 
         cleared_board, field_name_list = [], []
@@ -26,3 +14,21 @@ class RefreshBoard:
             cleared_board.append(column)
         
         return cleared_board, field_name_list
+
+
+class DropShipOnBoardMixin:
+    """Drop ship on board"""
+
+    async def put_ship_on_board(self, field_name_list: list, ship_name:str, column_name_list: list, board: list):
+        """Put ship on board"""
+
+        for field_name in field_name_list:
+            board[column_name_list.index(field_name[0])][field_name] = ship_name
+
+        return board
+
+
+class DropShipAddSpaceMixin(DropShipOnBoardMixin):
+    """Drop ship on board and add space around ship"""
+
+    pass
