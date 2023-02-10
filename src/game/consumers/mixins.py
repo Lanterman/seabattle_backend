@@ -1,6 +1,12 @@
-class RefreshBoardMixin:
+import logging
 
-    async def refresh_board(self, board: list) -> tuple:
+from .addspace import add_space
+
+
+class RefreshBoardMixin:
+    """Refresh board and get list of filled field names"""
+
+    def refresh_board(self, board: list) -> tuple:
         """Refresh board and get list of filled field names"""
 
         cleared_board, field_name_list = [], []
@@ -19,7 +25,9 @@ class RefreshBoardMixin:
 class DropShipOnBoardMixin:
     """Drop ship on board"""
 
-    async def put_ship_on_board(self, field_name_list: list, ship_name:str, column_name_list: list, board: list):
+    def drop_ship_on_board(
+        self, field_name_list: list, ship_name:str, column_name_list: list, board: list
+    ) -> list:
         """Put ship on board"""
 
         for field_name in field_name_list:
@@ -28,7 +36,21 @@ class DropShipOnBoardMixin:
         return board
 
 
-class DropShipAddSpaceMixin(DropShipOnBoardMixin):
+class AddSpaceAroundShipMixin:
+    """Add space around ship"""
+
+    def insert_space_around_ship(
+        self, plane: str, field_name_list: list, column_name_list: list, board: list
+    ) -> None:
+        """Add space around ship"""
+
+        if plane == "horizontal": 
+            add_space.AddSpaceAroundShipHorizontally(field_name_list, column_name_list, board)
+        else:
+            add_space.AddSpaceAroundShipVertically(field_name_list, column_name_list, board)
+
+
+class DropShipAddSpaceMixin(DropShipOnBoardMixin, AddSpaceAroundShipMixin):
     """Drop ship on board and add space around ship"""
 
     pass
