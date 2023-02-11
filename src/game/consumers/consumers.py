@@ -26,6 +26,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         self.user = None
         self.lobby_group_name = None
         self.column_name_list = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+        self.ship_count_dict = (4, 3, 2, 1)
 
     async def connect(self):
         await self.accept()
@@ -39,7 +40,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         self.drop_ship_on_board(field_name_list, ship_name, self.column_name_list, board)
         self.insert_space_around_ship(plane, field_name_list, self.column_name_list, board)
         column_dictionary = services.create_column_dict(self.column_name_list, board)
-        await services.get_map(board_id, column_dictionary)
+        await services.get_board(board_id, column_dictionary)
         
         return {"board": board}
 
@@ -48,16 +49,27 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
 
         cleared_board, field_name_list = self.refresh_board(board)
         column_dictionary = services.create_column_dict(self.column_name_list, cleared_board)
-        await services.get_map(board_id, column_dictionary)
+        await services.get_board(board_id, column_dictionary)
 
-        return {"cleared_board": cleared_board, "field_name_list": field_name_list}
+        return cleared_board, field_name_list
+    
+    async def _refresh_ships(self, board_id: int, ships: list) -> list:
+        """"Refresh ships for current board"""
+
+        ship_from_bd = await services.get_ships(board_id)
+        await services.update_ships(ship_from_bd, self.ship_count_dict)
+        refreshed_ships = [ship | {"plane": "horizontal", "count": count} for ship, count in zip(ships, self.ship_count_dict)]
+
+        return refreshed_ships
 
     async def receive_json(self, content, **kwargs):
         self.scope["user"] = database_sync_to_async(User.objects.get)(id=content["user_id"])
         self.user = await self.scope["user"]
 
         if content["type"] == "refresh_board":
-            content = await self._refresh_board(content["board_id"], content["board"])
+            cleared_board, field_name_list = await self._refresh_board(content["board_id"], content["board"])
+            ships = await self._refresh_ships(content["board_id"], content["ships"])
+            content = {"cleared_board": cleared_board, "field_name_list": field_name_list, "ships": ships}
 
         elif content["type"] == "put_ship":
             await self._drop_ship(

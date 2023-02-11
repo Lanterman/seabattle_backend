@@ -18,9 +18,9 @@ class LobbyAdmin(admin.ModelAdmin):
     raw_id_fields = ("users", )
 
 
-@admin.register(models.Map)
-class MapAdmin(admin.ModelAdmin):
-    """Lobby admin"""
+@admin.register(models.Board)
+class BoardAdmin(admin.ModelAdmin):
+    """Board admin"""
 
     list_display = ("id", "lobby_id", "user_id")
     list_display_links = ("id", )
@@ -30,3 +30,17 @@ class MapAdmin(admin.ModelAdmin):
     list_per_page = 150
     list_select_related = True
     raw_id_fields = ("lobby_id", "user_id")
+
+
+@admin.register(models.Ship)
+class ShipAdmin(admin.ModelAdmin):
+    """Ship admin"""
+
+    list_display = ("id", "name", "plane", "size", "count", "board_id")
+    list_display_links = ("id", "name")
+    fields = ("name", "plane", "size", "count", "board_id")
+    search_fields = ("board_id", )
+    list_max_show_all = 250
+    list_per_page = 150
+    list_select_related = True
+    raw_id_fields = ("board_id", )
