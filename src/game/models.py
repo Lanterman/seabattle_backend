@@ -36,8 +36,8 @@ class Lobby(models.Model):
         return reverse('lobby_detail', kwargs={'lobby_detail': self.slug})
 
 
-class Map(models.Model):
-    """Game map model"""
+class Board(models.Model):
+    """Game board model"""
 
     A: str = models.TextField("column A", default=utilities.column_generate("A"))
     B: str = models.TextField("column B", default=utilities.column_generate("B"))
@@ -49,13 +49,31 @@ class Map(models.Model):
     H: str = models.TextField("column H", default=utilities.column_generate("H"))
     I: str = models.TextField("column I", default=utilities.column_generate("I"))
     J: str = models.TextField("column J", default=utilities.column_generate("J"))
-    lobby_id: Lobby = models.ForeignKey(to=Lobby, verbose_name="lobby", on_delete=models.CASCADE, related_name="maps")
-    user_id: User = models.ForeignKey(to=User, verbose_name="user", on_delete=models.CASCADE, related_name="map_set", blank=True, null=True)
+    lobby_id: Lobby = models.ForeignKey(to=Lobby, verbose_name="lobby", on_delete=models.CASCADE, related_name="boards")
+    user_id: User = models.ForeignKey(to=User, verbose_name="user", on_delete=models.CASCADE, related_name="board_set", blank=True, null=True)
 
     class Meta:
-        verbose_name = "Map"
-        verbose_name_plural = "Maps"
+        verbose_name = "Board"
+        verbose_name_plural = "Boards"
         ordering = ["id"]
 
     def __str__(self):
         return f"{self.id} - name: {self.lobby_id}"
+
+
+class Ship(models.Model):
+    """Ship model"""
+
+    name: str = models.CharField("name", max_length=20)
+    plane: str = models.CharField("plane", max_length=10, default="horizontal")
+    size: int = models.IntegerField("size")
+    count: int = models.IntegerField("count")
+    board_id: Board = models.ForeignKey(to=Board, verbose_name="map", on_delete=models.CASCADE, related_name="ships")
+
+    class Meta:
+        verbose_name = "Ship"
+        verbose_name_plural = "Ships"
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"{self.id} - name: {self.name}"
