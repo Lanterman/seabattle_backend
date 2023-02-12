@@ -12,9 +12,8 @@ def create_column_dict(column_name_list: list, board: list) -> dict:
     return column_dict
 
 
-
 @database_sync_to_async
-def get_board(board_id: int, column_dict: dict) -> None:
+def update_board(board_id: int, column_dict: dict) -> None:
     """Get board for update"""
 
     models.Board.objects.filter(id=board_id).update(**column_dict)
@@ -29,11 +28,18 @@ def get_ships(board_id: int) -> list:
 
 
 @database_sync_to_async
-def update_ships(ships: list, ship_count_dict: tuple) -> None:
+def update_count_of_ship(ship_id: int, ship_count: int) -> None:
+    """Update count of a ship"""
+
+    models.Ship.objects.filter(id=ship_id).update(count=ship_count - 1)
+
+
+@database_sync_to_async
+def update_count_of_ships(ships: list, ship_count_tuple: tuple) -> None:
     """Update ships to database"""
 
-    ships[0].count = ship_count_dict[0]
-    ships[1].count = ship_count_dict[1]
-    ships[2].count = ship_count_dict[2]
-    ships[3].count = ship_count_dict[3]
+    ships[0].count = ship_count_tuple[0]
+    ships[1].count = ship_count_tuple[1]
+    ships[2].count = ship_count_tuple[2]
+    ships[3].count = ship_count_tuple[3]
     models.Ship.objects.bulk_update(ships, ["count"])
