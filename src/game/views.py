@@ -1,9 +1,10 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from rest_framework.reverse import reverse
+from rest_framework.response import Response
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
-from . import models as game_models, serializers
+from . import models as game_models, serializers, services
 from ..user import models as user_models
 
 
@@ -36,6 +37,12 @@ class DetailLobbyView(RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.RetrieveLobbySerializer
     lookup_field = "slug"
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance).data
+        index, enemy_board = services.clear_enemy_board(request, serializer["boards"])
+        serializer["boards"][index] = enemy_board
+        return Response(serializer)
 
 def index(request):
     lobby = game_models.Lobby.objects.first()

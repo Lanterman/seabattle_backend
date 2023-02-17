@@ -63,6 +63,18 @@ class AddSpaceAroundShipMixin:
             add_space.AddSpaceAroundShipVertically(space_name, field_name_list, self.column_name_list, board)
 
 
+class MakeShootMixin:
+    """Update a model instance"""
+
+    async def make_shoot(self, board_id: int, field_name: str) -> None:
+        """Make a shoot"""
+
+        board = await services.get_board(board_id)
+        logging.warning(board.A)
+        # column[fieldName] ? column[fieldName] = "hit" : column[fieldName] = "miss";
+        # return column;
+
+
 class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
     "Concrete view for refresh a board model instance and ship model instances"
 
