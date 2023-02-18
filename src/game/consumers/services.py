@@ -16,7 +16,7 @@ def create_column_dict(column_name_list: list, board: list) -> dict:
 def get_board(board_id: int) -> models.Board:
     """Get enemy board"""
 
-    query = models.Board.objects.get(id=board_id)
+    query = models.Board.objects.values().get(id=board_id)
     return query
 
 

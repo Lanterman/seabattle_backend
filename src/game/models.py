@@ -30,7 +30,7 @@ class Lobby(models.Model):
         unique_together = ["slug"]
 
     def __str__(self):
-        return f"{self.id} - name: {self.name}"
+        return f"lobby {self.name}"
 
     def get_absolute_url(self):
         return reverse('lobby_detail', kwargs={'lobby_detail': self.slug})
@@ -58,7 +58,7 @@ class Board(models.Model):
         ordering = ["id"]
 
     def __str__(self):
-        return f"{self.id} - name: {self.lobby_id}"
+        return f"board {self.id}: {self.lobby_id}"
 
 
 class Ship(models.Model):

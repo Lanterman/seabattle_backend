@@ -1,3 +1,4 @@
+import json
 import logging
 
 from . import services
@@ -7,7 +8,8 @@ from .addspace import add_space
 class RefreshBoardMixin:
     """Update a model instance"""
 
-    def _clear_board(self, board: list) -> tuple:
+    @staticmethod
+    def _clear_board(board: list) -> tuple:
         """Refresh a board and get a list of filled field names"""
 
         field_name_list = []
@@ -66,13 +68,36 @@ class AddSpaceAroundShipMixin:
 class MakeShootMixin:
     """Update a model instance"""
 
-    async def make_shoot(self, board_id: int, field_name: str) -> None:
+    @staticmethod
+    def _get_type_shot(board, field_name) -> str:
+        """Get type shot on field"""
+
+        return "hit" if type(board[field_name[0]][field_name]) == int else "miss"
+
+    @staticmethod
+    def _shot(board: dict, field_name: str, shot_type: str) -> None:
         """Make a shoot"""
 
+        board[field_name[0]][field_name] = shot_type
+
+    def _confert_to_json(self, board: dict) -> None:
+        """Convert board to json format"""
+
+        for key, value in board.items():
+                if key in self.column_name_list:
+                    board[key] = json.loads(value.replace("'", '"'))
+
+    async def make_shot(self, board_id: int, field_name: str) -> None:
         board = await services.get_board(board_id)
-        logging.warning(board.A)
-        # column[fieldName] ? column[fieldName] = "hit" : column[fieldName] = "miss";
-        # return column;
+        self._confert_to_json(board)
+        shot_type = self._get_type_shot(board, field_name)
+        self._shot(board, field_name, shot_type)
+        await self.perform_update_board(board_id, board)
+
+        return board
+    
+    async def perform_update_board(self, board_id: int, column_dictionary: dict) -> None:
+        await services.update_board(board_id, column_dictionary)
 
 
 class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
