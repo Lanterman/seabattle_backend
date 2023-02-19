@@ -50,7 +50,8 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         
         elif content["type"] == "make_shot":
             board = await self.make_shot(content["board_id"], content["field_name"])
-            await self.channel_layer.group_send(self.lobby_group_name, {"type": "send_shot", "board": board})
+            data = {"type": "send_shot", "board": board, "user_id": self.user.id}
+            await self.channel_layer.group_send(self.lobby_group_name, data)
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""

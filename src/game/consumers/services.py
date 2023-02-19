@@ -13,10 +13,10 @@ def create_column_dict(column_name_list: list, board: list) -> dict:
 
 
 @database_sync_to_async
-def get_board(board_id: int) -> models.Board:
+def get_board(board_id: int, column_name_list: list) -> models.Board:
     """Get enemy board"""
 
-    query = models.Board.objects.values().get(id=board_id)
+    query = models.Board.objects.values(*column_name_list).get(id=board_id)
     return query
 
 

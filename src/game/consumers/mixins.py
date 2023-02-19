@@ -27,7 +27,7 @@ class RefreshBoardMixin:
         field_name_list = self._clear_board(board)
         column_dictionary = services.create_column_dict(self.column_name_list, board)
         await self.perform_refresh_board(board_id, column_dictionary)
-        return field_name_list
+        return field_name_list, column_dictionary
     
     async def perform_refresh_board(self, board_id: int, column_dictionary: dict) -> None:
         await services.update_board(board_id, column_dictionary)
@@ -84,11 +84,10 @@ class MakeShootMixin:
         """Convert board to json format"""
 
         for key, value in board.items():
-                if key in self.column_name_list:
-                    board[key] = json.loads(value.replace("'", '"'))
+            board[key] = json.loads(value.replace("'", '"'))
 
     async def make_shot(self, board_id: int, field_name: str) -> None:
-        board = await services.get_board(board_id)
+        board = await services.get_board(board_id, self.column_name_list)
         self._confert_to_json(board)
         shot_type = self._get_type_shot(board, field_name)
         self._shot(board, field_name, shot_type)
@@ -106,9 +105,14 @@ class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
     async def refresh(self, board_id: int, ships: list, board: list) -> None:
         """Refresh a board model instance and ship model instances"""
 
-        field_name_list = await self.clear_board(board_id, board)
+        field_name_list, column_dictionary = await self.clear_board(board_id, board)
         updated_ships = await self.update_ships(board_id, ships)
-        content = {"cleared_board": board, "field_name_list": field_name_list, "ships": updated_ships}
+        content = {
+            "type": "clear_board", 
+            "board": column_dictionary, 
+            "field_name_list": field_name_list, 
+            "ships": updated_ships
+        }
 
         await self.send_json(content=content)
 
@@ -126,8 +130,8 @@ class DropShipAddSpaceMixin(DropShipOnBoardMixin, AddSpaceAroundShipMixin):
         column_dictionary = services.create_column_dict(self.column_name_list, board)
         await self.perform_update_board(board_id, column_dictionary)
         await self.perform_ship_updates(ship_id, ship_count)
-        
-        await self.send_json(content={"board": board})
+
+        await self.send_json(content={"type": "drop_ship", "board": column_dictionary})
     
     async def perform_update_board(self, board_id: int, column_dictionary: dict) -> None:
         await services.update_board(board_id, column_dictionary)
