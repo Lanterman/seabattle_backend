@@ -51,9 +51,9 @@ class RefreshShipsMixin:
 class DropShipOnBoardMixin:
     """Drop a ship on a board"""
 
-    def drop_ship_on_board(self, ship_id: int, field_name_list: list, board: list) -> None:
+    def drop_ship_on_board(self, ship_id: int, ship_count: int, field_name_list: list, board: list) -> None:
         for field_name in field_name_list:
-            board[self.column_name_list.index(field_name[0])][field_name] = ship_id
+            board[self.column_name_list.index(field_name[0])][field_name] = float(f"{ship_id}.{ship_count}")
 
 
 class AddSpaceAroundShipMixin:
@@ -66,14 +66,14 @@ class AddSpaceAroundShipMixin:
             add_space.AddSpaceAroundShipVertically(space_name, field_name_list, self.column_name_list, board)
 
 
-class MakeShootMixin:
+class TakeShotMixin:
     """Update a model instance"""
 
     @staticmethod
     def _get_type_shot(board, field_name) -> str:
         """Get type shot on field"""
 
-        return "hit" if type(board[field_name[0]][field_name]) == int else "miss"
+        return "hit" if type(board[field_name[0]][field_name]) == float else "miss"
 
     @staticmethod
     def _shot(board: dict, field_name: str, shot_type: str) -> None:
@@ -84,13 +84,22 @@ class MakeShootMixin:
         return field_value
     
     @staticmethod
-    def _add_misses_around_sunken_ship(field_value: int, board: dict) -> None:
+    def _check_if_ship_has_sunk(field_value: float, board: dict) -> bool or None:
+        """Check if the ship has sunk"""
+
+        for _, column_value in board.items():
+            for _, value in column_value.items():
+                if field_value == value:
+                    return True
+    
+    @staticmethod
+    def _add_misses_around_sunken_ship(field_value: float, board: dict) -> None:
         """Add misses around the sunken ship"""
 
         for column_name, column_value in board.items():
             for field_name, value in column_value.items():
-                # if field_value in value:
-                print(board[column_name][field_name], field_name)
+                if f"space {field_value}" in str(value):
+                    board[column_name][field_name] = "miss"
 
     def _confert_to_json(self, board: dict) -> None:
         """Convert board to json format"""
@@ -98,13 +107,13 @@ class MakeShootMixin:
         for key, value in board.items():
             board[key] = json.loads(value.replace("'", '"'))
 
-    async def make_shot(self, board_id: int, field_name: str) -> None:
+    async def take_shot(self, board_id: int, field_name: str) -> None:
         board = await services.get_board(board_id, self.column_name_list)
         self._confert_to_json(board)
         shot_type = self._get_type_shot(board, field_name)
         field_value = self._shot(board, field_name, shot_type)
         
-        if type(field_value) == int:
+        if type(field_value) == float and not self._check_if_ship_has_sunk(field_value, board):
             self._add_misses_around_sunken_ship(field_value, board)
 
         await self.perform_update_board(board_id, board)
@@ -143,13 +152,13 @@ class DropShipAddSpaceMixin(DropShipOnBoardMixin, AddSpaceAroundShipMixin):
         serializer = serializers.ShipSerializer(ship_list, many=True)
         return serializer.data
 
-    async def update_board(
+    async def drop_ship(
         self, ship_id: int, board_id: int, ship_plane: str, ship_count: int, field_name_list: list, board: list
     ) -> None:
         """Drop a ship on a board and add spaces around a ship"""
 
-        self.drop_ship_on_board(ship_id, field_name_list, board)
-        self.insert_space_around_ship(f"space {ship_id}", ship_plane, field_name_list, board)
+        self.drop_ship_on_board(ship_id, ship_count, field_name_list, board)
+        self.insert_space_around_ship(f" space {ship_id}.{ship_count}", ship_plane, field_name_list, board)
         column_dictionary = services.create_column_dict(self.column_name_list, board)
         await self.perform_update_board(board_id, column_dictionary)
         await self.perform_ship_updates(ship_id, ship_count)

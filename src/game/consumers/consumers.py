@@ -19,7 +19,7 @@ class LobbyListConsumer(AsyncJsonWebsocketConsumer):
 class LobbyConsumer(AsyncJsonWebsocketConsumer, 
                     mixins.RefreshBoardShipsMixin, 
                     mixins.DropShipAddSpaceMixin,
-                    mixins.MakeShootMixin):
+                    mixins.TakeShotMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -43,13 +43,13 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.refresh(content["board_id"], content["ships"], content["board"])
             
         elif content["type"] == "drop_ship":
-            await self.update_board(
+            await self.drop_ship(
                 content["ship_id"], content["board_id"], content["ship_plane"], 
                 content["ship_count"], content["field_name_list"], content["board"]
             )
         
-        elif content["type"] == "make_shot":
-            board = await self.make_shot(content["board_id"], content["field_name"])
+        elif content["type"] == "take_shot":
+            board = await self.take_shot(content["board_id"], content["field_name"])
             data = {"type": "send_shot", "board": board, "user_id": self.user.id}
             await self.channel_layer.group_send(self.lobby_group_name, data)
 

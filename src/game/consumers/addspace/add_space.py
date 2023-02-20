@@ -5,13 +5,13 @@ class Base:
         """Add space above a ship"""
 
         if int(first_elem[1:]) > 1:
-            board[column_name_list.index(first_elem[0])][f"{first_elem[0]}{int(first_elem[1:]) - 1}"] = space_name
+            board[column_name_list.index(first_elem[0])][f"{first_elem[0]}{int(first_elem[1:]) - 1}"] += space_name
 
     def add_space_to_last_field(self, space_name, last_elem, column_name_list, board):
         """Add space under a ship"""
 
         if int(last_elem[1:]) < 10:
-            board[column_name_list.index(last_elem[0])][f"{last_elem[0]}{int(last_elem[1:]) + 1}"] = space_name
+            board[column_name_list.index(last_elem[0])][f"{last_elem[0]}{int(last_elem[1:]) + 1}"] += space_name
 
 
 class AddSpaceAroundShipHorizontally(Base):
@@ -27,7 +27,7 @@ class AddSpaceAroundShipHorizontally(Base):
         
         if top_string_number >= 1:
             for field_name in field_name_list:
-                board[column_name_list.index(field_name[0])][f"{field_name[0]}{top_string_number}"] = space_name
+                board[column_name_list.index(field_name[0])][f"{field_name[0]}{top_string_number}"] += space_name
     
     def add_space_to_right(self, space_name, field_name_list, column_name_list, board):
         """Add space to right"""
@@ -48,7 +48,7 @@ class AddSpaceAroundShipHorizontally(Base):
 
         if bottom_string_number <= 10:
             for field_name in field_name_list:
-                board[column_name_list.index(field_name[0])][f"{field_name[0]}{bottom_string_number}"] = space_name
+                board[column_name_list.index(field_name[0])][f"{field_name[0]}{bottom_string_number}"] += space_name
 
     def add_space_to_left(self, space_name, first_elem, column_name_list, board):
         """Add space to left"""
@@ -92,7 +92,7 @@ class AddSpaceAroundShipVertically(Base):
             column_name = column_name_list[right_column_index]
 
             for field_name in field_name_list:
-                board[right_column_index][f"{column_name}{field_name[1:]}"] = space_name
+                board[right_column_index][f"{column_name}{field_name[1:]}"] += space_name
 
             self.add_space_to_first_field(space_name, f"{column_name}{field_name_list[0][1:]}", column_name_list, board)
             self.add_space_to_last_field(space_name, f"{column_name}{field_name_list[-1][1:]}", column_name_list, board)
@@ -111,7 +111,7 @@ class AddSpaceAroundShipVertically(Base):
             elem = column_name_list[left_column_index]
 
             for field_name in field_name_list:
-                board[left_column_index][f"{elem}{field_name[1:]}"] = space_name
+                board[left_column_index][f"{elem}{field_name[1:]}"] += space_name
 
             self.add_space_to_first_field(space_name, f"{elem}{field_name_list[0][1:]}", column_name_list, board)
             self.add_space_to_last_field(space_name, f"{elem}{field_name_list[-1][1:]}", column_name_list, board)
