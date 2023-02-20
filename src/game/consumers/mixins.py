@@ -3,6 +3,7 @@ import logging
 
 from . import services
 from .addspace import add_space
+from .. import serializers
 
 
 class RefreshBoardMixin:
@@ -50,7 +51,7 @@ class RefreshShipsMixin:
 class DropShipOnBoardMixin:
     """Drop a ship on a board"""
 
-    def drop_ship_on_board(self, ship_id: int,field_name_list: list, board: list) -> None:
+    def drop_ship_on_board(self, ship_id: int, field_name_list: list, board: list) -> None:
         for field_name in field_name_list:
             board[self.column_name_list.index(field_name[0])][field_name] = ship_id
 
@@ -78,7 +79,18 @@ class MakeShootMixin:
     def _shot(board: dict, field_name: str, shot_type: str) -> None:
         """Make a shoot"""
 
+        field_value = board[field_name[0]][field_name]
         board[field_name[0]][field_name] = shot_type
+        return field_value
+    
+    @staticmethod
+    def _add_misses_around_sunken_ship(field_value: int, board: dict) -> None:
+        """Add misses around the sunken ship"""
+
+        for column_name, column_value in board.items():
+            for field_name, value in column_value.items():
+                # if field_value in value:
+                print(board[column_name][field_name], field_name)
 
     def _confert_to_json(self, board: dict) -> None:
         """Convert board to json format"""
@@ -90,9 +102,12 @@ class MakeShootMixin:
         board = await services.get_board(board_id, self.column_name_list)
         self._confert_to_json(board)
         shot_type = self._get_type_shot(board, field_name)
-        self._shot(board, field_name, shot_type)
-        await self.perform_update_board(board_id, board)
+        field_value = self._shot(board, field_name, shot_type)
+        
+        if type(field_value) == int:
+            self._add_misses_around_sunken_ship(field_value, board)
 
+        await self.perform_update_board(board_id, board)
         return board
     
     async def perform_update_board(self, board_id: int, column_dictionary: dict) -> None:
@@ -120,6 +135,14 @@ class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
 class DropShipAddSpaceMixin(DropShipOnBoardMixin, AddSpaceAroundShipMixin):
     """Concrete view for drop a ship on a board and add spaces around a ship"""
 
+    @staticmethod
+    async def get_serialized_ships(board_id: int) -> list:
+        """Get ships from DB and serialize them"""
+
+        ship_list = await services.get_ships(board_id)
+        serializer = serializers.ShipSerializer(ship_list, many=True)
+        return serializer.data
+
     async def update_board(
         self, ship_id: int, board_id: int, ship_plane: str, ship_count: int, field_name_list: list, board: list
     ) -> None:
@@ -130,8 +153,9 @@ class DropShipAddSpaceMixin(DropShipOnBoardMixin, AddSpaceAroundShipMixin):
         column_dictionary = services.create_column_dict(self.column_name_list, board)
         await self.perform_update_board(board_id, column_dictionary)
         await self.perform_ship_updates(ship_id, ship_count)
+        ship_list = await self.get_serialized_ships(board_id)
 
-        await self.send_json(content={"type": "drop_ship", "board": column_dictionary})
+        await self.send_json(content={"type": "drop_ship", "board": column_dictionary, "ships": ship_list})
     
     async def perform_update_board(self, board_id: int, column_dictionary: dict) -> None:
         await services.update_board(board_id, column_dictionary)
