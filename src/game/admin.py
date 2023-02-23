@@ -24,7 +24,7 @@ class BoardAdmin(admin.ModelAdmin):
 
     list_display = ("id", "lobby_id", "user_id")
     list_display_links = ("id", )
-    fields = ("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "lobby_id", "user_id")
+    fields = ("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "is_ready", "lobby_id", "user_id")
     search_fields = ("lobby_id", )
     list_max_show_all = 250
     list_per_page = 150

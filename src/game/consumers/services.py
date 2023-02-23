@@ -28,6 +28,13 @@ def update_board(board_id: int, column_dict: dict) -> None:
 
 
 @database_sync_to_async
+def update_board_is_ready(board_id: int, is_ready: bool) -> None:
+    """Update a board is ready field"""
+
+    models.Board.objects.filter(id=board_id).update(is_ready=is_ready)
+
+
+@database_sync_to_async
 def get_ships(board_id: int) -> list:
     """Get ships for the board"""
 

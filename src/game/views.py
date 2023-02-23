@@ -40,7 +40,7 @@ class DetailLobbyView(RetrieveUpdateDestroyAPIView):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance).data
-        index, enemy_board = services.clear_enemy_board(request, serializer["boards"])
+        index, enemy_board = services.clear_enemy_board(request.user, serializer["boards"])
         serializer["boards"][index] = enemy_board
         return Response(serializer)
 

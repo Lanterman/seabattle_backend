@@ -19,7 +19,7 @@ class BoardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Board
-        fields = ["id", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "lobby_id", "user_id", "ships"]
+        fields = ["id", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "is_ready", "lobby_id", "user_id", "ships"]
         extra_kwargs = {"user_id": {"read_only": True}, "lobby_id": {"read_only": True}}
 
 

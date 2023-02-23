@@ -84,13 +84,14 @@ class TakeShotMixin:
         return field_value
     
     @staticmethod
-    def _check_if_ship_has_sunk(field_value: float, board: dict) -> bool or None:
+    def is_ship_has_sunk(field_value: float, board: dict) -> bool or None:
         """Check if the ship has sunk"""
 
         for _, column_value in board.items():
             for _, value in column_value.items():
                 if field_value == value:
-                    return True
+                    return False
+        return True
     
     @staticmethod
     def _add_misses_around_sunken_ship(field_value: float, board: dict) -> None:
@@ -112,8 +113,7 @@ class TakeShotMixin:
         self._confert_to_json(board)
         shot_type = self._get_type_shot(board, field_name)
         field_value = self._shot(board, field_name, shot_type)
-        
-        if type(field_value) == float and not self._check_if_ship_has_sunk(field_value, board):
+        if type(field_value) == float and self.is_ship_has_sunk(field_value, board):
             self._add_misses_around_sunken_ship(field_value, board)
 
         await self.perform_update_board(board_id, board)
@@ -121,6 +121,16 @@ class TakeShotMixin:
     
     async def perform_update_board(self, board_id: int, column_dictionary: dict) -> None:
         await services.update_board(board_id, column_dictionary)
+
+
+class IsReadyToPlay:
+    """Update a model instance"""
+
+    async def ready_to_play(self, board_id: int, is_ready: bool) -> None:
+        """Change ready to play field"""
+        
+        await services.update_board_is_ready(board_id, is_ready)
+        return is_ready
 
 
 class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):

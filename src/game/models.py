@@ -49,6 +49,7 @@ class Board(models.Model):
     H: str = models.TextField("column H", default=utilities.column_generate("H"))
     I: str = models.TextField("column I", default=utilities.column_generate("I"))
     J: str = models.TextField("column J", default=utilities.column_generate("J"))
+    is_ready: bool = models.BooleanField("is ready", default=False)
     lobby_id: Lobby = models.ForeignKey(to=Lobby, verbose_name="lobby", on_delete=models.CASCADE, related_name="boards")
     user_id: User = models.ForeignKey(to=User, verbose_name="user", on_delete=models.CASCADE, related_name="board_set", blank=True, null=True)
 

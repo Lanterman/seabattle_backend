@@ -19,7 +19,8 @@ class LobbyListConsumer(AsyncJsonWebsocketConsumer):
 class LobbyConsumer(AsyncJsonWebsocketConsumer, 
                     mixins.RefreshBoardShipsMixin, 
                     mixins.DropShipAddSpaceMixin,
-                    mixins.TakeShotMixin):
+                    mixins.TakeShotMixin,
+                    mixins.IsReadyToPlay):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -52,8 +53,18 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             board = await self.take_shot(content["board_id"], content["field_name"])
             data = {"type": "send_shot", "board": board, "user_id": self.user.id}
             await self.channel_layer.group_send(self.lobby_group_name, data)
+        
+        elif content["type"] == "is_ready_to_play":
+            is_ready = await self.ready_to_play(content["board_id"], content["is_ready"])
+            data = {"type": "is_ready_to_play", "is_ready": is_ready, "user_id": self.user.id}
+            await self.channel_layer.group_send(self.lobby_group_name, data)
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""
+
+        await self.send_json(event)
+    
+    async def is_ready_to_play(self, event):
+        """Called when someone change ready to play field"""
 
         await self.send_json(event)
