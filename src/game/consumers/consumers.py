@@ -20,13 +20,15 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                     mixins.RefreshBoardShipsMixin, 
                     mixins.DropShipAddSpaceMixin,
                     mixins.TakeShotMixin,
-                    mixins.IsReadyToPlay):
+                    mixins.IsReadyToPlayMixin,
+                    mixins.RandomPlacementClearShipsMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = None
         self.lobby_group_name = None
         self.column_name_list = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+        self.string_number_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         self.ship_count_tuple = (4, 3, 2, 1)
 
     async def connect(self):
@@ -58,6 +60,9 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             is_ready = await self.ready_to_play(content["board_id"], content["is_ready"])
             data = {"type": "is_ready_to_play", "is_ready": is_ready, "user_id": self.user.id}
             await self.channel_layer.group_send(self.lobby_group_name, data)
+        
+        elif content["type"] == "random_placement":
+            await self.random_placement_and_clear_ships(content["board_id"])
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""
