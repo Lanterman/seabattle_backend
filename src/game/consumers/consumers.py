@@ -63,8 +63,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "random_placement":
-            logging.warning("получать от фронта корабли и доску вместо 2 запросов в бд")
-            await self.random_placement_and_clear_ships(content["board_id"])
+            await self.random_placement_and_clear_ships(content["board_id"], content["board"], content["ships"])
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""

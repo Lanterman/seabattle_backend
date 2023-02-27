@@ -136,64 +136,90 @@ class ClearCountOfShipsMixin:
         for ship in ships:
             ship["count"] = 0
     
-    @staticmethod
-    async def get_serialized_ships(board_id: int) -> list:
-        """Get ships from DB and serialize them"""
-
-        ship_list = await db_queries.get_ships(board_id)
-        serializer = serializers.ShipSerializer(ship_list, many=True)
-        return serializer.data
-    
     async def perform_clear_count_of_ships(self, board_id: int) -> None:
         await db_queries.clear_count_of_ships(board_id)
 
 
-class RandomPlacementMixin:
+class RandomPlacementMixin(AddSpaceAroundShipMixin):
     """Update a board model instance"""
 
     @staticmethod
-    def _put_on_board(ship_id, ship_count, field_list, board):
+    def _is_put_on_board(field_list: list, board: dict) -> bool:
+        """Check if a ship can be put on a board"""
+
         for field_name in field_list:
             if board[field_name[0]][field_name]:
                 return False
 
-            board[field_name[0]][field_name] = float(f"{ship_id}.{ship_count}")
-
         return True
+    
+    @staticmethod
+    def _put_ship_on_board(ship_id: int, ship_number: int, field_list: list, board: dict) -> None:
+        """Put a ship on a board"""
+
+        for field_name in field_list:
+            board[field_name[0]][field_name] = float(f"{ship_id}.{ship_number}")
 
 
-    def get_field_list(self, ship_id, ship_count, ship_size, board) -> None:
+    @staticmethod
+    def get_field_list_horizontally(
+        random_number: int, random_column_name: str, ship_size: int, column_name_list: list
+    ) -> list:
+        """Get list of field horizontally"""
+
+        index = column_name_list.index(random_column_name)
+
+        if index + ship_size <= 9:
+            field_list = [f"{column_name_list[index + number]}{random_number}" for number in range(ship_size)]
+        else: 
+            field_list = [f"{column_name_list[index - number]}{random_number}" for number in range(ship_size)]
+        
+        return field_list
+    
+    @staticmethod
+    def get_field_list_vertically(random_number: int, random_column_name: str, ship_size: int) -> list:
+        """Get list of fields vertically"""
+
+        if random_number + ship_size <= 10:
+            field_list = [f"{random_column_name}{random_number + number}" for number in range(ship_size)]
+        else: 
+            field_list = [f"{random_column_name}{random_number - number}" for number in range(ship_size)]
+        
+        return field_list
+
+    def get_field_list(self, plane: str, ship_size: int, board: dict) -> list:
+        """Get a list of fields where a ship will a located"""
+
         is_put = False
 
         while not is_put:
             random_number = random.choice(self.string_number_list)
             random_column_name = random.choice(self.column_name_list)
 
-            if random_number + ship_size < 10:
-                field_list = [f"{random_column_name}{random_number + number}" for number in range(ship_size)]
-            else: 
-                field_list = [f"{random_column_name}{random_number - number}" for number in range(ship_size)]
-            
-            if self._put_on_board(ship_id, ship_count, field_list, board):
-                is_put = True
-    
-        add_space.AddSpaceAroundShipVertically(f" space {ship_id}.{ship_count}", field_list, self.column_name_list, board) 
+            if plane == "vertical":
+                field_list = self.get_field_list_vertically(random_number, random_column_name, ship_size)
+            else:
+                field_list = self.get_field_list_horizontally(
+                    random_number, random_column_name, ship_size, self.column_name_list
+                )
 
-    def _random_ship_placement(self, board: dict, ships: list) -> None:
+            if self._is_put_on_board(field_list, board):
+                is_put = True
+        
+        return field_list
+
+    async def random_placement(self, board: dict, ships: list) -> dict:
         """Random ships placement on a board"""
 
-        while ships:
-            ship = ships.pop()
-            
-            for ship_count in range(ship["count"], 0, -1):
-                # vertical
-                self.get_field_list(ship["id"], ship_count, ship["size"], board)
-
-    async def random_placement(self, board_id: int, ships: list) -> dict:
-        board = await db_queries.get_board(board_id, self.column_name_list)
-        services.confert_to_json(board)
         services.clear_board(board)
-        self._random_ship_placement(board, ships)
+        
+        for ship, count in zip(ships, self.ship_count_tuple):
+            for ship_number in range(1, count + 1):
+                plane = random.choice(("horizontal", "vertical"))
+                field_list = self.get_field_list(plane, ship["size"], board)
+                self._put_ship_on_board(ship["id"], ship_number, field_list, board)
+                self.insert_space_around_ship(f" space {ship['id']}.{ship_number}", plane, field_list, board)
+
         return board
     
     async def perform_update_board(self, board_id: int, column_dictionary: dict) -> None:
@@ -205,17 +231,16 @@ class RandomPlacementClearShipsMixin(RandomPlacementMixin, ClearCountOfShipsMixi
     Concrete view for random placement ships on a board model instance and update ship model instances count field
     """
 
-    async def random_placement_and_clear_ships(self, board_id: int) -> None:
+    async def random_placement_and_clear_ships(self, board_id: int, board: dict, ships: list) -> None:
         """Random placement ships on a board and update ships count field"""
 
-        serialized_ships = await self.get_serialized_ships(board_id)
-        placed_board = await self.random_placement(board_id, serialized_ships.copy())
-        self._clear_count_of_ships(serialized_ships)
+        placed_board = await self.random_placement(board, ships)
+        self._clear_count_of_ships(ships)
 
         await self.perform_update_board(board_id, placed_board)
         await self.perform_clear_count_of_ships(board_id)
 
-        await self.send_json(content={"type": "random_replaced", "ships": serialized_ships, "board": placed_board})
+        await self.send_json(content={"type": "random_replaced", "ships": ships, "board": placed_board})
 
 
 class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
