@@ -4,6 +4,7 @@ from datetime import datetime
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 from . import mixins
+from ..services import column_name_list
 
 
 class LobbyListConsumer(AsyncJsonWebsocketConsumer):
@@ -27,7 +28,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         super().__init__(*args, **kwargs)
         self.user = None
         self.lobby_group_name = None
-        self.column_name_list = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+        self.column_name_list = column_name_list
         self.string_number_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         self.ship_count_tuple = (4, 3, 2, 1)
 
@@ -62,6 +63,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "random_placement":
+            logging.warning("получать от фронта корабли и доску вместо 2 запросов в бд")
             await self.random_placement_and_clear_ships(content["board_id"])
 
     async def send_shot(self, event):

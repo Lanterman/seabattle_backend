@@ -9,7 +9,7 @@ class RefreshBoardMixin:
     """Update a model instance"""
 
     @staticmethod
-    def _clear_board(board: list) -> tuple:
+    def _clear_board(board: dict) -> tuple:
         """Refresh a board and get a list of filled field names"""
 
         field_name_list = []
@@ -23,14 +23,13 @@ class RefreshBoardMixin:
 
         return field_name_list
     
-    async def clear_board(self, board_id: int, board: list) -> list:
-        board_dictionary = services.create_column_dict(self.column_name_list, board)
-        field_name_list = self._clear_board(board_dictionary)
-        await self.perform_refresh_board(board_id, board_dictionary)
-        return field_name_list, board_dictionary
+    async def clear_board(self, board_id: int, board: dict) -> list:
+        field_name_list = self._clear_board(board)
+        await self.perform_refresh_board(board_id, board)
+        return field_name_list
     
-    async def perform_refresh_board(self, board_id: int, board_dictionary: dict) -> None:
-        await db_queries.update_board(board_id, board_dictionary)
+    async def perform_refresh_board(self, board_id: int, board: dict) -> None:
+        await db_queries.update_board(board_id, board)
 
 
 class RefreshShipsMixin:
@@ -84,7 +83,7 @@ class TakeShotMixin:
         return field_value
     
     @staticmethod
-    def is_ship_has_sunk(field_value: float, board: dict) -> bool or None:
+    def _is_ship_has_sunk(field_value: float, board: dict) -> bool or None:
         """Check if the ship has sunk"""
 
         for _, column_value in board.items():
@@ -107,7 +106,7 @@ class TakeShotMixin:
         services.confert_to_json(board)
         shot_type = self._get_type_shot(board, field_name)
         field_value = self._shot(board, field_name, shot_type)
-        if type(field_value) == float and self.is_ship_has_sunk(field_value, board):
+        if type(field_value) == float and self._is_ship_has_sunk(field_value, board):
             self._add_misses_around_sunken_ship(field_value, board)
 
         await self.perform_update_board(board_id, board)
@@ -141,7 +140,7 @@ class ClearCountOfShipsMixin:
     async def get_serialized_ships(board_id: int) -> list:
         """Get ships from DB and serialize them"""
 
-        ship_list = await services.get_ships(board_id)
+        ship_list = await db_queries.get_ships(board_id)
         serializer = serializers.ShipSerializer(ship_list, many=True)
         return serializer.data
     
@@ -211,7 +210,7 @@ class RandomPlacementClearShipsMixin(RandomPlacementMixin, ClearCountOfShipsMixi
 
         serialized_ships = await self.get_serialized_ships(board_id)
         placed_board = await self.random_placement(board_id, serialized_ships.copy())
-        # self._clear_count_of_ships(serialized_ships)
+        self._clear_count_of_ships(serialized_ships)
 
         await self.perform_update_board(board_id, placed_board)
         await self.perform_clear_count_of_ships(board_id)
@@ -222,14 +221,14 @@ class RandomPlacementClearShipsMixin(RandomPlacementMixin, ClearCountOfShipsMixi
 class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
     """Concrete view for refresh a board model instance and ship model instances"""
 
-    async def refresh(self, board_id: int, ships: list, board: list) -> None:
+    async def refresh(self, board_id: int, ships: list, board: dict) -> None:
         """Refresh a board model instance and ship model instances"""
 
-        field_name_list, column_dictionary = await self.clear_board(board_id, board)
+        field_name_list = await self.clear_board(board_id, board)
         updated_ships = await self.update_ships(board_id, ships)
         content = {
             "type": "clear_board", 
-            "board": column_dictionary, 
+            "board": board, 
             "field_name_list": field_name_list, 
             "ships": updated_ships
         }
@@ -249,22 +248,21 @@ class DropShipAddSpaceMixin(DropShipOnBoardMixin, AddSpaceAroundShipMixin):
         return serializer.data
 
     async def drop_ship(
-        self, ship_id: int, board_id: int, ship_plane: str, ship_count: int, field_name_list: list, board: list
+        self, ship_id: int, board_id: int, ship_plane: str, ship_count: int, field_name_list: list, board: dict
     ) -> None:
         """Drop a ship on a board and add spaces around a ship"""
 
-        board_dictionary = services.create_column_dict(self.column_name_list, board)
-        self.drop_ship_on_board(ship_id, ship_count, field_name_list, board_dictionary)
-        self.insert_space_around_ship(f" space {ship_id}.{ship_count}", ship_plane, field_name_list, board_dictionary)
+        self.drop_ship_on_board(ship_id, ship_count, field_name_list, board)
+        self.insert_space_around_ship(f" space {ship_id}.{ship_count}", ship_plane, field_name_list, board)
 
-        await self.perform_update_board(board_id, board_dictionary)
+        await self.perform_update_board(board_id, board)
         await self.perform_ship_updates(ship_id, ship_count)
         ship_list = await self.get_serialized_ships(board_id)
 
-        await self.send_json(content={"type": "drop_ship", "board": board_dictionary, "ships": ship_list})
+        await self.send_json(content={"type": "drop_ship", "board": board, "ships": ship_list})
     
-    async def perform_update_board(self, board_id: int, column_dictionary: dict) -> None:
-        await db_queries.update_board(board_id, column_dictionary)
+    async def perform_update_board(self, board_id: int, board: dict) -> None:
+        await db_queries.update_board(board_id, board)
     
     async def perform_ship_updates(self, ship_id: int, ship_count: int) -> None:
         await db_queries.update_count_of_ship(ship_id, ship_count)

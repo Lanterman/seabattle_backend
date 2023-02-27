@@ -1,5 +1,6 @@
+import json
 from rest_framework import serializers
-from . import models
+from . import models, services
 from ..user import serializers as user_serializers
 
 
@@ -21,6 +22,12 @@ class BoardSerializer(serializers.ModelSerializer):
         model = models.Board
         fields = ["id", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "is_ready", "lobby_id", "user_id", "ships"]
         extra_kwargs = {"user_id": {"read_only": True}, "lobby_id": {"read_only": True}}
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        for column_name, in services.column_name_list:
+            ret[column_name] = json.loads(ret[column_name].replace("'", '"'))
+        return ret
 
 
 class ListLobbySerializer(serializers.HyperlinkedModelSerializer):

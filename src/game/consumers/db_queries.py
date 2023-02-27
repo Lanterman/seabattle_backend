@@ -12,10 +12,10 @@ def get_board(board_id: int, column_name_list: list) -> models.Board:
 
 
 @database_sync_to_async
-def update_board(board_id: int, board_dictionary: dict) -> None:
+def update_board(board_id: int, board: dict) -> None:
     """Get board for update"""
 
-    models.Board.objects.filter(id=board_id).update(**board_dictionary)
+    models.Board.objects.filter(id=board_id).update(**board)
 
 
 @database_sync_to_async
