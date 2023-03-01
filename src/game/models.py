@@ -21,6 +21,7 @@ class Lobby(models.Model):
     time_to_move: int = models.IntegerField("time to move", choices=utilities.TimePerMove.choices, help_text="Required")
     password: str = models.CharField(max_length=100, blank=True)
     winner: str = models.CharField(max_length=150, blank=True)
+    who_shoots: str = models.CharField("who shoots", max_length=150, blank=True)
     users: Optional[list[User]] = models.ManyToManyField(to=User, related_name="lobbies", help_text="Required")
 
     class Meta:

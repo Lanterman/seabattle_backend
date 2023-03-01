@@ -9,7 +9,7 @@ class LobbyAdmin(admin.ModelAdmin):
 
     list_display = ("id", "name", "bet", "time_to_move", "winner", "created_in", "finished_in")
     list_display_links = ("id", "name")
-    fields = ("name", "slug", "finished_in", "bet", "time_to_move", "password", "winner", "users")
+    fields = ("name", "slug", "finished_in", "bet", "time_to_move", "password", "winner", "who_shoots", "users")
     search_fields = ("name", )
     list_filter = ("bet", "time_to_move")
     list_max_show_all = 250
@@ -22,7 +22,7 @@ class LobbyAdmin(admin.ModelAdmin):
 class BoardAdmin(admin.ModelAdmin):
     """Board admin"""
 
-    list_display = ("id", "lobby_id", "user_id")
+    list_display = ("id", "lobby_id", "user_id", "is_ready")
     list_display_links = ("id", )
     fields = ("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "is_ready", "lobby_id", "user_id")
     search_fields = ("lobby_id", )

@@ -22,7 +22,8 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                     mixins.DropShipAddSpaceMixin,
                     mixins.TakeShotMixin,
                     mixins.IsReadyToPlayMixin,
-                    mixins.RandomPlacementClearShipsMixin):
+                    mixins.RandomPlacementClearShipsMixin,
+                    mixins.SelectFirstShotMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,6 +65,11 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         
         elif content["type"] == "random_placement":
             await self.random_placement_and_clear_ships(content["board_id"], content["board"], content["ships"])
+        
+        # elif content["type"] == "who_starts":
+        #     board_id = await self.select_first_shot(content["my_board_id"], content["enemy_board_id"])
+
+            # await self.channel_layer.group_send(self.lobby_group_name, {"type": "who_starts", "board_id": board_id})
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""
@@ -72,5 +78,10 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
     
     async def is_ready_to_play(self, event):
         """Called when someone change ready to play field"""
+
+        await self.send_json(event)
+    
+    async def who_starts(self, event):
+        """Called when a player who shoots first is chosen"""
 
         await self.send_json(event)

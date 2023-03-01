@@ -61,4 +61,4 @@ class RetrieveLobbySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Lobby
-        fields = ["name", "created_in", "bet", "password", "time_to_move", "users", "boards"]
+        fields = ["name", "created_in", "bet", "password", "time_to_move", "who_shoots", "users", "boards"]

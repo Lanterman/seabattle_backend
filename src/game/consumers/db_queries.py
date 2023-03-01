@@ -52,7 +52,7 @@ def update_count_of_ships(ships: list, ship_count_tuple: tuple) -> None:
 
 
 @database_sync_to_async
-def clear_count_of_ships(board_id) -> None:
+def clear_count_of_ships(board_id: int) -> None:
     """Update ships count field to database"""
 
     models.Ship.objects.filter(board_id=board_id).update(count=0)

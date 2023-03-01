@@ -1,4 +1,6 @@
 import logging
+import datetime
+import uuid
 import random
 from . import services, db_queries
 from .addspace import add_space
@@ -187,12 +189,11 @@ class RandomPlacementMixin(AddSpaceAroundShipMixin):
         
         return field_list
 
-    def get_field_list(self, plane: str, ship_size: int, board: dict) -> list:
+    # Переработать логику получения списка полей, костыль херня
+    async def get_field_list(self, plane: str, ship_size: int, board: dict, ships) -> list:
         """Get a list of fields where a ship will a located"""
 
-        is_put = False
-
-        while not is_put:
+        for _ in range(100):
             random_number = random.choice(self.string_number_list)
             random_column_name = random.choice(self.column_name_list)
 
@@ -204,26 +205,40 @@ class RandomPlacementMixin(AddSpaceAroundShipMixin):
                 )
 
             if self._is_put_on_board(field_list, board):
-                is_put = True
-        
-        return field_list
+                return field_list
+
+        print("xernya, davai po novoi")
+        return await self.random_placement(board, ships)
 
     async def random_placement(self, board: dict, ships: list) -> dict:
         """Random ships placement on a board"""
 
         services.clear_board(board)
-        
+
         for ship, count in zip(ships, self.ship_count_tuple):
             for ship_number in range(1, count + 1):
                 plane = random.choice(("horizontal", "vertical"))
-                field_list = self.get_field_list(plane, ship["size"], board)
-                self._put_ship_on_board(ship["id"], ship_number, field_list, board)
-                self.insert_space_around_ship(f" space {ship['id']}.{ship_number}", plane, field_list, board)
+                field_list = await self.get_field_list(plane, ship["size"], board, ships)
+                if type(field_list) == list:  # из-за временного костыля идет проверка, при его исправлении - проверку убрать
+                    self._put_ship_on_board(ship["id"], ship_number, field_list, board)
+                    self.insert_space_around_ship(f" space {ship['id']}.{ship_number}", plane, field_list, board)
 
         return board
     
     async def perform_update_board(self, board_id: int, column_dictionary: dict) -> None:
         await db_queries.update_board(board_id, column_dictionary)
+
+
+class SelectFirstShotMixin:
+    """Concrete view that chooses a player who will shot first"""
+
+    @staticmethod
+    async def select_first_shot(my_board_id: int, enemy_board_id: int, slug: uuid) -> int:
+        """Select who will take first shot"""
+
+        board_id = random.choice((my_board_id, enemy_board_id))
+        await db_queries.update_lobby(slug, {"who_shoots": board_id})
+        return board_id
 
 
 class RandomPlacementClearShipsMixin(RandomPlacementMixin, ClearCountOfShipsMixin):
