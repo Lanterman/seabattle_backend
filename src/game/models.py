@@ -21,7 +21,6 @@ class Lobby(models.Model):
     time_to_move: int = models.IntegerField("time to move", choices=utilities.TimePerMove.choices, help_text="Required")
     password: str = models.CharField(max_length=100, blank=True)
     winner: str = models.CharField(max_length=150, blank=True)
-    who_shoots: str = models.CharField("who shoots", max_length=150, blank=True)
     users: Optional[list[User]] = models.ManyToManyField(to=User, related_name="lobbies", help_text="Required")
 
     class Meta:
@@ -51,6 +50,7 @@ class Board(models.Model):
     I: str = models.TextField("column I", default=utilities.column_generate("I"))
     J: str = models.TextField("column J", default=utilities.column_generate("J"))
     is_ready: bool = models.BooleanField("is ready", default=False)
+    my_turn: bool = models.BooleanField("my turn", default=False)
     lobby_id: Lobby = models.ForeignKey(to=Lobby, verbose_name="lobby", on_delete=models.CASCADE, related_name="boards")
     user_id: User = models.ForeignKey(to=User, verbose_name="user", on_delete=models.CASCADE, related_name="board_set", blank=True, null=True)
 

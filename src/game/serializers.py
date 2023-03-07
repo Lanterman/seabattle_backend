@@ -20,7 +20,7 @@ class BoardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Board
-        fields = ["id", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "is_ready", "lobby_id", "user_id", "ships"]
+        fields = ["id", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "is_ready", "my_turn", "lobby_id", "user_id", "ships"]
         extra_kwargs = {"user_id": {"read_only": True}, "lobby_id": {"read_only": True}}
 
     def to_representation(self, instance):
@@ -61,4 +61,4 @@ class RetrieveLobbySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Lobby
-        fields = ["name", "created_in", "bet", "password", "time_to_move", "who_shoots", "users", "boards"]
+        fields = ["id", "name", "created_in", "bet", "password", "time_to_move", "users", "boards"]

@@ -23,7 +23,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                     mixins.TakeShotMixin,
                     mixins.IsReadyToPlayMixin,
                     mixins.RandomPlacementClearShipsMixin,
-                    mixins.SelectFirstShotMixin):
+                    mixins.ChooseWhoWillShotFirstMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -54,8 +54,8 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             )
         
         elif content["type"] == "take_shot":
-            board = await self.take_shot(content["board_id"], content["field_name"])
-            data = {"type": "send_shot", "board": board, "user_id": self.user.id}
+            board, is_my_turn = await self.take_shot(content["lobby_slug"], content["board_id"], content["field_name"])
+            data = {"type": "send_shot", "board": board, "user_id": self.user.id, "is_my_turn": is_my_turn}
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "is_ready_to_play":
@@ -66,10 +66,14 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         elif content["type"] == "random_placement":
             await self.random_placement_and_clear_ships(content["board_id"], content["board"], content["ships"])
         
-        # elif content["type"] == "who_starts":
-        #     board_id = await self.select_first_shot(content["my_board_id"], content["enemy_board_id"])
+        elif content["type"] == "who_starts":
+            is_my_turn = await self.choose_first_shooter(content["lobbySlug"])
 
-            # await self.channel_layer.group_send(self.lobby_group_name, {"type": "who_starts", "board_id": board_id})
+            if is_my_turn is not None:
+                data = {"type": "who_starts", "is_my_turn": is_my_turn, "user_id": self.user.id}
+                await self.channel_layer.group_send(self.lobby_group_name, data)
+            else:
+                logging.warning("Turn is determined!")
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""

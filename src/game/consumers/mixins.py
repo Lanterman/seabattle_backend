@@ -1,10 +1,12 @@
 import logging
-import datetime
 import uuid
 import random
+
+from channels.db import database_sync_to_async
+
 from . import services, db_queries
 from .addspace import add_space
-from .. import serializers
+from .. import serializers, models as game_models
 
 
 class RefreshBoardMixin:
@@ -67,7 +69,50 @@ class AddSpaceAroundShipMixin:
             add_space.AddSpaceAroundShipVertically(space_name, field_name_list, self.column_name_list, board)
 
 
-class TakeShotMixin:
+class ClearCountOfShipsMixin:
+    """Update ship models instances"""
+
+    @staticmethod
+    def _clear_count_of_ships(ships: list) -> None:
+        """Cleat count field of ships"""
+
+        for ship in ships:
+            ship["count"] = 0
+    
+    async def perform_clear_count_of_ships(self, board_id: int) -> None:
+        await db_queries.clear_count_of_ships(board_id)
+
+
+class BaseChooseWhoWillShotMixin:
+    """Basic class that chooses a player who will shot"""
+
+    @staticmethod
+    async def get_lobby_boards(lobby_slug: uuid):
+        return await db_queries.get_lobby_boards(lobby_slug)
+
+    @database_sync_to_async
+    def determine_whoose_boards(self, boards: list) -> tuple:
+        """Determine whoose boards"""
+
+        if self.user.username == str(boards[0].user_id):
+            return boards[0], boards[1]
+        return boards[1], boards[0]
+
+    async def perform_update_boards(self, bool_value: bool, my_board, enemy_board) -> list:
+        return await db_queries.update_boards(bool_value, my_board, enemy_board)
+
+
+class IsReadyToPlayMixin:
+    """Update a model instance"""
+
+    async def ready_to_play(self, board_id: int, is_ready: bool) -> None:
+        """Change ready to play field"""
+        
+        await db_queries.update_board_is_ready(board_id, is_ready)
+        return is_ready
+
+
+class TakeShotMixin(BaseChooseWhoWillShotMixin):
     """Update a model instance"""
 
     @staticmethod
@@ -102,44 +147,29 @@ class TakeShotMixin:
             for field_name, value in column_value.items():
                 if f"space {field_value}" in str(value):
                     board[column_name][field_name] = "miss"
+    
+    async def hand_over_to_the_enemy(self, lobby_slug: uuid) -> None:
+        boards = await self.get_lobby_boards(lobby_slug)
+        my_board, enemy_board = await self.determine_whoose_boards(boards)
+        await self.perform_update_boards(True, my_board, enemy_board)
 
-    async def take_shot(self, board_id: int, field_name: str) -> None:
+    async def take_shot(self, lobby_slug: uuid, board_id: int, field_name: str) -> None:
         board = await db_queries.get_board(board_id, self.column_name_list)
         services.confert_to_json(board)
         shot_type = self._get_type_shot(board, field_name)
         field_value = self._shot(board, field_name, shot_type)
-        if type(field_value) == float and self._is_ship_has_sunk(field_value, board):
-            self._add_misses_around_sunken_ship(field_value, board)
+
+        if shot_type == "hit":
+            await self.hand_over_to_the_enemy(lobby_slug)
+
+            if self._is_ship_has_sunk(field_value, board):
+                self._add_misses_around_sunken_ship(field_value, board)
 
         await self.perform_update_board(board_id, board)
-        return board
+        return board, True if shot_type == "hit" else False
     
     async def perform_update_board(self, board_id: int, column_dictionary: dict) -> None:
         await db_queries.update_board(board_id, column_dictionary)
-
-
-class IsReadyToPlayMixin:
-    """Update a model instance"""
-
-    async def ready_to_play(self, board_id: int, is_ready: bool) -> None:
-        """Change ready to play field"""
-        
-        await db_queries.update_board_is_ready(board_id, is_ready)
-        return is_ready
-
-
-class ClearCountOfShipsMixin:
-    """Update ship models instances"""
-
-    @staticmethod
-    def _clear_count_of_ships(ships: list) -> None:
-        """Cleat count field of ships"""
-
-        for ship in ships:
-            ship["count"] = 0
-    
-    async def perform_clear_count_of_ships(self, board_id: int) -> None:
-        await db_queries.clear_count_of_ships(board_id)
 
 
 class RandomPlacementMixin(AddSpaceAroundShipMixin):
@@ -207,7 +237,7 @@ class RandomPlacementMixin(AddSpaceAroundShipMixin):
             if self._is_put_on_board(field_list, board):
                 return field_list
 
-        print("xernya, davai po novoi")
+        logging.warning("Failed to randomize ships to the board, try again.")
         return await self.random_placement(board, ships)
 
     async def random_placement(self, board: dict, ships: list) -> dict:
@@ -229,21 +259,33 @@ class RandomPlacementMixin(AddSpaceAroundShipMixin):
         await db_queries.update_board(board_id, column_dictionary)
 
 
-class SelectFirstShotMixin:
-    """Concrete view that chooses a player who will shot first"""
+class ChooseWhoWillShotFirstMixin(BaseChooseWhoWillShotMixin):
+    """Concrete mixin that chooses a player who will shot first"""
 
     @staticmethod
-    async def select_first_shot(my_board_id: int, enemy_board_id: int, slug: uuid) -> int:
-        """Select who will take first shot"""
+    @database_sync_to_async
+    def is_turn_determined(my_board: game_models.Board, enemy_board: game_models.Board) -> bool:
+        """Check if a turn is determined"""
 
-        board_id = random.choice((my_board_id, enemy_board_id))
-        await db_queries.update_lobby(slug, {"who_shoots": board_id})
-        return board_id
+        if my_board.my_turn or enemy_board.my_turn:
+            return True
+        return False
+
+    async def choose_first_shooter(self, lobby_slug: uuid) -> int:
+        """Choose who will take first shot"""
+
+        boards = await self.get_lobby_boards(lobby_slug)
+        my_board, enemy_board = await self.determine_whoose_boards(boards)
+
+        if not await self.is_turn_determined(my_board, enemy_board):
+            random_bool_value = random.choice((True, False))
+            await self.perform_update_boards(random_bool_value, my_board, enemy_board)
+            return random_bool_value
 
 
 class RandomPlacementClearShipsMixin(RandomPlacementMixin, ClearCountOfShipsMixin):
     """
-    Concrete view for random placement ships on a board model instance and update ship model instances count field
+    Concrete mixin for random placement ships on a board model instance and update ship model instances count field
     """
 
     async def random_placement_and_clear_ships(self, board_id: int, board: dict, ships: list) -> None:
@@ -259,7 +301,7 @@ class RandomPlacementClearShipsMixin(RandomPlacementMixin, ClearCountOfShipsMixi
 
 
 class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
-    """Concrete view for refresh a board model instance and ship model instances"""
+    """Concrete mixin for refresh a board model instance and ship model instances"""
 
     async def refresh(self, board_id: int, ships: list, board: dict) -> None:
         """Refresh a board model instance and ship model instances"""
@@ -277,7 +319,7 @@ class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
 
 
 class DropShipAddSpaceMixin(DropShipOnBoardMixin, AddSpaceAroundShipMixin):
-    """Concrete view for drop a ship on a board and add spaces around a ship"""
+    """Concrete mixin for drop a ship on a board and add spaces around a ship"""
 
     @staticmethod
     async def get_serialized_ships(board_id: int) -> list:

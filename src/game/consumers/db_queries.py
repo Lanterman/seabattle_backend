@@ -1,3 +1,5 @@
+import uuid
+
 from channels.db import database_sync_to_async
 
 from .. import models
@@ -56,3 +58,20 @@ def clear_count_of_ships(board_id: int) -> None:
     """Update ships count field to database"""
 
     models.Ship.objects.filter(board_id=board_id).update(count=0)
+
+
+@database_sync_to_async
+def get_lobby_boards(lobby_slug: uuid) -> list:
+    """Get lobby boards"""
+
+    query = models.Board.objects.select_related("lobby_id").filter(lobby_id__slug=lobby_slug)
+    return list(query)
+
+
+@database_sync_to_async
+def update_boards(bool_value: bool, my_board, enemy_board) -> list:
+    """Update your_turn field of Boards model instances"""
+
+    my_board.my_turn = bool_value
+    enemy_board.my_turn = not bool_value
+    models.Board.objects.bulk_update([my_board, enemy_board], ["my_turn"])
