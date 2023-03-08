@@ -10,12 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
+import logging
 
 from pathlib import Path
 from dotenv import load_dotenv
 
 
 load_dotenv(dotenv_path=".env")
+logging.basicConfig(format="[%(asctime)s] | %(levelname)s: %(message)s", level=logging.INFO, datefmt='%m.%d.%Y %H:%M:%S')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

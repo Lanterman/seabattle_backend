@@ -1,8 +1,10 @@
 import uuid
 
+from datetime import datetime
 from channels.db import database_sync_to_async
 
 from .. import models
+from ...user import models as user_models
 
 
 @database_sync_to_async
@@ -75,3 +77,18 @@ def update_boards(bool_value: bool, my_board, enemy_board) -> list:
     my_board.my_turn = bool_value
     enemy_board.my_turn = not bool_value
     models.Board.objects.bulk_update([my_board, enemy_board], ["my_turn"])
+
+
+@database_sync_to_async
+def set_winner_in_lobby(lobby_slug: uuid, username: str) -> None:
+    """Set winner in a lobby"""
+
+    models.Lobby.objects.filter(slug=lobby_slug).update(winner=username, finished_in=datetime.now())
+
+
+@database_sync_to_async
+def get_user(id: int) -> str:
+    """Get user by ID and return his username"""
+
+    query = user_models.User.objects.get(id=id)
+    return query.username

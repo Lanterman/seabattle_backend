@@ -16,3 +16,16 @@ def clear_board(board_columns: dict) -> dict:
         for field_name, field_value in column_value.items():
             if field_value:
                 board_columns[column_name][field_name] = ""
+
+
+def determine_number_of_enemy_ships(board: dict) -> int:
+        """Determine number of living enemy ships"""
+
+        enemy_ships_list = []
+
+        for _, column_value in board.items():
+            for _, value in column_value.items():
+                if value not in enemy_ships_list and type(value) == float:
+                    enemy_ships_list.append(value)
+        
+        return len(enemy_ships_list)

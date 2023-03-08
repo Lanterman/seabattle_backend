@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-from . import mixins
+from . import mixins, db_queries
 from ..services import column_name_list
 
 
@@ -23,7 +23,8 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                     mixins.TakeShotMixin,
                     mixins.IsReadyToPlayMixin,
                     mixins.RandomPlacementClearShipsMixin,
-                    mixins.ChooseWhoWillShotFirstMixin):
+                    mixins.ChooseWhoWillShotFirstMixin,
+                    mixins.DetermineWinnerMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -54,8 +55,11 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             )
         
         elif content["type"] == "take_shot":
-            board, is_my_turn = await self.take_shot(content["lobby_slug"], content["board_id"], content["field_name"])
-            data = {"type": "send_shot", "board": board, "user_id": self.user.id, "is_my_turn": is_my_turn}
+            board, is_my_turn, enemy_ships = await self.take_shot(
+                content["lobby_slug"], content["board_id"], content["field_name"]
+            )
+            data = {"type": "send_shot", "board": board, "user_id": self.user.id, "is_my_turn": is_my_turn, 
+                    "enemy_ships": enemy_ships}
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "is_ready_to_play":
@@ -67,13 +71,17 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.random_placement_and_clear_ships(content["board_id"], content["board"], content["ships"])
         
         elif content["type"] == "who_starts":
-            is_my_turn = await self.choose_first_shooter(content["lobbySlug"])
+            is_my_turn = await self.choose_first_shooter(content["lobby_slug"])
 
             if is_my_turn is not None:
                 data = {"type": "who_starts", "is_my_turn": is_my_turn, "user_id": self.user.id}
                 await self.channel_layer.group_send(self.lobby_group_name, data)
             else:
                 logging.warning("Turn is determined!")
+        elif content["type"] == "determine_winner":
+            username = await db_queries.get_user(content["enemy_id"]) if len(content) == 3 else self.user.username
+            winner = await self.determine_winner_of_game(content["lobby_slug"], username)
+            await self.channel_layer.group_send(self.lobby_group_name, {"type": "determine_winner", "winner": winner})
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""
@@ -87,5 +95,10 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
     
     async def who_starts(self, event):
         """Called when a player who shoots first is chosen"""
+
+        await self.send_json(event)
+    
+    async def determine_winner(self, event):
+        """Called when a player destroed all enemy ships"""
 
         await self.send_json(event)

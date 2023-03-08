@@ -112,6 +112,18 @@ class IsReadyToPlayMixin:
         return is_ready
 
 
+class DetermineWinnerMixin:
+    """Determine a winner of a game"""
+
+    async def determine_winner_of_game(self, lobby_slug: uuid, username: str) -> str:
+        await self.preform_set_winner_in_lobby(lobby_slug, username)
+        return username
+
+    async def preform_set_winner_in_lobby(self, lobby_slug: uuid, username: str) -> str:
+        await db_queries.set_winner_in_lobby(lobby_slug, username)
+
+
+
 class TakeShotMixin(BaseChooseWhoWillShotMixin):
     """Update a model instance"""
 
@@ -158,15 +170,18 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
         services.confert_to_json(board)
         shot_type = self._get_type_shot(board, field_name)
         field_value = self._shot(board, field_name, shot_type)
+        is_my_turn = True if shot_type == "hit" else False
+        number_of_enemy_ships = None
 
         if shot_type == "hit":
             await self.hand_over_to_the_enemy(lobby_slug)
 
             if self._is_ship_has_sunk(field_value, board):
                 self._add_misses_around_sunken_ship(field_value, board)
+                number_of_enemy_ships = services.determine_number_of_enemy_ships(board)
 
         await self.perform_update_board(board_id, board)
-        return board, True if shot_type == "hit" else False
+        return board, is_my_turn, number_of_enemy_ships
     
     async def perform_update_board(self, board_id: int, column_dictionary: dict) -> None:
         await db_queries.update_board(board_id, column_dictionary)
@@ -237,7 +252,7 @@ class RandomPlacementMixin(AddSpaceAroundShipMixin):
             if self._is_put_on_board(field_list, board):
                 return field_list
 
-        logging.warning("Failed to randomize ships to the board, try again.")
+        logging.warning(msg="Failed to randomize ships to the board, try again.")
         return await self.random_placement(board, ships)
 
     async def random_placement(self, board: dict, ships: list) -> dict:
