@@ -80,6 +80,14 @@ def update_boards(bool_value: bool, my_board, enemy_board) -> list:
 
 
 @database_sync_to_async
+def get_lobby_by_slug(slug: uuid) -> models.Lobby:
+    """Get the Lobby models instance"""
+
+    query = models.Lobby.objects.get(slug=slug)
+    return query
+
+
+@database_sync_to_async
 def set_winner_in_lobby(lobby_slug: uuid, username: str) -> None:
     """Set winner in a lobby"""
 
