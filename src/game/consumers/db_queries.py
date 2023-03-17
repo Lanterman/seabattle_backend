@@ -100,3 +100,8 @@ def get_user(id: int) -> str:
 
     query = user_models.User.objects.get(id=id)
     return query.username
+
+
+@database_sync_to_async
+def update_countdown_timer(slug: uuid, time_to_move: int) -> None:
+    """Write time_to_move of lobby"""

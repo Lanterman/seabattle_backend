@@ -23,6 +23,7 @@ drf-yasg = "^1.21.4"
 djangochannelsrestframework = "^1.1.0"
 django-cors-headers = "^3.13.0"
 daphne = "^4.0.0"
+celery = "^5.2.7"
 
 
 [build-system]

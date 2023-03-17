@@ -18,7 +18,12 @@ class Lobby(models.Model):
     created_in: datetime.datetime = models.DateTimeField(auto_now_add=True)
     finished_in: datetime.datetime = models.DateTimeField(blank=True, null=True)
     bet: int = models.IntegerField("game bet", choices=utilities.Bet.choices, help_text="Required")
-    time_to_move: int = models.IntegerField("time to move", choices=utilities.TimePerMove.choices, help_text="Required")
+    time_to_move: int = models.IntegerField(
+        choices=utilities.ChooseTime.choices, default=utilities.ChooseTime.THIRTY_SECONDS
+        )
+    time_to_placement: int = models.IntegerField(
+        choices=utilities.ChooseTime.choices, default=utilities.ChooseTime.THIRTY_SECONDS
+        )
     password: str = models.CharField(max_length=100, blank=True)
     winner: str = models.CharField(max_length=150, blank=True)
     users: Optional[list[User]] = models.ManyToManyField(to=User, related_name="lobbies", help_text="Required")

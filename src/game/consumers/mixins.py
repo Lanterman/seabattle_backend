@@ -1,12 +1,13 @@
-import logging
 import uuid
 import random
+import logging
 
 from channels.db import database_sync_to_async
 
 from . import services, db_queries
 from .addspace import add_space
-from .. import serializers, models as game_models
+from .. import serializers, tasks, models as game_models
+from config.utilities import redis_instance
 
 
 class RefreshBoardMixin:
@@ -122,6 +123,23 @@ class DetermineWinnerMixin:
     async def preform_set_winner_in_lobby(self, lobby_slug: uuid, username: str) -> str:
         await db_queries.set_winner_in_lobby(lobby_slug, username)
 
+
+class CountDownTimer:
+    """"""
+
+    def remove_user_from_redis(self):
+        redis_instance.delete(self.user.username)
+
+    async def countdown(self, time_left: int, type_action: str) -> bool:
+        if not redis_instance.hget(self.user.username, type_action):
+            redis_instance.hmset(self.user.username, {type_action: time_left})
+        
+            count_is_coming = tasks.counddown.delay(self.user.username, time_left, type_action)
+            print(count_is_coming)
+               
+
+
+    # async def preform
 
 
 class TakeShotMixin(BaseChooseWhoWillShotMixin):

@@ -37,7 +37,7 @@ class ListLobbySerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Lobby
-        fields = ["url", "name", "created_in", "bet", "password", "time_to_move", "slug", "users"]
+        fields = ["url", "name", "created_in", "bet", "password", "time_to_move", "time_to_placement", "slug", "users"]
         extra_kwargs = {"url": {"lookup_field": "slug"}}
 
 
@@ -46,7 +46,7 @@ class CreateLobbySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Lobby
-        fields = ["name", "bet", "time_to_move", "password", "slug"]
+        fields = ["name", "bet", "time_to_move", "time_to_placement", "password", "slug"]
         extra_kwargs = {"slug": {"read_only": True}}
 
     def create(self, validated_data):
@@ -61,4 +61,4 @@ class RetrieveLobbySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Lobby
-        fields = ["id", "name", "bet", "winner", "password", "time_to_move", "users", "boards"]
+        fields = ["id", "name", "bet", "winner", "password", "time_to_move", "time_to_placement", "users", "boards"]

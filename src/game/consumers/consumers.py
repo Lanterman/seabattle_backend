@@ -1,5 +1,5 @@
 import logging
-
+from asyncio import sleep
 from datetime import datetime
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
@@ -24,7 +24,8 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                     mixins.IsReadyToPlayMixin,
                     mixins.RandomPlacementClearShipsMixin,
                     mixins.ChooseWhoWillShotFirstMixin,
-                    mixins.DetermineWinnerMixin):
+                    mixins.DetermineWinnerMixin,
+                    mixins.CountDownTimer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -78,10 +79,15 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                 await self.channel_layer.group_send(self.lobby_group_name, data)
             else:
                 logging.warning("Turn is determined!")
+
         elif content["type"] == "determine_winner":
             username = await db_queries.get_user(content["enemy_id"]) if len(content) == 3 else self.user.username
             winner = await self.determine_winner_of_game(content["lobby_slug"], username)
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "determine_winner", "winner": winner})
+
+        elif content["type"] == "countdown":
+            count_is_coming = await self.countdown(content["time_left"], content["type_action"])
+            logging.warning(count_is_coming)
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""

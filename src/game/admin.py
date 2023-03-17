@@ -7,11 +7,11 @@ from . import models
 class LobbyAdmin(admin.ModelAdmin):
     """Lobby admin"""
 
-    list_display = ("id", "name", "bet", "time_to_move", "winner", "created_in", "finished_in")
+    list_display = ("id", "name", "bet", "time_to_move", "time_to_placement", "winner", "created_in", "finished_in")
     list_display_links = ("id", "name")
-    fields = ("name", "slug", "finished_in", "bet", "time_to_move", "password", "winner", "users")
+    fields = ("name", "slug", "finished_in", "bet", "time_to_move", "time_to_placement", "password", "winner", "users")
     search_fields = ("name", )
-    list_filter = ("bet", "time_to_move")
+    list_filter = ("bet", "time_to_move", "time_to_placement")
     list_max_show_all = 250
     list_per_page = 150
     list_select_related = True
