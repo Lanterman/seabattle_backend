@@ -86,8 +86,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "determine_winner", "winner": winner})
 
         elif content["type"] == "countdown":
-            count_is_coming = await self.countdown(content["time_left"], content["type_action"])
-            logging.warning(count_is_coming)
+            await self.countdown(content["time_left"], content["type_action"])
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""

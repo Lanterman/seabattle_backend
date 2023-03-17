@@ -130,16 +130,17 @@ class CountDownTimer:
     def remove_user_from_redis(self):
         redis_instance.delete(self.user.username)
 
-    async def countdown(self, time_left: int, type_action: str) -> bool:
-        if not redis_instance.hget(self.user.username, type_action):
-            redis_instance.hmset(self.user.username, {type_action: time_left})
+    async def countdown(self, time_left: int, type_action: str) -> int:
+        """Timer""" 
+
+        current_time = redis_instance.hget(self.user.username, type_action)
+
+        if not current_time:
+            current_time = redis_instance.hmset(self.user.username, {type_action: time_left})
         
-            count_is_coming = tasks.counddown.delay(self.user.username, time_left, type_action)
-            print(count_is_coming)
-               
-
-
-    # async def preform
+        tasks.countdown.delay(self.user.username, type_action)
+        print(current_time)
+        await self.send_json(content={"type": "countdown", "time_left": int(current_time), "type_action": type_action})
 
 
 class TakeShotMixin(BaseChooseWhoWillShotMixin):
