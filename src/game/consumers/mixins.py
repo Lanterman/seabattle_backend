@@ -109,6 +109,12 @@ class IsReadyToPlayMixin:
     async def ready_to_play(self, board_id: int, is_ready: bool) -> None:
         """Change ready to play field"""
         
+        if is_ready:
+            redis_instance.hmset(self.user.username, {"done": 1})
+        else:
+            redis_instance.hdel(self.user.username, "done")
+            tasks.countdown.delay(self.user.username, "replacement")
+
         await db_queries.update_board_is_ready(board_id, is_ready)
         return is_ready
 
@@ -136,10 +142,14 @@ class CountDownTimer:
         current_time = redis_instance.hget(self.user.username, type_action)
 
         if not current_time:
-            current_time = redis_instance.hmset(self.user.username, {type_action: time_left})
-        
+            redis_instance.hmset(self.user.username, {type_action: time_left})
+            current_time = time_left
+
+        if type_action == "turn":
+            redis_instance.hdel(self.user.username, "done")
+
+        # self.remove_user_from_redis()
         tasks.countdown.delay(self.user.username, type_action)
-        print(current_time)
         await self.send_json(content={"type": "countdown", "time_left": int(current_time), "type_action": type_action})
 
 
