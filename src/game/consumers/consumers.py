@@ -86,7 +86,14 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "determine_winner", "winner": winner})
 
         elif content["type"] == "countdown":
-            await self.countdown(content["time_left"], content["type_action"])
+            content = await self._countdown(content["time_left"], content["type_action"], content["lobby_slug"])
+            await self.channel_layer.group_send(self.lobby_group_name, content)
+        
+        elif content["type"] == "time_is_over":
+            await self.random_placement_and_clear_ships(content["board_id"], content["board"], content["ships"])
+            is_ready = await self.ready_to_play(content["board_id"], True)
+            data = {"type": "is_ready_to_play", "is_ready": is_ready, "user_id": self.user.id}
+            await self.channel_layer.group_send(self.lobby_group_name, data)
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""
@@ -104,6 +111,11 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         await self.send_json(event)
     
     async def determine_winner(self, event):
+        """Called when a player destroed all enemy ships"""
+
+        await self.send_json(event)
+    
+    async def countdown(self, event):
         """Called when a player destroed all enemy ships"""
 
         await self.send_json(event)

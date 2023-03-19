@@ -1,3 +1,4 @@
+import uuid
 import logging
 import asyncio
 
@@ -7,13 +8,13 @@ from celery import shared_task
 from config.utilities import redis_instance
 
 
-@shared_task(trail=True)
-def countdown(username: str, type_action: str):
+@shared_task
+def countdown(lobby_slug: uuid, type_action: str):
     while True:
-        time_left = int(redis_instance.hget(username, type_action))
-        logging.warning(msg=(username, time_left, redis_instance.hget(username, "done"), type_action))
-        if redis_instance.hget(username, "done") or time_left <= 0:
+        time_left = int(redis_instance.hget(lobby_slug, type_action))
+        logging.warning(msg=(lobby_slug, time_left, redis_instance.hget(lobby_slug, "done"), type_action))
+        if redis_instance.hget(lobby_slug, "done") or time_left <= 0:
             break
         
         async_to_sync(asyncio.sleep)(1)
-        redis_instance.hmset(username, {type_action: time_left - 1})
+        redis_instance.hmset(lobby_slug, {type_action: time_left - 1})

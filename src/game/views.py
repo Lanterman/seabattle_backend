@@ -1,11 +1,15 @@
+import uuid
+
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
+
 from . import models as game_models, serializers, services
 from ..user import models as user_models
+from config.utilities import redis_instance
 
 
 class LobbyListView(ListCreateAPIView):
@@ -42,7 +46,26 @@ class DetailLobbyView(RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(instance).data
         index, enemy_board = services.clear_enemy_board(request.user, serializer["boards"])
         serializer["boards"][index] = enemy_board
+        serializer["time_left"] = self.add_countdown(self.kwargs["slug"], serializer)
         return Response(serializer)
+
+    def add_countdown(self, slug: uuid, data: dict) -> int:
+        """Add time_left variable with countdown"""
+
+        if data["boards"][0]["is_ready"] and data["boards"][1]["is_ready"]:
+            return self.get_time_left(slug, redis_instance.hget(slug, "turn"), data["time_to_move"], "turn")
+        else:
+            return self.get_time_left(slug, redis_instance.hget(slug, "placement"), 
+                                         data["time_to_placement"], "placement")
+
+    @staticmethod
+    def get_time_left(slug: uuid, time_from_redis: str, time_to_serializer: int, type_action: str) -> int:
+        """Get a time left to placement ships or make a turn"""
+
+        if not time_from_redis:
+            redis_instance.hmset(slug, {type_action: time_to_serializer})
+            return time_to_serializer
+        return int(time_from_redis)
 
 def index(request):
     lobby = game_models.Lobby.objects.first()

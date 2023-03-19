@@ -109,11 +109,11 @@ class IsReadyToPlayMixin:
     async def ready_to_play(self, board_id: int, is_ready: bool) -> None:
         """Change ready to play field"""
         
-        if is_ready:
-            redis_instance.hmset(self.user.username, {"done": 1})
-        else:
-            redis_instance.hdel(self.user.username, "done")
-            tasks.countdown.delay(self.user.username, "replacement")
+        # if is_ready:
+        #     redis_instance.hmset(self.user.username, {"done": 1})
+        # else:
+        #     redis_instance.hdel(self.user.username, "done")
+        #     tasks.countdown.delay(self.user.username, "replacement")
 
         await db_queries.update_board_is_ready(board_id, is_ready)
         return is_ready
@@ -133,24 +133,25 @@ class DetermineWinnerMixin:
 class CountDownTimer:
     """"""
 
-    def remove_user_from_redis(self):
-        redis_instance.delete(self.user.username)
+    @staticmethod
+    def remove_lobby_from_redis(lobby_slug):
+        redis_instance.delete(lobby_slug)
 
-    async def countdown(self, time_left: int, type_action: str) -> int:
-        """Timer""" 
+    async def _countdown(self, time_left: int, type_action: str, lobby_slug: uuid) -> int:
+        """Timer"""
 
-        current_time = redis_instance.hget(self.user.username, type_action)
+        current_time = redis_instance.hget(lobby_slug, type_action)
 
         if not current_time:
-            redis_instance.hmset(self.user.username, {type_action: time_left})
+            redis_instance.hmset(lobby_slug, {type_action: time_left})
             current_time = time_left
 
-        if type_action == "turn":
-            redis_instance.hdel(self.user.username, "done")
+        # if type_action == "turn":
+            # redis_instance.hdel(self.user.username, "done")
 
-        # self.remove_user_from_redis()
-        tasks.countdown.delay(self.user.username, type_action)
-        await self.send_json(content={"type": "countdown", "time_left": int(current_time), "type_action": type_action})
+        # self.remove_lobby_from_redis(lobby_slug)
+        tasks.countdown.delay(lobby_slug, type_action)
+        return {"type": "countdown", "time_left": int(current_time), "type_action": type_action}
 
 
 class TakeShotMixin(BaseChooseWhoWillShotMixin):
@@ -341,7 +342,7 @@ class RandomPlacementClearShipsMixin(RandomPlacementMixin, ClearCountOfShipsMixi
         await self.perform_update_board(board_id, placed_board)
         await self.perform_clear_count_of_ships(board_id)
 
-        await self.send_json(content={"type": "random_replaced", "ships": ships, "board": placed_board})
+        await self.send_json(content={"type": "random_placed", "ships": ships, "board": placed_board})
 
 
 class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
