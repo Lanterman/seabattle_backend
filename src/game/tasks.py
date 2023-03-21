@@ -9,11 +9,12 @@ from config.utilities import redis_instance
 
 
 @shared_task
-def countdown(lobby_slug: uuid, type_action: str):
+def countdown(lobby_slug: uuid, type_action: str, my_turn: str):
     while True:
         time_left = int(redis_instance.hget(lobby_slug, type_action))
-        logging.warning(msg=(lobby_slug, time_left, redis_instance.hget(lobby_slug, "done"), type_action))
-        if redis_instance.hget(lobby_slug, "done") or time_left <= 0:
+        current_turn = redis_instance.hget(lobby_slug, "current_turn")
+        logging.warning(msg=(current_turn, my_turn, time_left, type_action))
+        if current_turn != my_turn or time_left <= 0:
             break
         
         async_to_sync(asyncio.sleep)(1)

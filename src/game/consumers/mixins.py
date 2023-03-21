@@ -108,12 +108,6 @@ class IsReadyToPlayMixin:
 
     async def ready_to_play(self, board_id: int, is_ready: bool) -> None:
         """Change ready to play field"""
-        
-        # if is_ready:
-        #     redis_instance.hmset(self.user.username, {"done": 1})
-        # else:
-        #     redis_instance.hdel(self.user.username, "done")
-        #     tasks.countdown.delay(self.user.username, "replacement")
 
         await db_queries.update_board_is_ready(board_id, is_ready)
         return is_ready
@@ -131,7 +125,11 @@ class DetermineWinnerMixin:
 
 
 class CountDownTimer:
-    """"""
+    """
+    Timer class. 
+    Starts a background countdown with celery.
+    Sends the remaining time to the action and the name of the action.
+    """
 
     @staticmethod
     def remove_lobby_from_redis(lobby_slug):
@@ -141,16 +139,14 @@ class CountDownTimer:
         """Timer"""
 
         current_time = redis_instance.hget(lobby_slug, type_action)
+        current_turn = redis_instance.hget(lobby_slug, "current_turn")
 
         if not current_time:
             redis_instance.hmset(lobby_slug, {type_action: time_left})
             current_time = time_left
 
-        # if type_action == "turn":
-            # redis_instance.hdel(self.user.username, "done")
-
         # self.remove_lobby_from_redis(lobby_slug)
-        tasks.countdown.delay(lobby_slug, type_action)
+        tasks.countdown.delay(lobby_slug, type_action, current_turn)
         return {"type": "countdown", "time_left": int(current_time), "type_action": type_action}
 
 
@@ -195,7 +191,7 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
         my_board, enemy_board = await self.determine_whoose_boards(boards)
         await self.perform_update_boards(True, my_board, enemy_board)
 
-    async def take_shot(self, lobby_slug: uuid, board_id: int, field_name: str) -> None:
+    async def take_shot(self, lobby_slug: uuid, board_id: int, field_name: str, time_to_move: int) -> None:
         board = await db_queries.get_board(board_id, self.column_name_list)
         services.confert_to_json(board)
         shot_type = self._get_type_shot(board, field_name)
@@ -209,6 +205,12 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
             if self._is_ship_has_sunk(field_value, board):
                 self._add_misses_around_sunken_ship(field_value, board)
                 number_of_enemy_ships = services.determine_number_of_enemy_ships(board)
+
+        current_turn = redis_instance.hget(lobby_slug, "current_turn")
+        if not current_turn:
+            redis_instance.hmset(lobby_slug, {"current_turn": 1, "turn": time_to_move})
+        else:
+            redis_instance.hmset(lobby_slug, {"current_turn": int(current_turn) + 1, "turn": time_to_move})
 
         await self.perform_update_board(board_id, board)
         return board, is_my_turn, number_of_enemy_ships
