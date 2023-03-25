@@ -43,6 +43,14 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         await self.channel_layer.group_add(self.lobby_group_name, self.channel_name)
 
         await self.accept()
+    
+    async def disconnect(self, close_code):
+        if close_code < 1002:
+            logging.info(msg=f"Websocket disconect. Code - {close_code}")
+        else: 
+            logging.warning(msg=f"Emergency shutdown. Code - {close_code}")
+
+        await self.channel_layer.group_discard(self.lobby_group_name, self.channel_name)
 
     async def receive_json(self, content, **kwargs):
 
@@ -83,8 +91,9 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                 logging.warning("Turn is determined!")
 
         elif content["type"] == "determine_winner":
-            username = await db_queries.get_user(content["enemy_id"]) if len(content) == 3 else self.user.username
-            winner = await self.determine_winner_of_game(content["lobby_slug"], username)
+            winner = await db_queries.get_user(content["enemy_id"]) if len(content) == 3 else self.user.username
+            await self.determine_winner_of_game(content["lobby_slug"], winner)
+            self.remove_lobby_from_redis(content["lobby_slug"])
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "determine_winner", "winner": winner})
 
         elif content["type"] == "countdown":

@@ -118,7 +118,6 @@ class DetermineWinnerMixin:
 
     async def determine_winner_of_game(self, lobby_slug: uuid, username: str) -> str:
         await self.preform_set_winner_in_lobby(lobby_slug, username)
-        return username
 
     async def preform_set_winner_in_lobby(self, lobby_slug: uuid, username: str) -> str:
         await db_queries.set_winner_in_lobby(lobby_slug, username)
@@ -134,6 +133,7 @@ class CountDownTimer:
     @staticmethod
     def remove_lobby_from_redis(lobby_slug):
         redis_instance.delete(lobby_slug)
+        redis_instance.hmset(lobby_slug, {"current_turn": 0})
 
     async def _countdown(self, time_left: int, type_action: str, lobby_slug: uuid) -> int:
         """Timer"""
@@ -144,9 +144,9 @@ class CountDownTimer:
         if not current_time:
             redis_instance.hmset(lobby_slug, {type_action: time_left})
             current_time = time_left
+        # redis_instance.delete(lobby_slug)
+        tasks.countdown.delay(lobby_slug, type_action, current_turn, int(current_time))
 
-        # self.remove_lobby_from_redis(lobby_slug)
-        tasks.countdown.delay(lobby_slug, type_action, current_turn)
         return {"type": "countdown", "time_left": int(current_time), "type_action": type_action}
 
 
