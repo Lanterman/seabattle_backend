@@ -109,6 +109,7 @@ class IsReadyToPlayMixin:
     async def ready_to_play(self, board_id: int, is_ready: bool) -> None:
         """Change ready to play field"""
 
+        redis_instance.hdel(self.lobby_name, "is_running")  # При обоюдной готовности
         await db_queries.update_board_is_ready(board_id, is_ready)
         return is_ready
 
@@ -133,21 +134,26 @@ class CountDownTimer:
     @staticmethod
     def remove_lobby_from_redis(lobby_slug):
         redis_instance.delete(lobby_slug)
-        redis_instance.hmset(lobby_slug, {"current_turn": 0})
+        redis_instance.hmset(lobby_slug, {"current_turn": -1})
 
-    async def _countdown(self, time_left: int, type_action: str, lobby_slug: uuid) -> int:
+    async def _countdown(self, lobby_slug: uuid, time_left: int) -> int:
         """Timer"""
 
-        current_time = redis_instance.hget(lobby_slug, type_action)
         current_turn = redis_instance.hget(lobby_slug, "current_turn")
+        is_task_in_progress = redis_instance.hget(lobby_slug, "is_running")
 
-        if not current_time:
-            redis_instance.hmset(lobby_slug, {type_action: time_left})
-            current_time = time_left
+        if time_left is None:
+            time_left = int(redis_instance.hget(lobby_slug, "time_left"))
+        else:
+            redis_instance.hmset(lobby_slug, {"current_turn": int(current_turn) + 1})
+            current_turn = str(int(current_turn) + 1)
+
         # redis_instance.delete(lobby_slug)
-        tasks.countdown.delay(lobby_slug, type_action, current_turn, int(current_time))
+        if not is_task_in_progress:
+            tasks.countdown.delay(lobby_slug, current_turn, time_left)
+            redis_instance.hmset(lobby_slug, {"is_running": 1})
 
-        return {"type": "countdown", "time_left": int(current_time), "type_action": type_action}
+        return {"type": "countdown", "time_left": time_left}
 
 
 class TakeShotMixin(BaseChooseWhoWillShotMixin):
@@ -191,7 +197,7 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
         my_board, enemy_board = await self.determine_whoose_boards(boards)
         await self.perform_update_boards(True, my_board, enemy_board)
 
-    async def take_shot(self, lobby_slug: uuid, board_id: int, field_name: str, time_to_move: int) -> None:
+    async def take_shot(self, lobby_slug: uuid, board_id: int, field_name: str) -> None:
         board = await db_queries.get_board(board_id, self.column_name_list)
         services.confert_to_json(board)
         shot_type = self._get_type_shot(board, field_name)
@@ -206,11 +212,7 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
                 self._add_misses_around_sunken_ship(field_value, board)
                 number_of_enemy_ships = services.determine_number_of_enemy_ships(board)
 
-        current_turn = redis_instance.hget(lobby_slug, "current_turn")
-        if not current_turn:
-            redis_instance.hmset(lobby_slug, {"current_turn": 1, "turn": time_to_move})
-        else:
-            redis_instance.hmset(lobby_slug, {"current_turn": int(current_turn) + 1, "turn": time_to_move})
+        redis_instance.hdel(lobby_slug, "is_running")
 
         await self.perform_update_board(board_id, board)
         return board, is_my_turn, number_of_enemy_ships

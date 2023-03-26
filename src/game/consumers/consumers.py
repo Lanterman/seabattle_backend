@@ -65,13 +65,13 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         
         elif content["type"] == "take_shot":
             board, is_my_turn, enemy_ships = await self.take_shot(
-                content["lobby_slug"], content["board_id"], content["field_name"], content["time_to_move"]
+                content["lobby_slug"], content["board_id"], content["field_name"]
             )
-            content = await self._countdown(content["time_to_move"], "turn", content["lobby_slug"])
-            data = {"type": "send_shot", "board": board, "user_id": self.user.id, "is_my_turn": is_my_turn, 
+            data_1 = await self._countdown(content["lobby_slug"], content["time_to_turn"])
+            data_2 = {"type": "send_shot", "board": board, "user_id": self.user.id, "is_my_turn": is_my_turn, 
                     "enemy_ships": enemy_ships}
-            await self.channel_layer.group_send(self.lobby_group_name, data)
-            await self.channel_layer.group_send(self.lobby_group_name, content)
+            await self.channel_layer.group_send(self.lobby_group_name, data_2)
+            await self.channel_layer.group_send(self.lobby_group_name, data_1)
         
         elif content["type"] == "is_ready_to_play":
             is_ready = await self.ready_to_play(content["board_id"], content["is_ready"])
@@ -97,8 +97,8 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "determine_winner", "winner": winner})
 
         elif content["type"] == "countdown":
-            content = await self._countdown(content["time_left"], content["type_action"], content["lobby_slug"])
-            await self.channel_layer.group_send(self.lobby_group_name, content)
+            data = await self._countdown(content["lobby_slug"], content["time_to_turn"])
+            await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "time_is_over":
             await self.random_placement_and_clear_ships(content["board_id"], content["board"], content["ships"])

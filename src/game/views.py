@@ -53,17 +53,16 @@ class DetailLobbyView(RetrieveUpdateDestroyAPIView):
         """Add time_left variable with countdown"""
 
         if data["boards"][0]["is_ready"] and data["boards"][1]["is_ready"]:
-            return self.get_time_left(slug, redis_instance.hget(slug, "turn"), data["time_to_move"], "turn")
+            return self.get_time_left(slug, redis_instance.hget(slug, "time_left"), data["time_to_move"])
         else:
-            return self.get_time_left(slug, redis_instance.hget(slug, "placement"), 
-                                         data["time_to_placement"], "placement")
+            return self.get_time_left(slug, redis_instance.hget(slug, "time_left"), data["time_to_placement"])
 
     @staticmethod
-    def get_time_left(slug: uuid, time_from_redis: str, time_to_serializer: int, type_action: str) -> int:
+    def get_time_left(slug: uuid, time_from_redis: str, time_to_serializer: int) -> int:
         """Get a time left to placement ships or make a turn"""
 
         if not time_from_redis:
-            redis_instance.hmset(slug, {type_action: time_to_serializer})
+            redis_instance.hmset(slug, {"time_left": time_to_serializer, "current_turn": 0})
             return time_to_serializer
         return int(time_from_redis)
 
