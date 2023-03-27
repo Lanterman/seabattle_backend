@@ -65,16 +65,16 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         
         elif content["type"] == "take_shot":
             board, is_my_turn, enemy_ships = await self.take_shot(
-                content["lobby_slug"], content["board_id"], content["field_name"]
+                self.lobby_name, content["board_id"], content["field_name"]
             )
-            data_1 = await self._countdown(content["lobby_slug"], content["time_to_turn"])
+            data_1 = await self._countdown(self.lobby_name, content["time_to_turn"])
             data_2 = {"type": "send_shot", "board": board, "user_id": self.user.id, "is_my_turn": is_my_turn, 
                     "enemy_ships": enemy_ships}
             await self.channel_layer.group_send(self.lobby_group_name, data_2)
             await self.channel_layer.group_send(self.lobby_group_name, data_1)
         
         elif content["type"] == "is_ready_to_play":
-            is_ready = await self.ready_to_play(content["board_id"], content["is_ready"])
+            is_ready = await self.ready_to_play(content["board_id"], content["is_ready"], content["is_enemy_ready"])
             data = {"type": "is_ready_to_play", "is_ready": is_ready, "user_id": self.user.id}
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
@@ -82,7 +82,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.random_placement_and_clear_ships(content["board_id"], content["board"], content["ships"])
         
         elif content["type"] == "who_starts":
-            is_my_turn = await self.choose_first_shooter(content["lobby_slug"])
+            is_my_turn = await self.choose_first_shooter(self.lobby_name)
 
             if is_my_turn is not None:
                 data = {"type": "who_starts", "is_my_turn": is_my_turn, "user_id": self.user.id}
@@ -91,18 +91,18 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                 logging.warning("Turn is determined!")
 
         elif content["type"] == "determine_winner":
-            winner = await db_queries.get_user(content["enemy_id"]) if len(content) == 3 else self.user.username
-            await self.determine_winner_of_game(content["lobby_slug"], winner)
-            self.remove_lobby_from_redis(content["lobby_slug"])
+            winner = await db_queries.get_user(content["enemy_id"]) if len(content) == 2 else self.user.username
+            await self.determine_winner_of_game(self.lobby_name, winner)
+            self.remove_lobby_from_redis(self.lobby_name)
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "determine_winner", "winner": winner})
 
         elif content["type"] == "countdown":
-            data = await self._countdown(content["lobby_slug"], content["time_to_turn"])
+            data = await self._countdown(self.lobby_name, content["time_to_turn"])
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "time_is_over":
             await self.random_placement_and_clear_ships(content["board_id"], content["board"], content["ships"])
-            is_ready = await self.ready_to_play(content["board_id"], True)
+            is_ready = await self.ready_to_play(content["board_id"], True, True)
             data = {"type": "is_ready_to_play", "is_ready": is_ready, "user_id": self.user.id}
             await self.channel_layer.group_send(self.lobby_group_name, data)
 

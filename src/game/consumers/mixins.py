@@ -106,10 +106,12 @@ class BaseChooseWhoWillShotMixin:
 class IsReadyToPlayMixin:
     """Update a model instance"""
 
-    async def ready_to_play(self, board_id: int, is_ready: bool) -> None:
+    async def ready_to_play(self, board_id: int, is_ready: bool, is_enemy_ready: bool) -> None:
         """Change ready to play field"""
 
-        redis_instance.hdel(self.lobby_name, "is_running")  # При обоюдной готовности
+        if is_ready and is_enemy_ready:
+            redis_instance.hdel(self.lobby_name, "is_running")
+
         await db_queries.update_board_is_ready(board_id, is_ready)
         return is_ready
 
