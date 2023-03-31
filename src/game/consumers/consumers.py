@@ -4,7 +4,7 @@ from datetime import datetime
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 from . import mixins, db_queries
-from ..services import column_name_list
+from .. import services, permissions
 
 
 class LobbyListConsumer(AsyncJsonWebsocketConsumer):
@@ -25,13 +25,14 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                     mixins.RandomPlacementClearShipsMixin,
                     mixins.ChooseWhoWillShotFirstMixin,
                     mixins.DetermineWinnerMixin,
-                    mixins.CountDownTimer):
+                    mixins.CountDownTimer,
+                    mixins.AddUserToGame):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = None
         self.lobby_group_name = None
-        self.column_name_list = column_name_list
+        self.column_name_list = services.column_name_list
         self.string_number_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         self.ship_count_tuple = (4, 3, 2, 1)
 
@@ -45,7 +46,9 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         await self.accept()
     
     async def disconnect(self, close_code):
-        if close_code < 1002:
+        if close_code is None:
+            logging.info(msg="Websocket disconect.")
+        elif close_code < 1002:
             logging.info(msg=f"Websocket disconect. Code - {close_code}")
         else: 
             logging.warning(msg=f"Emergency shutdown. Code - {close_code}")
@@ -105,6 +108,10 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             is_ready = await self.ready_to_play(content["board_id"], True, True)
             data = {"type": "is_ready_to_play", "is_ready": is_ready, "user_id": self.user.id}
             await self.channel_layer.group_send(self.lobby_group_name, data)
+        
+        elif content["type"] == "add_user_to_game":
+            user = await self._add_user_to_game(content["board_id"])
+            await self.channel_layer.group_send(self.lobby_group_name, {"type": "add_user_to_game", "user": user})
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""
@@ -123,6 +130,11 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
     
     async def determine_winner(self, event):
         """Called when a player destroed all enemy ships"""
+
+        await self.send_json(event)
+    
+    async def add_user_to_game(self, event):
+        """Called when a add a user to lobby"""
 
         await self.send_json(event)
     

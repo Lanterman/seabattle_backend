@@ -103,5 +103,15 @@ def get_user(id: int) -> str:
 
 
 @database_sync_to_async
-def update_countdown_timer(slug: uuid, time_to_move: int) -> None:
-    """Write time_to_move of lobby"""
+def add_user_to_lobby(lobby: models.Lobby, user: models.User) -> None:
+    """Add a second user to a lobby"""
+
+    lobby.users.add(user)
+
+
+
+@database_sync_to_async
+def update_user_id_of_board(board_id: int, user_id: int) -> None:
+    """Update a user_id field of a lobby model instance"""
+
+    models.Board.objects.filter(id=board_id).update(user_id=user_id)

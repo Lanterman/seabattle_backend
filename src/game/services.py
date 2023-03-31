@@ -13,3 +13,11 @@ def clear_enemy_board(user, boards) -> tuple:
                     enemy_board[key][column_name] = ""
 
     return index, enemy_board
+
+
+def is_lobby_free(user, obj):
+    """Check if the lobby is free"""
+
+    if len(obj.users.all()) < 2 or user in obj.users.all():
+        return True
+    return False

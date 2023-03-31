@@ -6,7 +6,8 @@ from channels.db import database_sync_to_async
 
 from . import services, db_queries
 from .addspace import add_space
-from .. import serializers, tasks, models as game_models
+from .. import serializers, tasks, models as game_models, services as game_services
+from ...user import serializers as user_serializers
 from config.utilities import redis_instance
 
 
@@ -124,6 +125,21 @@ class DetermineWinnerMixin:
 
     async def preform_set_winner_in_lobby(self, lobby_slug: uuid, username: str) -> str:
         await db_queries.set_winner_in_lobby(lobby_slug, username)
+
+
+class AddUserToGame:
+    """Add user to game"""
+
+    async def _add_user_to_game(self, board_id: int) -> game_models.User:
+        lobby = await db_queries.get_lobby_by_slug(self.lobby_name)
+
+        if game_services.is_lobby_free(self.users, lobby):
+            await db_queries.add_user_to_lobby(lobby, self.user)
+            await db_queries.update_user_id_of_board(board_id, self.user.id)
+            serializer = user_serializers.BaseUserSerializer(self.user)
+            return serializer.data
+        else:
+            logging.warning(msg=f"User {self.user.username} not added because lobby is full!")
 
 
 class CountDownTimer:

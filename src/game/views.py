@@ -1,14 +1,12 @@
 import uuid
 
-from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 
-from . import models as game_models, serializers, services
-from ..user import models as user_models
+from . import models as game_models, serializers, services, permissions
 from config.utilities import redis_instance
 
 
@@ -37,7 +35,7 @@ class DetailLobbyView(RetrieveUpdateDestroyAPIView):
     """Detailed description of the lobby, update and destroy lobby"""
 
     queryset = game_models.Lobby.objects.all().prefetch_related("users", "boards", "boards__ships")
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, permissions.IsLobbyFree]
     serializer_class = serializers.RetrieveLobbySerializer
     lookup_field = "slug"
 
@@ -65,8 +63,3 @@ class DetailLobbyView(RetrieveUpdateDestroyAPIView):
             redis_instance.hmset(slug, {"time_left": time_to_serializer, "current_turn": 0})
             return time_to_serializer
         return int(time_from_redis)
-
-def index(request):
-    lobby = game_models.Lobby.objects.first()
-    user = user_models.User.objects.get(username="lanterman")
-    return render(request, "index.html", {"lobby": lobby, "user1": user})
