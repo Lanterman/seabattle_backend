@@ -130,10 +130,21 @@ class DetermineWinnerMixin:
 class AddUserToGame:
     """Add user to game"""
 
+    @staticmethod
+    @database_sync_to_async
+    def is_lobby_free(user, lobby) -> bool:
+        """Check if a lobby is free"""
+
+        user_list = lobby.users.all()
+
+        if len(user_list) < 2 or user in user_list:
+            return True
+        return False
+
     async def _add_user_to_game(self, board_id: int) -> game_models.User:
         lobby = await db_queries.get_lobby_by_slug(self.lobby_name)
 
-        if game_services.is_lobby_free(self.users, lobby):
+        if await self.is_lobby_free(self.user, lobby):
             await db_queries.add_user_to_lobby(lobby, self.user)
             await db_queries.update_user_id_of_board(board_id, self.user.id)
             serializer = user_serializers.BaseUserSerializer(self.user)

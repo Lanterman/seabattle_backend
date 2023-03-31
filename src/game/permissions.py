@@ -9,4 +9,6 @@ class IsLobbyFree(BasePermission):
     message = "The lobby is crowded"
 
     def has_object_permission(self, request, view, obj):
-        return services.is_lobby_free(request.user, obj)
+        if len(obj.users.all()) < 2 or request.user in obj.users.all():
+            return True
+        return False
