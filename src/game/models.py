@@ -14,7 +14,9 @@ class Lobby(models.Model):
     """Lobby model"""
 
     name: str = models.CharField("lobby name", max_length=100, help_text="Required")
-    slug: uuid = models.UUIDField(max_length=250, verbose_name="URL", default=uuid.uuid4, help_text="Required")
+    slug: uuid = models.UUIDField(
+        max_length=250, verbose_name="URL", default=uuid.uuid4, help_text="Required", db_index=True
+        )
     created_in: datetime.datetime = models.DateTimeField(auto_now_add=True)
     finished_in: datetime.datetime = models.DateTimeField(blank=True, null=True)
     bet: int = models.IntegerField("game bet", choices=utilities.Bet.choices, help_text="Required")
@@ -84,3 +86,34 @@ class Ship(models.Model):
 
     def __str__(self):
         return f"{self.id} - name: {self.name}"
+
+
+class Chat(models.Model):
+    """Chat model"""
+
+    lobby_slug: uuid = models.UUIDField("lobby slug", max_length=250)
+
+    class Meta:
+        verbose_name = "Chat"
+        verbose_name_plural = "Chats"
+        ordering=["id"]
+    
+    def _str_(self):
+        return f"Chat {self.id}"
+
+
+class Message(models.Model):
+    """Message model"""
+
+    message: str = models.TextField("message", max_length=300)
+    owner: str = models.CharField("owner", max_length=150)
+    created_in: datetime.datetime = models.DateTimeField(auto_now_add=True)
+    chat_id: Chat = models.ForeignKey(to=Chat, on_delete=models.CASCADE, related_name="messages", verbose_name="chat")
+
+    class Meta:
+        verbose_name = "Message"
+        verbose_name_plural = "Messages"
+        ordering = ["id"]
+    
+    def _str_(self):
+        return f"Chat message {self.id}"

@@ -3,6 +3,10 @@ from django.contrib import admin
 from . import models
 
 
+class BoardInlince(admin.TabularInline):
+    model = models.Board
+
+
 @admin.register(models.Lobby)
 class LobbyAdmin(admin.ModelAdmin):
     """Lobby admin"""
@@ -44,3 +48,27 @@ class ShipAdmin(admin.ModelAdmin):
     list_per_page = 150
     list_select_related = True
     raw_id_fields = ("board_id", )
+
+
+@admin.register(models.Chat)
+class ChatAdmin(admin.ModelAdmin):
+    """Ship admin"""
+
+    list_display = ("id", "lobby_slug")
+    list_display_links = ("id", "lobby_slug")
+    fields = ("lobby_slug", )
+    list_max_show_all = 250
+    list_per_page = 150
+
+
+@admin.register(models.Message)
+class MessageAdmin(admin.ModelAdmin):
+    """Ship admin"""
+
+    list_display = ("id", "owner", "created_in", "chat_id")
+    list_display_links = ("id", "owner")
+    fields = ("message", "onwer", "chat_id")
+    list_max_show_all = 250
+    list_per_page = 150
+    list_select_related = True
+    raw_id_fields = ("chat_id", )
