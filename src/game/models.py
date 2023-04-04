@@ -88,32 +88,18 @@ class Ship(models.Model):
         return f"{self.id} - name: {self.name}"
 
 
-class Chat(models.Model):
-    """Chat model"""
-
-    lobby_slug: uuid = models.UUIDField("lobby slug", max_length=250)
-
-    class Meta:
-        verbose_name = "Chat"
-        verbose_name_plural = "Chats"
-        ordering=["id"]
-    
-    def _str_(self):
-        return f"Chat {self.id}"
-
-
 class Message(models.Model):
     """Message model"""
 
     message: str = models.TextField("message", max_length=300)
     owner: str = models.CharField("owner", max_length=150)
     created_in: datetime.datetime = models.DateTimeField(auto_now_add=True)
-    chat_id: Chat = models.ForeignKey(to=Chat, on_delete=models.CASCADE, related_name="messages", verbose_name="chat")
+    lobby_id: Lobby = models.ForeignKey(to=Lobby, on_delete=models.CASCADE, related_name="messages", verbose_name="lobby")
 
     class Meta:
         verbose_name = "Message"
         verbose_name_plural = "Messages"
-        ordering = ["id"]
+        ordering = ["-id"]
     
     def _str_(self):
         return f"Chat message {self.id}"

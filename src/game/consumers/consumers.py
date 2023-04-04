@@ -26,7 +26,8 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                     mixins.ChooseWhoWillShotFirstMixin,
                     mixins.DetermineWinnerMixin,
                     mixins.CountDownTimer,
-                    mixins.AddUserToGame):
+                    mixins.AddUserToGame,
+                    mixins.SendMessage):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -114,7 +115,8 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "add_user_to_game", "user": user})
         
         elif content["type"] == "send_message":
-            logging.info(content)
+            data = await self._send_message(content["lobby_id"], content["message"])
+            await self.channel_layer.group_send(self.lobby_group_name, data)
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""
@@ -143,5 +145,10 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
     
     async def countdown(self, event):
         """Called when a player destroed all enemy ships"""
+
+        await self.send_json(event)
+    
+    async def send_message(self, event):
+        """Called when a player sends a message to the chat"""
 
         await self.send_json(event)

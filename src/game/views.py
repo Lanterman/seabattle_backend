@@ -34,7 +34,7 @@ class LobbyListView(ListCreateAPIView):
 class DetailLobbyView(RetrieveUpdateDestroyAPIView):
     """Detailed description of the lobby, update and destroy lobby"""
 
-    queryset = game_models.Lobby.objects.all().prefetch_related("users", "boards", "boards__ships")
+    queryset = game_models.Lobby.objects.all().prefetch_related("users", "boards", "boards__ships", "messages")
     permission_classes = [IsAuthenticated, permissions.IsLobbyFree]
     serializer_class = serializers.RetrieveLobbySerializer
     lookup_field = "slug"

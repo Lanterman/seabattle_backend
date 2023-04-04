@@ -30,6 +30,14 @@ class BoardSerializer(serializers.ModelSerializer):
         return ret
 
 
+class MessageSerializer(serializers.ModelSerializer):
+    """Basic message serializer"""
+
+    class Meta:
+        model = models.Message
+        fields = ["message", "owner", "created_in"]
+
+
 class ListLobbySerializer(serializers.HyperlinkedModelSerializer):
     """List lobby serializer"""
 
@@ -58,7 +66,8 @@ class RetrieveLobbySerializer(serializers.ModelSerializer):
 
     users = user_serializers.BaseUserSerializer(many=True, read_only=True)
     boards = BoardSerializer(many=True, read_only=True)
+    messages = MessageSerializer(many=True)
 
     class Meta:
         model = models.Lobby
-        fields = ["id", "name", "bet", "winner", "password", "time_to_move", "time_to_placement", "users", "boards"]
+        fields = ["id", "name", "bet", "winner", "password", "time_to_move", "time_to_placement", "users", "boards", "messages"]

@@ -2,11 +2,12 @@ import uuid
 import random
 import logging
 
+from datetime import datetime
 from channels.db import database_sync_to_async
 
 from . import services, db_queries
 from .addspace import add_space
-from .. import serializers, tasks, models as game_models, services as game_services
+from .. import serializers, tasks, models as game_models
 from ...user import serializers as user_serializers
 from config.utilities import redis_instance
 
@@ -151,6 +152,20 @@ class AddUserToGame:
             return serializer.data
         else:
             logging.warning(msg=f"User {self.user.username} not added because lobby is full!")
+
+
+class SendMessage:
+    """Send message to lobby chat"""
+
+    async def _send_message(self, lobby_id: int, message: str) -> None:
+        db_message = await self.preform_create_message(lobby_id, self.user.username, message)
+        serializer = serializers.MessageSerializer(db_message).data
+        data = {"type": "send_message", "message": serializer}
+        return data
+    
+    async def preform_create_message(self, lobby_id, username, message):
+        query = await db_queries.create_message(lobby_id, username, message)
+        return query
 
 
 class CountDownTimer:
