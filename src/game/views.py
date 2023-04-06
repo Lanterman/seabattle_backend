@@ -44,7 +44,10 @@ class DetailLobbyView(RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(instance).data
         index, enemy_board = services.clear_enemy_board(request.user, serializer["boards"])
         serializer["boards"][index] = enemy_board
-        serializer["time_left"] = self.add_countdown(self.kwargs["slug"], serializer)
+
+        if not serializer["winner"]:
+            serializer["time_left"] = self.add_countdown(self.kwargs["slug"], serializer)
+
         return Response(serializer)
 
     def add_countdown(self, slug: uuid, data: dict) -> int:

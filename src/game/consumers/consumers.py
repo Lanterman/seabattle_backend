@@ -1,10 +1,8 @@
 import logging
-from asyncio import sleep
-from datetime import datetime
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 from . import mixins, db_queries
-from .. import services, permissions
+from .. import services
 
 
 class LobbyListConsumer(AsyncJsonWebsocketConsumer):

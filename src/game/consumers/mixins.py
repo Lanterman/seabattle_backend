@@ -176,9 +176,8 @@ class CountDownTimer:
     """
 
     @staticmethod
-    def remove_lobby_from_redis(lobby_slug):
+    def remove_lobby_from_redis(lobby_slug: uuid):
         redis_instance.delete(lobby_slug)
-        redis_instance.hmset(lobby_slug, {"current_turn": -1})
 
     async def _countdown(self, lobby_slug: uuid, time_left: int) -> int:
         """Timer"""
@@ -192,9 +191,8 @@ class CountDownTimer:
             redis_instance.hmset(lobby_slug, {"current_turn": int(current_turn) + 1})
             current_turn = str(int(current_turn) + 1)
 
-        # redis_instance.delete(lobby_slug)
         if not is_task_in_progress:
-            tasks.countdown.delay(lobby_slug, current_turn, time_left)
+            tasks.countdown.delay(lobby_slug, time_left)
             redis_instance.hmset(lobby_slug, {"is_running": 1})
 
         return {"type": "countdown", "time_left": time_left}
