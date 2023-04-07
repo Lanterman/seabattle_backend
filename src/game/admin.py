@@ -26,9 +26,10 @@ class LobbyAdmin(admin.ModelAdmin):
 class BoardAdmin(admin.ModelAdmin):
     """Board admin"""
 
-    list_display = ("id", "lobby_id", "user_id", "is_ready", "my_turn")
+    list_display = ("id", "lobby_id", "user_id", "is_ready", "is_my_turn")
     list_display_links = ("id", )
-    fields = ("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "is_ready", "my_turn", "lobby_id", "user_id")
+    fields = ("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "is_ready", "is_my_turn", "is_play_again", 
+              "lobby_id", "user_id")
     search_fields = ("lobby_id", )
     list_max_show_all = 250
     list_per_page = 150

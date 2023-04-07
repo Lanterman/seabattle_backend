@@ -76,7 +76,7 @@ def update_boards(bool_value: bool, my_board, enemy_board) -> list:
 
     my_board.my_turn = bool_value
     enemy_board.my_turn = not bool_value
-    models.Board.objects.bulk_update([my_board, enemy_board], ["my_turn"])
+    models.Board.objects.bulk_update([my_board, enemy_board], ["is_my_turn"])
 
 
 @database_sync_to_async
@@ -123,3 +123,10 @@ def create_message(lobby_id, username, message) -> None:
 
     query = models.Message.objects.create(message=message, owner=username, lobby_id_id=lobby_id)
     return query
+
+
+@database_sync_to_async
+def update_play_again_field(board_id: int, answer: bool) -> None:
+    """Update play again field of Board model instance"""
+
+    models.Board.objects.filter(id=board_id).update(is_play_again=answer)

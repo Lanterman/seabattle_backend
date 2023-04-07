@@ -20,7 +20,8 @@ class BoardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Board
-        fields = ["id", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "is_ready", "my_turn", "lobby_id", "user_id", "ships"]
+        fields = ["id", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "is_ready", "is_my_turn", "is_play_again", 
+                  "lobby_id", "user_id", "ships"]
         extra_kwargs = {"user_id": {"read_only": True}, "lobby_id": {"read_only": True}}
 
     def to_representation(self, instance):

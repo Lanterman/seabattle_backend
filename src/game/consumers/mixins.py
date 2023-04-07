@@ -168,6 +168,13 @@ class SendMessage:
         return query
 
 
+class PlayAgain:
+    """Called, when player want to play again"""
+    
+    async def preform_update_play_again_field(self, board_id: int, answer: bool) -> None:
+        await db_queries.update_play_again_field(board_id, answer)
+
+
 class CountDownTimer:
     """
     Timer class. 
@@ -176,7 +183,7 @@ class CountDownTimer:
     """
 
     @staticmethod
-    def remove_lobby_from_redis(lobby_slug: uuid):
+    def remove_lobby_from_redis(lobby_slug: uuid) -> None:
         redis_instance.delete(lobby_slug)
 
     async def _countdown(self, lobby_slug: uuid, time_left: int) -> int:
@@ -358,7 +365,7 @@ class ChooseWhoWillShotFirstMixin(BaseChooseWhoWillShotMixin):
     def is_turn_determined(my_board: game_models.Board, enemy_board: game_models.Board) -> bool:
         """Check if a turn is determined"""
 
-        if my_board.my_turn or enemy_board.my_turn:
+        if my_board.is_my_turn or enemy_board.is_my_turn:
             return True
         return False
 
