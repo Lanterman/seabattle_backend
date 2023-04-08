@@ -74,8 +74,8 @@ def get_lobby_boards(lobby_slug: uuid) -> list:
 def update_boards(bool_value: bool, my_board, enemy_board) -> list:
     """Update your_turn field of Boards model instances"""
 
-    my_board.my_turn = bool_value
-    enemy_board.my_turn = not bool_value
+    my_board.is_my_turn = bool_value
+    enemy_board.is_my_turn = not bool_value
     models.Board.objects.bulk_update([my_board, enemy_board], ["is_my_turn"])
 
 
