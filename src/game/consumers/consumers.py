@@ -1,7 +1,7 @@
 import logging
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-from . import mixins, db_queries
+from . import mixins, db_queries, bot_mixins
 from .. import services
 
 
@@ -26,7 +26,8 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                     mixins.CountDownTimer,
                     mixins.AddUserToGame,
                     mixins.SendMessage,
-                    mixins.PlayAgain):
+                    mixins.PlayAgain,
+                    bot_mixins.GenericBotMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -112,15 +113,25 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         elif content["type"] == "add_user_to_game":
             user = await self._add_user_to_game(content["board_id"])
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "add_user_to_game", "user": user})
+
+            if user:
+                message = self.get_bot_message_with_connected_player()
+                dict_message = await self._send_message(content["lobby_id"], message, True)
+                await self.channel_layer.group_send(self.lobby_group_name, dict_message)
         
         elif content["type"] == "send_message":
             data = await self._send_message(content["lobby_id"], content["message"])
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "is_play_again":
-            data = {"type": "is_play_again", "is_play_again": content["answer"], "user_id": self.user.id}
+            message = self.get_bot_message_with_offer(content["answer"])
+            dict_answer = {"type": "is_play_again", "is_play_again": content["answer"], "user_id": self.user.id}
+
             await self.preform_update_play_again_field(content["board_id"], content["answer"])
-            await self.channel_layer.group_send(self.lobby_group_name, data)
+            dict_message = await self._send_message(content["lobby_id"], message, True)
+
+            await self.channel_layer.group_send(self.lobby_group_name, dict_answer)
+            await self.channel_layer.group_send(self.lobby_group_name, dict_message)
            
 
     async def send_shot(self, event):

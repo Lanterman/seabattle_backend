@@ -142,7 +142,7 @@ class AddUserToGame:
             return True
         return False
 
-    async def _add_user_to_game(self, board_id: int) -> game_models.User:
+    async def _add_user_to_game(self, board_id: int) -> game_models.User or None:
         lobby = await db_queries.get_lobby_by_slug(self.lobby_name)
 
         if await self.is_lobby_free(self.user, lobby):
@@ -157,14 +157,14 @@ class AddUserToGame:
 class SendMessage:
     """Send message to lobby chat"""
 
-    async def _send_message(self, lobby_id: int, message: str) -> None:
-        db_message = await self.preform_create_message(lobby_id, self.user.username, message)
-        serializer = serializers.MessageSerializer(db_message).data
+    async def _send_message(self, lobby_id: int, message: str, is_bot: bool = False) -> dict:
+        message_instance = await self.preform_create_message(lobby_id, self.user.username, message, is_bot)
+        serializer = serializers.MessageSerializer(message_instance).data
         data = {"type": "send_message", "message": serializer}
         return data
     
-    async def preform_create_message(self, lobby_id, username, message):
-        query = await db_queries.create_message(lobby_id, username, message)
+    async def preform_create_message(self, lobby_id, username, message, is_bot: bool) -> game_models.Message:
+        query = await db_queries.create_message(lobby_id, username, message, is_bot)
         return query
 
 

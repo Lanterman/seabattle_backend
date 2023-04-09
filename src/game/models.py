@@ -94,6 +94,7 @@ class Message(models.Model):
 
     message: str = models.TextField("message", max_length=300)
     owner: str = models.CharField("owner", max_length=150)
+    is_bot: bool = models.BooleanField("is bot", default=False)
     created_in: datetime.datetime = models.DateTimeField(auto_now_add=True)
     lobby_id: Lobby = models.ForeignKey(to=Lobby, on_delete=models.CASCADE, related_name="messages", verbose_name="lobby")
 

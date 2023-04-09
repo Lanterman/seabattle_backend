@@ -36,7 +36,7 @@ class MessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Message
-        fields = ["message", "owner", "created_in"]
+        fields = ["message", "owner", "is_bot", "created_in"]
 
 
 class ListLobbySerializer(serializers.HyperlinkedModelSerializer):

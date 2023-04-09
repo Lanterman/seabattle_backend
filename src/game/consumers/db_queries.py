@@ -118,10 +118,10 @@ def update_user_id_of_board(board_id: int, user_id: int) -> None:
 
 
 @database_sync_to_async
-def create_message(lobby_id, username, message) -> None:
+def create_message(lobby_id: int, username: str, message: str, is_bot: bool) -> None:
     """Create message model instance and return it"""
 
-    query = models.Message.objects.create(message=message, owner=username, lobby_id_id=lobby_id)
+    query = models.Message.objects.create(message=message, owner=username, is_bot=is_bot, lobby_id_id=lobby_id)
     return query
 
 

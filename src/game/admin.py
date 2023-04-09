@@ -108,9 +108,9 @@ class ShipAdmin(admin.ModelAdmin):
 class MessageAdmin(admin.ModelAdmin):
     """Ship admin"""
 
-    list_display = ("id", "owner", "created_in", "lobby_id")
+    list_display = ("id", "owner", "is_bot", "created_in", "lobby_id")
     list_display_links = ("id", "owner")
-    fields = ("message", "owner", "lobby_id")
+    fields = ("message", "owner", "is_bot", "lobby_id")
     list_max_show_all = 250
     list_per_page = 150
     list_select_related = True
