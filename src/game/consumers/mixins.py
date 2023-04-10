@@ -2,7 +2,6 @@ import uuid
 import random
 import logging
 
-from datetime import datetime
 from channels.db import database_sync_to_async
 
 from . import services, db_queries
@@ -199,7 +198,7 @@ class CountDownTimer:
             current_turn = str(int(current_turn) + 1)
 
         if not is_task_in_progress:
-            tasks.countdown.delay(lobby_slug, time_left)
+            tasks.countdown.delay(lobby_slug, time_left, current_turn)
             redis_instance.hmset(lobby_slug, {"is_running": 1})
 
         return {"type": "countdown", "time_left": time_left}

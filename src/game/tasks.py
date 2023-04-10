@@ -9,7 +9,7 @@ from config.utilities import redis_instance
 
 
 @shared_task
-def countdown(lobby_slug: uuid, time_left: int):
+def countdown(lobby_slug: uuid, time_left: int, old_turn: str):
     """The task that acts like a countdown"""
 
     for number in range(time_left, -1, -1):
@@ -18,6 +18,6 @@ def countdown(lobby_slug: uuid, time_left: int):
         async_to_sync(asyncio.sleep)(1)
         redis_instance.hmset(lobby_slug, {"time_left": number})
 
-        if current_turn is None or time_left <= 0:
+        if current_turn != old_turn or time_left <= 0:
             logging.info(msg="Task closed.")
             break

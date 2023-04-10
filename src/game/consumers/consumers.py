@@ -41,7 +41,8 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         self.user = self.scope["user"]
         self.lobby_name = self.scope["url_route"]["kwargs"]["lobby_slug"]
         self.lobby_group_name = f"lobby_{self.lobby_name}"
-
+        # from config.utilities import redis_instance
+        # redis_instance.flushall()
         await self.channel_layer.group_add(self.lobby_group_name, self.channel_name)
 
         await self.accept()
