@@ -113,12 +113,14 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         
         elif content["type"] == "add_user_to_game":
             user = await self._add_user_to_game(content["board_id"])
-            await self.channel_layer.group_send(self.lobby_group_name, {"type": "add_user_to_game", "user": user})
+            data = {"type": "add_user_to_game", "user": user}
 
             if user:
                 message = self.get_bot_message_with_connected_player()
                 dict_message = await self._send_message(content["lobby_id"], message, True)
-                await self.channel_layer.group_send(self.lobby_group_name, dict_message)
+                data["message"] = dict_message["message"]
+            
+            await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "send_message":
             data = await self._send_message(content["lobby_id"], content["message"])
@@ -126,14 +128,12 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         
         elif content["type"] == "is_play_again":
             message = self.get_bot_message_with_offer(content["answer"])
-            dict_answer = {"type": "is_play_again", "is_play_again": content["answer"], "user_id": self.user.id}
+            dict_message = await self._send_message(content["lobby_id"], message, True)
+            dict_answer = {"type": "is_play_again", "is_play_again": content["answer"], "user_id": self.user.id, 
+                           "message": dict_message["message"]}
 
             await self.preform_update_play_again_field(content["board_id"], content["answer"])
-            dict_message = await self._send_message(content["lobby_id"], message, True)
-
-            await self.channel_layer.group_send(self.lobby_group_name, dict_answer)
-            await self.channel_layer.group_send(self.lobby_group_name, dict_message)
-           
+            await self.channel_layer.group_send(self.lobby_group_name, dict_answer)       
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""
