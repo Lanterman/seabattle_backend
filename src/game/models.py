@@ -14,7 +14,7 @@ class Lobby(models.Model):
     """Lobby model"""
 
     name: str = models.CharField("lobby name", max_length=100, help_text="Required")
-    slug: uuid = models.UUIDField(
+    slug: uuid.uuid4 = models.UUIDField(
         max_length=250, verbose_name="URL", default=uuid.uuid4, help_text="Required", db_index=True
         )
     created_in: datetime.datetime = models.DateTimeField(auto_now_add=True)
@@ -40,7 +40,7 @@ class Lobby(models.Model):
         return f"lobby {self.name}"
 
     def get_absolute_url(self):
-        return reverse('lobby_detail', kwargs={'lobby_detail': self.slug})
+        return reverse('lobby-detail', kwargs={'slug': self.slug})
 
 
 class Board(models.Model):

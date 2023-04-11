@@ -130,3 +130,48 @@ def update_play_again_field(board_id: int, answer: bool) -> None:
     """Update play again field of Board model instance"""
 
     models.Board.objects.filter(id=board_id).update(is_play_again=answer)
+
+
+@database_sync_to_async
+def get_user_by_id(enemy_id: int) -> user_models.User:
+    """Get user by id"""
+
+    query = user_models.User.objects.get(id=enemy_id)
+    return query
+
+
+@database_sync_to_async
+def create_lobby(name: str, bet: int, time_to_move: int, time_to_placement: int, users: tuple) -> tuple[int, uuid.uuid4]:
+    """Create lobby"""
+
+    query = models.Lobby.objects.create(name=name, bet=bet, time_to_move=time_to_move, 
+                                        time_to_placement=time_to_placement)
+    query.users.add(*users)
+    return query.id, query.slug
+
+
+@database_sync_to_async
+def create_lobby_boards(lobby_id: int, first_user_id: int, second_user_id: int) -> tuple[int]:
+    """Create lobby boards"""
+
+    first_board, second_board = models.Board.objects.bulk_create([
+        models.Board(lobby_id_id=lobby_id, user_id_id=first_user_id),
+        models.Board(lobby_id_id=lobby_id, user_id_id=second_user_id)
+    ])
+    return first_board.id, second_board.id
+
+
+@database_sync_to_async
+def create_ships_for_boards(first_board_id: int, second_board_id: int) -> None:
+    """Create shipf for boards"""
+
+    models.Ship.objects.bulk_create([
+        models.Ship(name="singledeck", size=1, count=4, board_id_id=first_board_id),
+        models.Ship(name="doubledeck", size=2, count=3, board_id_id=first_board_id),
+        models.Ship(name="tripledeck", size=3, count=2, board_id_id=first_board_id),
+        models.Ship(name="fourdeck", size=4, count=1, board_id_id=first_board_id),
+        models.Ship(name="singledeck", size=1, count=4, board_id_id=second_board_id),
+        models.Ship(name="doubledeck", size=2, count=3, board_id_id=second_board_id),
+        models.Ship(name="tripledeck", size=3, count=2, board_id_id=second_board_id),
+        models.Ship(name="fourdeck", size=4, count=1, board_id_id=second_board_id),
+    ])

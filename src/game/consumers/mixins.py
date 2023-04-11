@@ -89,7 +89,7 @@ class BaseChooseWhoWillShotMixin:
     """Basic class that chooses a player who will shot"""
 
     @staticmethod
-    async def get_lobby_boards(lobby_slug: uuid):
+    async def get_lobby_boards(lobby_slug: uuid.uuid4):
         return await db_queries.get_lobby_boards(lobby_slug)
 
     @database_sync_to_async
@@ -120,10 +120,10 @@ class IsReadyToPlayMixin:
 class DetermineWinnerMixin:
     """Determine a winner of a game"""
 
-    async def determine_winner_of_game(self, lobby_slug: uuid, username: str) -> str:
+    async def determine_winner_of_game(self, lobby_slug: uuid.uuid4, username: str) -> str:
         await self.preform_set_winner_in_lobby(lobby_slug, username)
 
-    async def preform_set_winner_in_lobby(self, lobby_slug: uuid, username: str) -> str:
+    async def preform_set_winner_in_lobby(self, lobby_slug: uuid.uuid4, username: str) -> str:
         await db_queries.set_winner_in_lobby(lobby_slug, username)
 
 
@@ -174,6 +174,21 @@ class PlayAgain:
         await db_queries.update_play_again_field(board_id, answer)
 
 
+class CreateNewGame:
+    """Create new game"""
+
+    async def                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       _create_new_game(
+            self, bet: int, name: str, time_to_move: int, time_to_placement: int, enemy_id: int
+            ) -> str:
+        """Create new game and return its url"""
+
+        enemy = await db_queries.get_user_by_id(enemy_id)
+        lobby_id, lobby_slug = await db_queries.create_lobby(name, bet, time_to_move, time_to_placement, (self.user, enemy))
+        first_board_id, second_board_id = await db_queries.create_lobby_boards(lobby_id, self.user.id, enemy.id)
+        await db_queries.create_ships_for_boards(first_board_id, second_board_id)
+        return str(lobby_slug)
+
+
 class CountDownTimer:
     """
     Timer class. 
@@ -182,10 +197,10 @@ class CountDownTimer:
     """
 
     @staticmethod
-    def remove_lobby_from_redis(lobby_slug: uuid) -> None:
+    def remove_lobby_from_redis(lobby_slug: uuid.uuid4) -> None:
         redis_instance.delete(lobby_slug)
 
-    async def _countdown(self, lobby_slug: uuid, time_left: int) -> int:
+    async def _countdown(self, lobby_slug: uuid.uuid4, time_left: int) -> int:
         """Timer"""
 
         current_turn = redis_instance.hget(lobby_slug, "current_turn")
@@ -240,12 +255,12 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
                 if f"space {field_value}" in str(value):
                     board[column_name][field_name] = "miss"
     
-    async def hand_over_to_the_enemy(self, lobby_slug: uuid) -> None:
+    async def hand_over_to_the_enemy(self, lobby_slug: uuid.uuid4) -> None:
         boards = await self.get_lobby_boards(lobby_slug)
         my_board, enemy_board = await self.determine_whoose_boards(boards)
         await self.perform_update_boards(True, my_board, enemy_board)
 
-    async def take_shot(self, lobby_slug: uuid, board_id: int, field_name: str) -> None:
+    async def take_shot(self, lobby_slug: uuid.uuid4, board_id: int, field_name: str) -> None:
         board = await db_queries.get_board(board_id, self.column_name_list)
         services.confert_to_json(board)
         shot_type = self._get_type_shot(board, field_name)
@@ -368,7 +383,7 @@ class ChooseWhoWillShotFirstMixin(BaseChooseWhoWillShotMixin):
             return True
         return False
 
-    async def choose_first_shooter(self, lobby_slug: uuid) -> int:
+    async def choose_first_shooter(self, lobby_slug: uuid.uuid4) -> int:
         """Choose who will take first shot"""
 
         boards = await self.get_lobby_boards(lobby_slug)
