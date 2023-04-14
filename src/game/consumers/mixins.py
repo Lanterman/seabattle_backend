@@ -262,13 +262,18 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
         return True
     
     @staticmethod
-    def _add_misses_around_sunken_ship(field_value: float, board: dict) -> None:
+    def _add_misses_around_sunken_ship(field_value: float, board: dict) -> dict:
         """Add misses around the sunken ship"""
+
+        field_name_dict = {}
 
         for column_name, column_value in board.items():
             for field_name, value in column_value.items():
                 if f"space {field_value}" in str(value):
                     board[column_name][field_name] = "miss"
+                    field_name_dict[field_name] = "miss"
+        
+        return field_name_dict
     
     async def hand_over_to_the_enemy(self, lobby_slug: uuid.uuid4) -> None:
         boards = await self.get_lobby_boards(lobby_slug)
@@ -281,13 +286,13 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
         shot_type = self._get_type_shot(board, field_name)
         field_value = self._shot(board, field_name, shot_type)
         is_my_turn = True if shot_type == "hit" else False
-        number_of_enemy_ships = None
+        number_of_enemy_ships, field_name_dict = None, {field_name: shot_type}
 
         if shot_type == "hit":
             await self.hand_over_to_the_enemy(lobby_slug)
 
             if self._is_ship_has_sunk(field_value, board):
-                self._add_misses_around_sunken_ship(field_value, board)
+                field_name_dict.update(self._add_misses_around_sunken_ship(field_value, board))
                 number_of_enemy_ships = services.determine_number_of_enemy_ships(board)
 
         else: 
@@ -296,7 +301,7 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
         redis_instance.hdel(lobby_slug, "is_running")
 
         await self.perform_write_shot(board_id, not is_my_turn, board)
-        return board, is_my_turn, number_of_enemy_ships
+        return is_my_turn, field_name_dict, number_of_enemy_ships
     
     async def perform_write_shot(self, board_id: int, is_my_turn: bool, column_dictionary: dict) -> None:
         await db_queries.write_shot(board_id, is_my_turn, column_dictionary)

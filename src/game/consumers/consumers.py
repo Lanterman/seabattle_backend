@@ -70,12 +70,12 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             )
         
         elif content["type"] == "take_shot":
-            board, is_my_turn, enemy_ships = await self.take_shot(
+            is_my_turn, field_name_dict, enemy_ships = await self.take_shot(
                 self.lobby_name, content["board_id"], content["my_board_id"], content["field_name"]
             )
             data_1 = await self._countdown(self.lobby_name, content["time_to_turn"])
-            data_2 = {"type": "send_shot", "board": board, "user_id": self.user.id, "is_my_turn": is_my_turn, 
-                    "enemy_ships": enemy_ships}
+            data_2 = {"type": "send_shot", "field_name_dict": field_name_dict, "user_id": self.user.id, 
+                      "is_my_turn": is_my_turn, "enemy_ships": enemy_ships}
             await self.channel_layer.group_send(self.lobby_group_name, data_2)
             await self.channel_layer.group_send(self.lobby_group_name, data_1)
         
