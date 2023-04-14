@@ -1,3 +1,4 @@
+import re
 import uuid
 import random
 import logging
@@ -177,13 +178,27 @@ class PlayAgain:
 class CreateNewGame:
     """Create new game"""
 
-    async def                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       _create_new_game(
+    @staticmethod
+    def create_new_name(name: str) -> str:
+        """Create new name of lobby"""
+
+        split_name = name.split(" ")
+        repeat_number = re.match("\([\d]+\)", split_name[-1])
+
+        if repeat_number is None:
+            return f"{name} (1)"
+        else:
+             return f"{''.join(split_name[:-1])} ({int(split_name[-1][1:-1]) + 1})"
+
+    async def _create_new_game(
             self, bet: int, name: str, time_to_move: int, time_to_placement: int, enemy_id: int
             ) -> str:
         """Create new game and return its url"""
 
         enemy = await db_queries.get_user_by_id(enemy_id)
-        lobby_id, lobby_slug = await db_queries.create_lobby(name, bet, time_to_move, time_to_placement, (self.user, enemy))
+        new_name = self.create_new_name(name)
+        lobby_id, lobby_slug = await db_queries.create_lobby(new_name, bet, time_to_move, time_to_placement, 
+                                                             (self.user, enemy))
         first_board_id, second_board_id = await db_queries.create_lobby_boards(lobby_id, self.user.id, enemy.id)
         await db_queries.create_ships_for_boards(first_board_id, second_board_id)
         return str(lobby_slug)
@@ -260,7 +275,7 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
         my_board, enemy_board = await self.determine_whoose_boards(boards)
         await self.perform_update_boards(True, my_board, enemy_board)
 
-    async def take_shot(self, lobby_slug: uuid.uuid4, board_id: int, field_name: str) -> None:
+    async def take_shot(self, lobby_slug: uuid.uuid4, board_id: int, my_board_id: int, field_name: str) -> None:
         board = await db_queries.get_board(board_id, self.column_name_list)
         services.confert_to_json(board)
         shot_type = self._get_type_shot(board, field_name)
@@ -275,13 +290,16 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
                 self._add_misses_around_sunken_ship(field_value, board)
                 number_of_enemy_ships = services.determine_number_of_enemy_ships(board)
 
+        else: 
+            await db_queries.update_is_my_turn_field(my_board_id, False)
+
         redis_instance.hdel(lobby_slug, "is_running")
 
-        await self.perform_update_board(board_id, board)
+        await self.perform_write_shot(board_id, not is_my_turn, board)
         return board, is_my_turn, number_of_enemy_ships
     
-    async def perform_update_board(self, board_id: int, column_dictionary: dict) -> None:
-        await db_queries.update_board(board_id, column_dictionary)
+    async def perform_write_shot(self, board_id: int, is_my_turn: bool, column_dictionary: dict) -> None:
+        await db_queries.write_shot(board_id, is_my_turn, column_dictionary)
 
 
 class RandomPlacementMixin(AddSpaceAroundShipMixin):

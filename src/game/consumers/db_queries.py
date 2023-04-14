@@ -23,6 +23,20 @@ def update_board(board_id: int, board: dict) -> None:
 
 
 @database_sync_to_async
+def write_shot(board_id: int, is_my_turn:bool, board: dict) -> None:
+    """Get board for update"""
+
+    models.Board.objects.filter(id=board_id).update(is_my_turn=is_my_turn, **board)
+
+
+@database_sync_to_async
+def update_is_my_turn_field(board_id: int, is_my_turn: bool) -> None:
+    """Update is_my_turn field of Board model instance"""
+
+    models.Board.objects.filter(id=board_id).update(is_my_turn=is_my_turn)
+
+
+@database_sync_to_async
 def update_board_is_ready(board_id: int, is_ready: bool) -> None:
     """Update a board is ready field"""
 
