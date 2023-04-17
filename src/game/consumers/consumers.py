@@ -1,4 +1,5 @@
 import logging
+
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 from . import mixins, db_queries, bot_mixins
@@ -44,6 +45,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         self.lobby_group_name = f"lobby_{self.lobby_name}"
         # from config.utilities import redis_instance
         # redis_instance.flushall()
+        # logging.warning(redis_instance.keys())
         await self.channel_layer.group_add(self.lobby_group_name, self.channel_name)
 
         await self.accept()
@@ -73,11 +75,10 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             is_my_turn, field_name_dict, enemy_ships = await self.take_shot(
                 self.lobby_name, content["board_id"], content["my_board_id"], content["field_name"]
             )
-            data_1 = await self._countdown(self.lobby_name, content["time_to_turn"])
-            data_2 = {"type": "send_shot", "field_name_dict": field_name_dict, "user_id": self.user.id, 
-                      "is_my_turn": is_my_turn, "enemy_ships": enemy_ships}
-            await self.channel_layer.group_send(self.lobby_group_name, data_2)
-            await self.channel_layer.group_send(self.lobby_group_name, data_1)
+            countdown = await self._countdown(self.lobby_name, content["time_to_turn"])
+            data = {"type": "send_shot", "field_name_dict": field_name_dict, "user_id": self.user.id, 
+                      "is_my_turn": is_my_turn, "enemy_ships": enemy_ships, "time_left": countdown["time_left"]}
+            await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "is_ready_to_play":
             is_ready = await self.ready_to_play(content["board_id"], content["is_ready"], content["is_enemy_ready"])
