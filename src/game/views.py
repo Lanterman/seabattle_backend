@@ -3,7 +3,7 @@ import uuid
 from django.http import HttpResponseRedirect
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from . import models as game_models, serializers, services, permissions
@@ -31,7 +31,7 @@ class LobbyListView(ListCreateAPIView):
         return HttpResponseRedirect(redirect_to=reverse(viewname="lobby-detail", kwargs={"slug": data["slug"]}))
 
 
-class DetailLobbyView(RetrieveUpdateDestroyAPIView):
+class DetailLobbyView(RetrieveDestroyAPIView):
     """Detailed description of the lobby, update and destroy lobby"""
 
     queryset = game_models.Lobby.objects.all().prefetch_related("users", "boards", "boards__ships", "messages")
