@@ -13,7 +13,8 @@ class TestDetailLobbyView(APITestCase):
     """Testing DetailLobbyView view"""
 
     @classmethod
-    def setUpTestData(cls) -> None:
+    def setUpClass(cls) -> None:
+        super().setUpClass()
         logging.warning(f"Number of keys in Redis database before running tests: {len(redis_instance.keys())}")
         
         cls.user = User.objects.create_user(username='user', password='password', email="user@mail.ru")
@@ -38,6 +39,7 @@ class TestDetailLobbyView(APITestCase):
     def tearDownClass(cls) -> None:
         logging.warning(f"Number of keys in Redis database before closing: {len(redis_instance.keys())}")
         redis_instance.flushall()
+        super().tearDownClass()
     
     def test_url_of_unauthenticated_user(self):
         response = self.client.get(path=self.url)

@@ -1,3 +1,7 @@
+column_name_list = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+
+row = "{'A1': '', 'A2': 'qwe', 'A3': '', 'A4': '', 'A5': '12', 'A6': '', 'A7': 'qwe', 'A8': '', 'A9': '', 'A10': ''}"
+
 board = {
     "A": {
         "A1": 27.4,
@@ -122,10 +126,10 @@ board = {
 }
             
 ships = [
-    {"id": 27, "name": "fourdeck", "plane": "horizontal", "size": 4, "count": 0},
-    {"id": 33, "name": "tripledeck", "plane": "horizontal", "size": 3, "count": 0},
-    {"id": 39, "name": "doubledeck", "plane": "horizontal", "size": 2, "count": 0},
-    {"id": 45, "name": "singledeck", "plane": "horizontal", "size": 1, "count": 0}
+    {"id": 27, "name": "fourdeck", "plane": "horizontal", "size": 4, "count": 1},
+    {"id": 33, "name": "tripledeck", "plane": "horizontal", "size": 3, "count": 2},
+    {"id": 39, "name": "doubledeck", "plane": "horizontal", "size": 2, "count": 3},
+    {"id": 45, "name": "singledeck", "plane": "horizontal", "size": 1, "count": 4}
 ]
 
 messages = [

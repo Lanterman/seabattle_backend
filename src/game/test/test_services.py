@@ -9,7 +9,8 @@ class TestDetailLobbyView(APITestCase):
     """Testing DetailLobbyView view"""
 
     @classmethod
-    def setUpTestData(cls) -> None:
+    def setUpClass(cls) -> None:
+        super().setUpClass()
         cls.row = "{'A1': '', 'A2': 'qwe', 'A3': '', 'A4': '', 'A5': '12', 'A6': '', 'A7': 'qwe', 'A8': '', 'A9': '', 'A10': ''}"
 
         cls.user = User.objects.create_user(username='user', password='password', email="user@mail.ru")
