@@ -128,7 +128,7 @@ class DetermineWinnerMixin:
         await db_queries.set_winner_in_lobby(lobby_slug, username)
 
 
-class AddUserToGame:
+class AddUserToGameMixin:
     """Add user to game"""
 
     @staticmethod
@@ -154,7 +154,7 @@ class AddUserToGame:
             logging.warning(msg=f"User {self.user.username} not added because lobby is full!")
 
 
-class SendMessage:
+class SendMessageMixin:
     """Send message to lobby chat"""
 
     async def _send_message(self, lobby_id: int, message: str, is_bot: bool = False) -> dict:
@@ -168,35 +168,35 @@ class SendMessage:
         return query
 
 
-class PlayAgain:
+class PlayAgainMixin:
     """Called, when player want to play again"""
     
     async def preform_update_play_again_field(self, board_id: int, answer: bool) -> None:
         await db_queries.update_play_again_field(board_id, answer)
 
 
-class CreateNewGame:
+class CreateNewGameMixin:
     """Create new game"""
 
     @staticmethod
-    def create_new_name(name: str) -> str:
+    def _create_new_name(name: str) -> str:
         """Create new name of lobby"""
 
         split_name = name.split(" ")
-        repeat_number = re.match("\([\d]+\)", split_name[-1])
+        repeat_number = re.match(r"\([\d]+\)", split_name[-1])
 
         if repeat_number is None:
             return f"{name} (1)"
         else:
-             return f"{''.join(split_name[:-1])} ({int(split_name[-1][1:-1]) + 1})"
+             return f"{' '.join(split_name[:-1])} ({int(split_name[-1][1:-1]) + 1})"
 
-    async def _create_new_game(
+    async def create_new_game(
             self, bet: int, name: str, time_to_move: int, time_to_placement: int, enemy_id: int
             ) -> str:
         """Create new game and return its url"""
 
         enemy = await db_queries.get_user_by_id(enemy_id)
-        new_name = self.create_new_name(name)
+        new_name = self._create_new_name(name)
         lobby_id, lobby_slug = await db_queries.create_lobby(new_name, bet, time_to_move, time_to_placement, 
                                                              (self.user, enemy))
         first_board_id, second_board_id = await db_queries.create_lobby_boards(lobby_id, self.user.id, enemy.id)
@@ -204,7 +204,7 @@ class CreateNewGame:
         return str(lobby_slug)
 
 
-class CountDownTimer:
+class CountDownTimerMixin:
     """
     Timer class. 
     Starts a background countdown with celery.
@@ -224,12 +224,12 @@ class CountDownTimer:
         if time_left is None:
             time_left = int(redis_instance.hget(lobby_slug, "time_left"))
         else:
-            redis_instance.hmset(lobby_slug, {"current_turn": int(current_turn) + 1})
+            redis_instance.hset(name=lobby_slug, mapping={"current_turn": int(current_turn) + 1})
             current_turn = str(int(current_turn) + 1)
 
         if not is_task_in_progress:
             tasks.countdown.delay(lobby_slug, time_left, current_turn)
-            redis_instance.hmset(lobby_slug, {"is_running": 1})
+            redis_instance.hset(name=lobby_slug, mapping={"is_running": 1})
 
         return {"type": "countdown", "time_left": time_left}
 
@@ -244,7 +244,7 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
         return "hit" if type(board[field_name[0]][field_name]) == float else "miss"
 
     @staticmethod
-    def _shot(board: dict, field_name: str, shot_type: str) -> None:
+    def _shot(board: dict, field_name: str, shot_type: str) -> str:
         """Make a shoot"""
 
         field_value = board[field_name[0]][field_name]
@@ -252,7 +252,7 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
         return field_value
     
     @staticmethod
-    def _is_ship_has_sunk(field_value: float, board: dict) -> bool or None:
+    def _is_ship_has_sunk(field_value: float, board: dict) -> bool:
         """Check if the ship has sunk"""
 
         for _, column_value in board.items():
@@ -327,7 +327,6 @@ class RandomPlacementMixin(AddSpaceAroundShipMixin):
         for field_name in field_list:
             board[field_name[0]][field_name] = float(f"{ship_id}.{ship_number}")
 
-
     @staticmethod
     def get_field_list_horizontally(
         random_number: int, random_column_name: str, ship_size: int, column_name_list: list
@@ -355,7 +354,7 @@ class RandomPlacementMixin(AddSpaceAroundShipMixin):
         return field_list
 
     # Переработать логику получения списка полей, костыль херня
-    async def get_field_list(self, plane: str, ship_size: int, board: dict, ships) -> list:
+    async def get_field_list(self, plane: str, ship_size: int, board: dict, ships: list) -> list:
         """Get a list of fields where a ship will a located"""
 
         for _ in range(100):

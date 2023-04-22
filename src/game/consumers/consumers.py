@@ -24,11 +24,11 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                     mixins.RandomPlacementClearShipsMixin,
                     mixins.ChooseWhoWillShotFirstMixin,
                     mixins.DetermineWinnerMixin,
-                    mixins.CountDownTimer,
-                    mixins.AddUserToGame,
-                    mixins.SendMessage,
-                    mixins.PlayAgain,
-                    mixins.CreateNewGame,
+                    mixins.CountDownTimerMixin,
+                    mixins.AddUserToGameMixin,
+                    mixins.SendMessageMixin,
+                    mixins.PlayAgainMixin,
+                    mixins.CreateNewGameMixin,
                     bot_mixins.GenericBotMixin):
 
     def __init__(self, *args, **kwargs):
@@ -138,7 +138,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.channel_layer.group_send(self.lobby_group_name, dict_answer)       
 
         elif content["type"] == "create_new_game":
-            lobby_slug = await self._create_new_game(content["bet"], content["name"], content["time_to_move"],
+            lobby_slug = await self.create_new_game(content["bet"], content["name"], content["time_to_move"],
                                               content["time_to_placement"], content["enemy_id"])
             
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "new_group", "lobby_slug": lobby_slug})

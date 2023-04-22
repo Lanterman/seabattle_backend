@@ -63,6 +63,6 @@ class DetailLobbyView(RetrieveDestroyAPIView):
         """Get a time left to placement ships or make a turn"""
 
         if not time_from_redis:
-            redis_instance.hmset(slug, {"time_left": time_to_serializer, "current_turn": 0})
+            redis_instance.hset(name=slug, mapping={"time_left": time_to_serializer, "current_turn": 0})
             return time_to_serializer
         return int(time_from_redis)

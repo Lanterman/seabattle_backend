@@ -149,8 +149,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-USE_L10N = False
-
 DATETIME_FORMAT = "d.m.Y G:i:s"
 
 DATETIME_INPUT_FORMATS = ["d.m.Y G:i:s"]
