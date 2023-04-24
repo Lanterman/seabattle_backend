@@ -7,7 +7,7 @@ from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
 from channels.db import database_sync_to_async
 
-from .data import board, ships, column_name_list, row
+from .test_data import board, ships, column_name_list, row
 from src.game.consumers import consumers
 from src.game import models
 from src.user.models import User

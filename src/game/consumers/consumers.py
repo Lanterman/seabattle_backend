@@ -37,7 +37,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         self.lobby_group_name = None
         self.column_name_list = services.column_name_list
         self.string_number_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        self.ship_count_tuple = (4, 3, 2, 1)
+        self.ship_count_tuple = (1, 2, 3, 4)
 
     async def connect(self):
         self.user = self.scope["user"]
@@ -81,7 +81,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "is_ready_to_play":
-            is_ready = await self.ready_to_play(content["board_id"], content["is_ready"], content["is_enemy_ready"])
+            is_ready = await self._is_ready_to_play(content["board_id"], content["is_ready"], content["is_enemy_ready"])
             data = {"type": "is_ready_to_play", "is_ready": is_ready, "user_id": self.user.id}
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
@@ -109,7 +109,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         
         elif content["type"] == "time_is_over":
             await self.random_placement_and_clear_ships(content["board_id"], content["board"], content["ships"])
-            is_ready = await self.ready_to_play(content["board_id"], True, True)
+            is_ready = await self._is_ready_to_play(content["board_id"], True, True)
             data = {"type": "is_ready_to_play", "is_ready": is_ready, "user_id": self.user.id}
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
