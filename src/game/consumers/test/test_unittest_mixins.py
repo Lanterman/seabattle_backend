@@ -197,7 +197,9 @@ class TestIsReadyToPlayMixin(APITransactionTestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        logging.warning(f"Number of keys in Redis database before running tests: {len(redis_instance.keys())}")
+        class_name = self.__class__.__name__
+        info = f"{class_name}: Number of keys in Redis database before running tests: {len(redis_instance.keys())}"
+        logging.info(info)
 
         self.lobby = models.Lobby.objects.get(id=1)
 
@@ -208,7 +210,9 @@ class TestIsReadyToPlayMixin(APITransactionTestCase):
         redis_instance.hset(name=self.lobby_name, mapping={"is_running": 1})
     
     def tearDown(self) -> None:
-        logging.info(f"Number of keys in Redis database before closing: {len(redis_instance.keys())}")
+        class_name = self.__class__.__name__
+        info = f"{class_name}: Number of keys in Redis database before closing: {len(redis_instance.keys())}"
+        logging.info(info)
         redis_instance.flushall()
         super().tearDown()
 
@@ -274,132 +278,271 @@ class TestAddUserToGameMixin(APITransactionTestCase):
 
         self.instance.lobby_name = str(self.lobby_1.slug)
         self.instance.user = self.user_1
-        ser_user = await self.instance._add_user_to_game(self.empty_board.id)
+        with self.assertNoLogs():
+            ser_user = await self.instance._add_user_to_game(self.empty_board.id)
         assert ser_user == self.ser_user_1, ser_user
 
         self.instance.user = self.user_2
-        ser_user = await self.instance._add_user_to_game(self.empty_board.id)
+        with self.assertLogs():
+            ser_user = await self.instance._add_user_to_game(self.empty_board.id)
         assert ser_user == None, ser_user
 
         self.instance.lobby_name = str(self.lobby_2.slug)
         self.instance.user = self.user_1
-        ser_user = await self.instance._add_user_to_game(self.empty_board.id)
+        with self.assertNoLogs():
+            ser_user = await self.instance._add_user_to_game(self.empty_board.id)
         assert ser_user == self.ser_user_1, ser_user
 
         self.instance.user = self.user_2
-        ser_user = await self.instance._add_user_to_game(self.empty_board.id)
+        with self.assertNoLogs():
+            ser_user = await self.instance._add_user_to_game(self.empty_board.id)
         assert ser_user == self.ser_user_2, ser_user
-        assert 1 == 2, "asserWarngs (self::test_add_user_to_game, views::test_url_of_unauthenticated_user && test_is_lobby_not_free)"
-
-# class TestSendMessageMixin:
-#     """Testing the SendMessageMixin class methods"""
-
-#     def test_send_message(self):
-#         """Testing the _send_message method"""
 
 
-# class TestCreateNewGameMixin:
-#     """Testing the CreateNewGameMixin class methods"""
+class TestSendMessageMixin(APITransactionTestCase):
+    """Testing the SendMessageMixin class methods"""
 
-#     @pytest.fixture(autouse=True)
-#     def instance(self):
-#         _instance = mixins.CreateNewGameMixin()
-#         return _instance
+    fixtures = ["./src/game/consumers/test/test_data.json"]
 
-#     @pytest.mark.parametrize(
-#             "test_input, output", 
-#             [("string", "string (1)"), ("string (2)", "string (3)"), ("(1) string test (2)", "(1) string test (3)")]
-#     )
-#     def test__create_new_game(self, test_input: str, output: str, instance: mixins.CreateNewGameMixin):
-#         """Testing the _create_new_game method"""
+    def setUp(self) -> None:
+        super().setUp()
 
-#         name = instance._create_new_name(test_input)
-#         assert name == output
+        self.user_1 = user_models.User.objects.get(id=1)
+        self.user_2 = user_models.User.objects.get(id=2)
+
+        self.instance = mixins.SendMessageMixin()
+
+    async def test_send_message(self):
+        """Testing the _send_message method"""
+
+        self.instance.user = self.user_1
+        response = await self.instance._send_message(1, "Test")
+        assert response["type"] == "send_message", response["type"]
+        assert response["message"]["owner"] == self.user_1.username, response["message"]["owner"]
+        assert response["message"]["is_bot"] == False, response["message"]["is_bot"]
+
+        response = await self.instance._send_message(1, "Test", True)
+        assert response["type"] == "send_message", response["type"]
+        assert response["message"]["owner"] == self.user_1.username, response["message"]["owner"]
+        assert response["message"]["is_bot"] == True, response["message"]["is_bot"]
+
+        self.instance.user = self.user_2
+        response = await self.instance._send_message(1, "Test")
+        assert response["type"] == "send_message", response["type"]
+        assert response["message"]["owner"] == self.user_2.username, response["message"]["owner"]
+        assert response["message"]["is_bot"] == False, response["message"]["is_bot"]
     
-#     def test_create_new_game(self):
-#         """Testing the create_new_game method"""
+    async def test_preform_create_message(self):
+        """Testing the preform_create_message method"""
+
+        message_instance = await self.instance.preform_create_message(1, self.user_1.username, "Hi everyone!", False)
+        assert message_instance.id == 4 , message_instance.id
+        assert message_instance.owner == self.user_1.username, message_instance.owner
+        assert message_instance.is_bot == False, message_instance.is_bot
+
+        message_instance = await self.instance.preform_create_message(1, self.user_1.username, "Hi everyone!", True)
+        assert message_instance.id == 5 , message_instance.id
+        assert message_instance.owner == self.user_1.username, message_instance.owner
+        assert message_instance.is_bot == True, message_instance.is_bot
+
+        message_instance = await self.instance.preform_create_message(1, self.user_2.username, "Hi everyone!", False)
+        assert message_instance.id == 6 , message_instance.id
+        assert message_instance.owner == self.user_2.username, message_instance.owner
+        assert message_instance.is_bot == False, message_instance.is_bot
 
 
-# class TestCountDownTimerMixin:
-#     """Testing the CountDownTimerMixin class methods"""
+class TestCreateNewGameMixin(APITransactionTestCase):
+    """Testing the CreateNewGameMixin class methods"""
 
-#     def test_countdown(self):
-#         """Testing the _countdown method"""
+    fixtures = ["./src/game/consumers/test/test_data.json"]
 
+    def setUp(self) -> None:
+        super().setUp()
 
-# class TestTakeShotMixin:
-#     """Testing the TakeShotMixin class methods"""
+        self.user = user_models.User.objects.get(id=1)
 
-#     @pytest.fixture(autouse=True)
-#     def instance(self):
-#         _instance = mixins.TakeShotMixin()
-#         return _instance
+        self.instance = mixins.CreateNewGameMixin()
 
-#     @pytest.mark.parametrize("test_input, output", [("F1", "hit"), ("A5", "miss"), ("F2", "miss")])
-#     def test_get_type_shot(self, copy_board: dict, test_input: str, output: str, instance: mixins.TakeShotMixin):
-#         """Testing the _get_type_shot method"""
+    def test__create_new_game(self):
+        """Testing the _create_new_game method"""
 
-#         type_shot = instance._get_type_shot(copy_board, test_input)
-#         assert type_shot == output
+        name = self.instance._create_new_name("string")
+        assert name == "string (1)", name
+
+        name = self.instance._create_new_name("string (2)")
+        assert name == "string (3)", name
+
+        name = self.instance._create_new_name("(1) string test (2)")
+        assert name == "(1) string test (3)", name
     
-#     @pytest.mark.parametrize(
-#         "test_input, output", 
-#         [
-#             (("F1", "hit"), ("F1", 27.1, "hit")), 
-#             (("A5", "miss"), ("A5", "", "miss")), 
-#             (("F2", "miss"), ("F2", " space 27.1 space 33.1", "miss"))
-#         ]
-#     )
-#     def test_shot(self, test_input: tuple, output: tuple, copy_board: dict, instance: mixins.TakeShotMixin):
-#         """Testing the _shot method"""
+    async def test_create_new_game(self):
+        """Testing the create_new_game method"""
 
-#         assert copy_board[output[0][0]][output[0]] == output[1]
+        self.instance.user = self.user
 
-#         field_value = instance._shot(copy_board, *test_input)
-#         assert field_value == output[1]
-#         assert copy_board[output[0][0]][output[0]] == output[2]
+        new_lobby_slug = await self.instance.create_new_game(30, "test", 30, 30, 2)
+        new_lobby = await db_queries.get_lobby_by_slug(new_lobby_slug)
+        new_board_list = await db_queries.get_lobby_boards(new_lobby_slug)
+        assert new_lobby.name == "test (1)", new_lobby.name
+        assert new_lobby.id == 3, new_lobby.id
+        assert len(new_board_list) == 2, new_board_list
 
-#     @pytest.mark.parametrize("test_input, output", [(45.1, (False,)), (45.1, ("hit", True)), (45.4, (True,))])
-#     def test_is_ship_has_sunk(self, test_input: float, output: bool, copy_board: dict, instance: mixins.TakeShotMixin):
-#         """Testing the _is_ship_has_sunk method"""
+        new_lobby_slug = await self.instance.create_new_game(30, "(1) qwe test (3)", 30, 30, 2)
+        new_lobby = await db_queries.get_lobby_by_slug(new_lobby_slug)
+        new_board_list = await db_queries.get_lobby_boards(new_lobby_slug)
+        assert new_lobby.name == "(1) qwe test (4)", new_lobby.name
+        assert new_lobby.id == 4, new_lobby.id
+        assert len(new_board_list) == 2, new_board_list
 
-#         if len(output) == 2: copy_board["H"]["H10"] = output[0]
 
-#         is_ship_has_sunk = instance._is_ship_has_sunk(test_input, copy_board)
-#         assert is_ship_has_sunk == output[-1]
+class TestCountDownTimerMixin(APITestCase):
+    """Testing the CountDownTimerMixin class methods"""
+
+    fixtures = ["./src/game/consumers/test/test_data.json"]
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        info = f"{cls.__name__}: Number of keys in Redis database before running tests: {len(redis_instance.keys())}"
+        logging.info(info)
+
+        cls.lobby = models.Lobby.objects.get(id=1)
+        cls.lobby_slug = str(cls.lobby.slug)
+
+        cls.instance = mixins.CountDownTimerMixin()
+
+        redis_instance.hset(name=cls.lobby_slug, mapping={"current_turn": 0, "is_running": 1, "time_left": 30})
     
-#     def test_add_misses_around_sunken_ship(self, copy_board: dict, instance: mixins.TakeShotMixin):
-#         """Testing the _add_misses_around_sunken_ship method"""
+    @classmethod
+    def tearDownClass(cls) -> None:
+        info = f"{cls.__name__}: Number of keys in Redis database before closing: {len(redis_instance.keys())}"
+        logging.info(info)
+        redis_instance.flushall()
+        super().tearDownClass()
 
-#         test_data_dict = {
-#             "G9": " space 27.2 space 45.1", 
-#             "G10": " space 27.2 space 45.1", 
-#             "H9": " space 45.1", 
-#             "I9": " space 33.2 space 45.1", 
-#             "I10": " space 45.1"
-#         }
-#         test_data_value = (
-#             copy_board["G"]["G9"], 
-#             copy_board["G"]["G9"], 
-#             copy_board["H"]["H9"], 
-#             copy_board["I"]["I9"], 
-#             copy_board["I"]["I10"]
-#         )
+    async def test_countdown(self):
+        """Testing the _countdown method"""
 
-#         assert test_data_value == tuple(value for value in test_data_dict.values())
+        resposne = await self.instance._countdown(self.lobby_slug, None)
+        current_turn = redis_instance.hget(self.lobby_slug, "current_turn")
+        is_task_in_progress = redis_instance.hget(self.lobby_slug, "is_running")
+        assert resposne == {"type": "countdown", "time_left": 30}, resposne
+        assert current_turn == "0", current_turn
+        assert is_task_in_progress == "1", is_task_in_progress
 
-#         for key in test_data_dict:
-#             test_data_dict[key] = "miss"
+        resposne = await self.instance._countdown(self.lobby_slug, 20)
+        current_turn = redis_instance.hget(self.lobby_slug, "current_turn")
+        assert resposne == {"type": "countdown", "time_left": 20}, resposne
+        assert resposne["time_left"] == 20, resposne["time_left"]
+        assert current_turn == "1", current_turn
 
-#         field_name_dict = instance._add_misses_around_sunken_ship(45.1, copy_board)
-#         assert field_name_dict == test_data_dict
-#         assert (copy_board["G"]["G9"], copy_board["H"]["H9"]) == ("miss", "miss")
+        redis_instance.hdel(self.lobby_slug, "is_running")
+        is_task_in_progress = redis_instance.hget(self.lobby_slug, "is_running")
+        assert is_task_in_progress == None, is_task_in_progress
 
-#         field_name_dict = instance._add_misses_around_sunken_ship(45.3, copy_board)
-#         assert field_name_dict == {} 
+        resposne = await self.instance._countdown(self.lobby_slug, 15)
+        current_turn = redis_instance.hget(self.lobby_slug, "current_turn")
+        is_task_in_progress = redis_instance.hget(self.lobby_slug, "is_running")
+        assert resposne == {"type": "countdown", "time_left": 15}, resposne
+        assert current_turn == "2", current_turn
+        assert is_task_in_progress == "1", is_task_in_progress
+
+        resposne = await self.instance._countdown(self.lobby_slug, None)
+        current_turn = redis_instance.hget(self.lobby_slug, "current_turn")
+        is_task_in_progress = redis_instance.hget(self.lobby_slug, "is_running")
+        assert resposne == {"type": "countdown", "time_left": 30}, resposne
+        assert current_turn == "2", current_turn
+        assert is_task_in_progress == "1", is_task_in_progress
+
+
+class TestTakeShotMixin(APITransactionTestCase):
+    """Testing the TakeShotMixin class methods"""
+
+    fixtures = ["./src/game/consumers/test/test_data.json"]
+
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.board = models.Board.objects.get(id=1)
+        self.ser_board = serializers.BoardSerializer(self.board).data
+        self.board = {key: value for key, value in self.ser_board.items() if key in column_name_list}
+
+        self.instance = mixins.TakeShotMixin()
+
+    def test_get_type_shot(self):
+        """Testing the _get_type_shot method"""
+
+        type_shot = self.instance._get_type_shot(self.board, "I4")
+        assert type_shot == "hit"
+
+        type_shot = self.instance._get_type_shot(self.board, "A1")
+        assert type_shot == "miss"
+
+        type_shot = self.instance._get_type_shot(self.board, "A2")
+        assert type_shot == "miss"
+
+        type_shot = self.instance._get_type_shot(self.board, "A1")
+        assert type_shot == "miss"
     
-#     def test_take_shot(self):
-#         """Testing the take_shot method"""
+    def test_shot(self):
+        """Testing the _shot method"""
+
+        assert self.ser_board["F"]["F1"] == " space 19.1", self.board["F"]["F1"]
+        assert self.ser_board["A"]["A1"] == "", self.ser_board["A"]["A1"]
+        assert self.ser_board["G"]["G9"] == 1.1, self.ser_board["G"]["G9"]
+
+        field_value = self.instance._shot(self.board, "F1", "miss")
+        assert field_value == " space 19.1", field_value
+        assert self.board["F"]["F1"] == "miss", self.board["F"]["F1"]
+
+        field_value = self.instance._shot(self.board, "A1", "miss")
+        assert field_value == "", field_value
+        assert self.board["A"]["A1"] == "miss", self.board["A"]["A1"]
+
+        field_value = self.instance._shot(self.board, "G9", "hit")
+        assert field_value == 1.1, field_value
+        assert self.board["G"]["G9"] == "hit", self.board["G"]["G9"]
+
+    def test_is_ship_has_sunk(self):
+        """Testing the _is_ship_has_sunk method"""
+
+        is_ship_has_sunk = self.instance._is_ship_has_sunk(1.1, self.board)
+        assert is_ship_has_sunk == False, is_ship_has_sunk
+
+        is_ship_has_sunk = self.instance._is_ship_has_sunk(4.1, self.board)
+        assert is_ship_has_sunk == True, is_ship_has_sunk
+
+        self.board["G"]["G9"] = "hit"
+
+        is_ship_has_sunk = self.instance._is_ship_has_sunk(1.1, self.board)
+        assert is_ship_has_sunk == True, is_ship_has_sunk
+    
+    def test_add_misses_around_sunken_ship(self):
+        """Testing the _add_misses_around_sunken_ship method"""
+
+        test_data = {"F8": "miss", "F9": "miss", "F10": "miss", "G8": "miss", 
+                     "G10": "miss", "H8": "miss", "H9": "miss", "H10": "miss"}
+
+        assert self.ser_board["G"]["G8"] == " space 1.1", self.board["G"]["G8"]
+        assert self.ser_board["F"]["F8"] == " space 1.1", self.ser_board["F"]["F8"]
+        assert self.ser_board["G"]["G9"] == 1.1, self.ser_board["G"]["G9"]
+
+        field_name_dict = self.instance._add_misses_around_sunken_ship(1.1, self.board)
+        assert field_name_dict == test_data, field_name_dict
+        assert self.ser_board["G"]["G8"] == "miss", self.board["G"]["G8"]
+        assert self.ser_board["F"]["F8"] == "miss", self.ser_board["F"]["F8"]
+        assert self.ser_board["G"]["G9"] == 1.1, self.ser_board["G"]["G9"]
+
+        field_name_dict = self.instance._add_misses_around_sunken_ship(4.1, self.board)
+        assert field_name_dict == {} 
+    
+    def test_take_shot(self):
+        """Testing the take_shot method"""
+
+        self.instance.column_name_list = column_name_list
+        # assert 1 == 2, "в фикстуре выбирать только те данные, которые нужны для каждого класса"
+        # assert 1 == 2, "Подумать как использоватеть тестовую базу редиса или удалять только добавляемые через тесты ключи"
+        # assert 1 == 2, "Почему-то TestCountDownTimerMixin создается 3 записи в редис, исправить"
 
 
 # class TestRandomPlacementMixin:

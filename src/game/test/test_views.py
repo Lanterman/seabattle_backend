@@ -17,7 +17,8 @@ class TestDetailLobbyView(APITestCase):
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
-        logging.warning(f"Number of keys in Redis database before running tests: {len(redis_instance.keys())}")
+        info = f"{cls.__name__}: Number of keys in Redis database before running tests: {len(redis_instance.keys())}"
+        logging.info(info)
 
         cls.user = User.objects.get(username="admin")
         cls.third_user = User.objects.get(username='user')
@@ -30,17 +31,20 @@ class TestDetailLobbyView(APITestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        logging.warning(f"Number of keys in Redis database before closing: {len(redis_instance.keys())}")
+        info = f"{cls.__name__}: Number of keys in Redis database before closing: {len(redis_instance.keys())}"
+        logging.info(info)
         redis_instance.flushall()
         super().tearDownClass()
 
     def test_url_of_unauthenticated_user(self):
-        response = self.client.get(path=self.url)
+        with self.assertLogs(level="WARNING"):
+            response = self.client.get(path=self.url)
         assert response.status_code == 401, response.status_code
 
     def test_url_of_authenticated_user(self):
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.user_token.key)
-        response = self.client.get(path=self.url)
+        with self.assertNoLogs(level="WARNING"):
+            response = self.client.get(path=self.url)
         assert response.status_code == 200, response.status_code
 
     def test_output_data(self):
@@ -53,12 +57,14 @@ class TestDetailLobbyView(APITestCase):
 
     def test_is_lobby_not_free(self):
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.third_user_token.key)
-        response = self.client.get(path=self.url)
+        with self.assertLogs(level="WARNING"):
+            response = self.client.get(path=self.url)
         assert response.status_code == 403, response.status_code
 
     def test_is_lobby_free(self):
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.user_token.key)
-        response = self.client.get(path=self.url)
+        with self.assertNoLogs(level="WARNING"):
+            response = self.client.get(path=self.url)
         assert response.status_code == 200, response.status_code
 
     def test_if_not_exists_winner(self):

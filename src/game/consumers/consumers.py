@@ -95,7 +95,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                 data = {"type": "who_starts", "is_my_turn": is_my_turn, "user_id": self.user.id}
                 await self.channel_layer.group_send(self.lobby_group_name, data)
             else:
-                logging.warning("Turn is determined!")
+                logging.info(f"For lobby '{self.lobby_name}' turn is determined!")
 
         elif content["type"] == "determine_winner":
             winner = await db_queries.get_user(content["enemy_id"]) if len(content) == 2 else self.user.username

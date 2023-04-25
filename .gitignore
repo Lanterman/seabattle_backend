@@ -7,5 +7,7 @@ src/user/migrations/*
 !src/user/migrations/__init__.py
 
 .idea
+.pytest_cache
+.vscode
 
 __pycache__

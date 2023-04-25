@@ -154,7 +154,7 @@ class AddUserToGameMixin:
             serializer = user_serializers.BaseUserSerializer(self.user)
             return serializer.data
         else:
-            logging.warning(msg=f"User {self.user.username} not added because lobby is full!")
+            logging.info(msg=f"User '{self.user.username}' not added because lobby is full!")
 
 
 class SendMessageMixin:
@@ -166,7 +166,9 @@ class SendMessageMixin:
         data = {"type": "send_message", "message": serializer}
         return data
     
-    async def preform_create_message(self, lobby_id, username, message, is_bot: bool) -> game_models.Message:
+    async def preform_create_message(
+        self, lobby_id: int, username: str, message: str, is_bot: bool
+    ) -> game_models.Message:
         query = await db_queries.create_message(lobby_id, username, message, is_bot)
         return query
 
@@ -194,8 +196,8 @@ class CreateNewGameMixin:
              return f"{' '.join(split_name[:-1])} ({int(split_name[-1][1:-1]) + 1})"
 
     async def create_new_game(
-            self, bet: int, name: str, time_to_move: int, time_to_placement: int, enemy_id: int
-            ) -> str:
+        self, bet: int, name: str, time_to_move: int, time_to_placement: int, enemy_id: int
+    ) -> str:
         """Create new game and return its url"""
 
         enemy = await db_queries.get_user_by_id(enemy_id)
@@ -374,7 +376,7 @@ class RandomPlacementMixin(AddSpaceAroundShipMixin):
             if self._is_put_on_board(field_list, board):
                 return field_list
 
-        logging.warning(msg="Failed to randomize ships to the board, try again.")
+        logging.info(msg="Failed to randomize ships to the board, try again.")
         return await self.random_placement(board, ships)
 
     async def random_placement(self, board: dict, ships: list) -> dict:
