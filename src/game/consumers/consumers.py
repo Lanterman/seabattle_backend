@@ -73,7 +73,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         
         elif content["type"] == "take_shot":
             is_my_turn, field_name_dict, enemy_ships = await self.take_shot(
-                self.lobby_name, content["board_id"], content["my_board_id"], content["field_name"]
+                self.lobby_name, content["board_id"], content["field_name"]
             )
             countdown = await self._countdown(self.lobby_name, content["time_to_turn"])
             data = {"type": "send_shot", "field_name_dict": field_name_dict, "user_id": self.user.id, 

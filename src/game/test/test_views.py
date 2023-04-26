@@ -33,7 +33,7 @@ class TestDetailLobbyView(APITestCase):
     def tearDownClass(cls) -> None:
         info = f"{cls.__name__}: Number of keys in Redis database before closing: {len(redis_instance.keys())}"
         logging.info(info)
-        redis_instance.flushall()
+        redis_instance.delete(str(cls.lobby.slug))
         super().tearDownClass()
 
     def test_url_of_unauthenticated_user(self):

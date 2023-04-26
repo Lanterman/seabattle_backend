@@ -1,6 +1,7 @@
 import logging
 
 from copy import deepcopy
+from channels.db import database_sync_to_async
 from rest_framework.test import APITestCase, APITransactionTestCase
 
 from src.game import models, serializers
@@ -213,7 +214,7 @@ class TestIsReadyToPlayMixin(APITransactionTestCase):
         class_name = self.__class__.__name__
         info = f"{class_name}: Number of keys in Redis database before closing: {len(redis_instance.keys())}"
         logging.info(info)
-        redis_instance.flushall()
+        redis_instance.delete(self.lobby_name)
         super().tearDown()
 
     async def test_ready_to_play(self):
@@ -417,7 +418,7 @@ class TestCountDownTimerMixin(APITestCase):
     def tearDownClass(cls) -> None:
         info = f"{cls.__name__}: Number of keys in Redis database before closing: {len(redis_instance.keys())}"
         logging.info(info)
-        redis_instance.flushall()
+        redis_instance.delete("celery", "_kombu.binding.celery", cls.lobby_slug)
         super().tearDownClass()
 
     async def test_countdown(self):
@@ -463,9 +464,13 @@ class TestTakeShotMixin(APITransactionTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.board = models.Board.objects.get(id=1)
-        self.ser_board = serializers.BoardSerializer(self.board).data
+        self.lobby = models.Lobby.objects.prefetch_related("users", "boards").get(id=1)
+        self.board_1, self.board_2 = self.lobby.boards.all()
+        self.user_2, self.user_1 = self.lobby.users.all()
+
+        self.ser_board = serializers.BoardSerializer(self.board_1).data
         self.board = {key: value for key, value in self.ser_board.items() if key in column_name_list}
+        self.lobby_slug = str(self.lobby.slug)
 
         self.instance = mixins.TakeShotMixin()
 
@@ -536,37 +541,92 @@ class TestTakeShotMixin(APITransactionTestCase):
         field_name_dict = self.instance._add_misses_around_sunken_ship(4.1, self.board)
         assert field_name_dict == {} 
     
-    def test_take_shot(self):
+    async def test_take_shot(self):
         """Testing the take_shot method"""
 
         self.instance.column_name_list = column_name_list
-        # assert 1 == 2, "в фикстуре выбирать только те данные, которые нужны для каждого класса"
-        # assert 1 == 2, "Подумать как использоватеть тестовую базу редиса или удалять только добавляемые через тесты ключи"
-        # assert 1 == 2, "Почему-то TestCountDownTimerMixin создается 3 записи в редис, исправить"
+        self.instance.user = self.user_2
+        assert self.board_1.A[1:29] == "'A1': '', 'A2': ' space 7.1'", self.board_1.A[1:29]
+
+        response = await self.instance.take_shot(self.lobby_slug, self.board_1.id, "A1")
+        updated_board_1 = await database_sync_to_async(models.Board.objects.get)(id=1)
+        updated_board_2 = await database_sync_to_async(models.Board.objects.get)(id=2)
+        assert response == (False, {"A1": "miss"}, None), response
+        assert self.board_1.is_my_turn != updated_board_1.is_my_turn, updated_board_1.is_my_turn
+        assert self.board_2.is_my_turn != updated_board_2.is_my_turn, updated_board_2.is_my_turn
+        assert self.board_1.is_my_turn == updated_board_2.is_my_turn, updated_board_2.is_my_turn
+        assert updated_board_1.A[1:33] == "'A1': 'miss', 'A2': ' space 7.1'", updated_board_1.A[1:33]
+        assert updated_board_1.A[1:33] != self.board_1.A[1:33], updated_board_1.A[1:33]
+
+        self.instance.user = self.user_1
+        assert self.board_2.A[1:32] == "'A1': ' space 26.3', 'A2': 26.3", self.board_2.A[1:32]
+
+        response = await self.instance.take_shot(self.lobby_slug, self.board_2.id, "A1")
+        updated_board_1 = await database_sync_to_async(models.Board.objects.get)(id=1)
+        updated_board_2 = await database_sync_to_async(models.Board.objects.get)(id=2)
+        assert response == (False, {"A1": "miss"}, None), response
+        assert self.board_1.is_my_turn == updated_board_1.is_my_turn, updated_board_1.is_my_turn
+        assert self.board_2.is_my_turn == updated_board_2.is_my_turn, updated_board_2.is_my_turn
+        assert self.board_1.is_my_turn != updated_board_2.is_my_turn, updated_board_2.is_my_turn
+        assert updated_board_2.A[1:25] == "'A1': 'miss', 'A2': 26.3", updated_board_2.A[1:25]
+        assert updated_board_2.A[1:25] != self.board_1.A[1:25], updated_board_2.A[1:25]
+
+        self.instance.suer = self.user_2
+        assert self.board_1.C[1:50] == "'C1': 1.2, 'C2': ' space 1.2 space 7.1 space 7.3'", self.board_1.C[1:50]
+
+        response = await self.instance.take_shot(self.lobby_slug, self.board_1.id, "C1")
+        updated_board_1 = await database_sync_to_async(models.Board.objects.get)(id=1)
+        updated_board_2 = await database_sync_to_async(models.Board.objects.get)(id=2)
+        assert response == (True, {'C1': 'hit', 'B1': 'miss', 'B2': 'miss', 'C2': 'miss', 'D1': 'miss', 'D2': 'miss'}, 9), response
+        assert self.board_1.is_my_turn == updated_board_1.is_my_turn, updated_board_1.is_my_turn
+        assert self.board_2.is_my_turn == updated_board_2.is_my_turn, updated_board_2.is_my_turn
+        assert self.board_1.is_my_turn != updated_board_2.is_my_turn, updated_board_2.is_my_turn
+        assert updated_board_1.C[1:26] == "'C1': 'hit', 'C2': 'miss'", updated_board_1.C[1:26]
+        assert updated_board_1.C[1:26] != self.board_1.C[1:26], updated_board_1.C[1:26]
+
+        assert self.board_1.H[1:32] == "'H1': 19.1, 'H2': ' space 19.1'", self.board_1.H[1:32]
+
+        response = await self.instance.take_shot(self.lobby_slug, self.board_1.id, "H1")
+        updated_board_1 = await database_sync_to_async(models.Board.objects.get)(id=1)
+        updated_board_2 = await database_sync_to_async(models.Board.objects.get)(id=2)
+        assert response == (True, {'H1': 'hit'}, None), response
+        assert self.board_1.is_my_turn == updated_board_1.is_my_turn, updated_board_1.is_my_turn
+        assert self.board_2.is_my_turn == updated_board_2.is_my_turn, updated_board_2.is_my_turn
+        assert self.board_1.is_my_turn != updated_board_2.is_my_turn, updated_board_2.is_my_turn
+        assert updated_board_1.H[1:33] == "'H1': 'hit', 'H2': ' space 19.1'", updated_board_1.H[1:33]
+        assert updated_board_1.H[1:33] != self.board_1.H[1:33], updated_board_1.H[1:33]
 
 
-# class TestRandomPlacementMixin:
-#     """Testing the RandomPlacementMixin class methods"""
+class TestRandomPlacementMixin(APITestCase):
+    """Testing the RandomPlacementMixin class methods"""
 
-#     @pytest.fixture(autouse=True)
-#     def instance(self):
-#         ins = mixins.RandomPlacementMixin()
-#         ins.column_name_list = column_name_list
-#         ins.string_number_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-#         ins.ship_count_tuple = (4, 3, 2, 1)
-#         return ins
+    fixtures = ["./src/game/consumers/test/test_data.json"]
 
-#     @pytest.mark.parametrize(
-#         "test_input, output", 
-#         [(["A1", "A2", "A3"], False), (["A5", "A6", "A7"], True), (["J10"], True), (["B5"], False)]
-#     )
-#     def test_is_put_on_board(
-#         self, test_input: list, output: bool, copy_board: dict, instance: mixins.RandomPlacementMixin
-#     ):
-#         """Testing the _is_put_on_board method"""
+    def setUp(self) -> None:
+        super().setUp()
 
-#         is_put = instance._is_put_on_board(test_input, copy_board)
-#         assert is_put == output
+        self.db_board = models.Board.objects.get(id=1)
+
+        self.ser_board = serializers.BoardSerializer(self.db_board).data
+        self.board = {key: value for key, value in self.ser_board.items() if key in column_name_list}
+
+        self.instance = mixins.RandomPlacementMixin()
+
+    def test_is_put_on_board(self):
+        """Testing the _is_put_on_board method"""
+
+        is_put = self.instance._is_put_on_board(["A1", "A2", "A3"], self.board)
+        assert is_put == False
+
+        is_put = self.instance._is_put_on_board(["G3", "G4", "G5"], self.board)
+        assert is_put == True
+
+        is_put = self.instance._is_put_on_board(["A1"], self.board)
+        assert is_put == True
+
+        is_put = self.instance._is_put_on_board(["A3"], self.board)
+        assert is_put == False
+        # assert False, "Заменить прод Редис на тестовый"
 
 #     def test_put_ship_on_board(self, copy_board: dict, instance: mixins.RandomPlacementMixin):
 #         """Testing the _put_ship_on_board method"""

@@ -23,17 +23,10 @@ def update_board(board_id: int, board: dict) -> None:
 
 
 @database_sync_to_async
-def write_shot(board_id: int, is_my_turn:bool, board: dict) -> None:
+def write_shot(board_id: int, board: dict) -> None:
     """Get board for update"""
 
-    models.Board.objects.filter(id=board_id).update(is_my_turn=is_my_turn, **board)
-
-
-@database_sync_to_async
-def update_is_my_turn_field(board_id: int, is_my_turn: bool) -> None:
-    """Update is_my_turn field of Board model instance"""
-
-    models.Board.objects.filter(id=board_id).update(is_my_turn=is_my_turn)
+    models.Board.objects.filter(id=board_id).update(**board)
 
 
 @database_sync_to_async
@@ -121,7 +114,6 @@ def add_user_to_lobby(lobby: models.Lobby, user: models.User) -> None:
     """Add a second user to a lobby"""
 
     lobby.users.add(user)
-
 
 
 @database_sync_to_async

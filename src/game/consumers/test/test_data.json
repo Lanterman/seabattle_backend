@@ -147,7 +147,7 @@
         "I": "{'I1': ' space 32.2', 'I2': ' space 32.2 space 44.1', 'I3': ' space 44.1', 'I4': ' space 26.4 space 44.1', 'I5': ' space 26.4', 'I6': ' space 26.4', 'I7': ' space 26.4', 'I8': ' space 26.4', 'I9': ' space 26.4 space 32.3', 'I10': 32.3}",
         "J": "{'J1': '', 'J2': ' space 44.1', 'J3': 44.1, 'J4': ' space 26.4 space 44.1', 'J5': 26.4, 'J6': 26.4, 'J7': 26.4, 'J8': 26.4, 'J9': ' space 26.4 space 32.3', 'J10': 32.3}",
         "is_ready": false,
-        "is_my_turn": false,
+        "is_my_turn": true,
         "is_play_again": null,
         "lobby_id": 1,
         "user_id": 2

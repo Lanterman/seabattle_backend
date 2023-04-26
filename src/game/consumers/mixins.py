@@ -283,9 +283,9 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
     async def hand_over_to_the_enemy(self, lobby_slug: uuid.uuid4) -> None:
         boards = await self.get_lobby_boards(lobby_slug)
         my_board, enemy_board = await self.determine_whoose_boards(boards)
-        await self.perform_update_boards(True, my_board, enemy_board)
+        await self.perform_update_boards(False, my_board, enemy_board)
 
-    async def take_shot(self, lobby_slug: uuid.uuid4, board_id: int, my_board_id: int, field_name: str) -> None:
+    async def take_shot(self, lobby_slug: uuid.uuid4, board_id: int, field_name: str) -> None:
         board = await db_queries.get_board(board_id, self.column_name_list)
         services.confert_to_json(board)
         shot_type = self._get_type_shot(board, field_name)
@@ -293,23 +293,20 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
         is_my_turn = True if shot_type == "hit" else False
         number_of_enemy_ships, field_name_dict = None, {field_name: shot_type}
 
-        if shot_type == "hit":
-            await self.hand_over_to_the_enemy(lobby_slug)
-
+        if is_my_turn:
             if self._is_ship_has_sunk(field_value, board):
                 field_name_dict.update(self._add_misses_around_sunken_ship(field_value, board))
                 number_of_enemy_ships = services.determine_number_of_enemy_ships(board)
-
         else: 
-            await db_queries.update_is_my_turn_field(my_board_id, False)
+            await self.hand_over_to_the_enemy(lobby_slug)
 
         redis_instance.hdel(lobby_slug, "is_running")
 
-        await self.perform_write_shot(board_id, not is_my_turn, board)
+        await self.perform_write_shot(board_id, board)
         return is_my_turn, field_name_dict, number_of_enemy_ships
     
-    async def perform_write_shot(self, board_id: int, is_my_turn: bool, column_dictionary: dict) -> None:
-        await db_queries.write_shot(board_id, is_my_turn, column_dictionary)
+    async def perform_write_shot(self, board_id: int, column_dictionary: dict) -> None:
+        await db_queries.write_shot(board_id, column_dictionary)
 
 
 class RandomPlacementMixin(AddSpaceAroundShipMixin):
