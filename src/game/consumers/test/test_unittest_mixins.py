@@ -606,11 +606,16 @@ class TestRandomPlacementMixin(APITestCase):
         super().setUp()
 
         self.db_board = models.Board.objects.get(id=1)
+        self.db_ships = models.Ship.objects.filter(board_id=1)
 
+        self.ships = serializers.ShipSerializer(self.db_ships, many=True).data
         self.ser_board = serializers.BoardSerializer(self.db_board).data
         self.board = {key: value for key, value in self.ser_board.items() if key in column_name_list}
 
         self.instance = mixins.RandomPlacementMixin()
+        self.instance.column_name_list = column_name_list
+        self.instance.string_number_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        self.instance.ship_count_tuple = (1, 2, 3, 4)
 
     def test_is_put_on_board(self):
         """Testing the _is_put_on_board method"""
@@ -626,77 +631,108 @@ class TestRandomPlacementMixin(APITestCase):
 
         is_put = self.instance._is_put_on_board(["A3"], self.board)
         assert is_put == False
-        # assert False, "Заменить прод Редис на тестовый"
 
-#     def test_put_ship_on_board(self, copy_board: dict, instance: mixins.RandomPlacementMixin):
-#         """Testing the _put_ship_on_board method"""
+    def test_put_ship_on_board(self):
+        """Testing the _put_ship_on_board method"""
 
-#         assert (copy_board["A"]["A5"], copy_board["A"]["A6"], copy_board["A"]["A7"]) == ("", "", "")
+        test_data = (self.board["F"]["F6"], self.board["G"]["G6"], self.board["H"]["H6"])
+        assert test_data == ("", "", ""), test_data
 
-#         instance._put_ship_on_board(3, 1, ["A5", "A6", "A7"], copy_board)
+        self.instance._put_ship_on_board(3, 1, ["F6", "G6", "H6"], self.board)
+        test_data = (self.board["F"]["F6"], self.board["G"]["G6"], self.board["H"]["H6"])
+        assert test_data == (3.1, 3.1, 3.1), test_data
 
-#         assert (copy_board["A"]["A5"], copy_board["A"]["A6"], copy_board["A"]["A7"]) == (3.1, 3.1, 3.1)
+        self.instance._put_ship_on_board(1, 4, ["G3", "G4", "G5"], self.board)
+        test_data = (self.board["G"]["G3"], self.board["G"]["G4"], self.board["G"]["G5"])
+        assert test_data == (1.4, 1.4, 1.4), test_data
     
-#     @pytest.mark.parametrize(
-#         "test_input, output", 
-#         [
-#             ((3, "A", 3, column_name_list), ["A3", "B3", "C3"]), 
-#             ((3, "J", 3, column_name_list), ["J3", "I3", "H3"]),
-#             ((3, "I", 3, column_name_list), ["I3", "H3", "G3"])
-#         ]
-#     )
-#     def test_get_field_list_horizontally(self, test_input: tuple, output: list, instance: mixins.RandomPlacementMixin):
-#         """Testing the get_field_list_horizontally method"""
+    def test_get_field_list_horizontally(self):
+        """Testing the get_field_list_horizontally method"""
 
-#         field_list = instance.get_field_list_horizontally(*test_input)
-#         assert field_list == output
+        field_list = self.instance.get_field_list_horizontally(3, "A", 3, column_name_list)
+        assert field_list == ["A3", "B3", "C3"]
+
+        field_list = self.instance.get_field_list_horizontally(3, "J", 3, column_name_list)
+        assert field_list == ["J3", "I3", "H3"]
+
+        field_list = self.instance.get_field_list_horizontally(3, "I", 3, column_name_list)
+        assert field_list == ["I3", "H3", "G3"]
     
-#     @pytest.mark.parametrize(
-#         "test_input, output", 
-#         [
-#             ((1, "A", 3), ["A1", "A2", "A3"]), 
-#             ((10, "A", 3), ["A10", "A9", "A8"]), 
-#             ((9, "E", 3), ["E9", "E8", "E7"])
-#         ]
-#     )
-#     def test_get_field_list_vertically(self, test_input: tuple, output: list, instance: mixins.RandomPlacementMixin):
-#         """Testing the get_field_list_vertically method"""
+    def test_get_field_list_vertically(self):
+        """Testing the get_field_list_vertically method"""
 
-#         field_list = instance.get_field_list_vertically(*test_input)
-#         assert field_list == output
+        field_list = self.instance.get_field_list_vertically(1, "A", 3)
+        assert field_list == ["A1", "A2", "A3"]
+
+        field_list = self.instance.get_field_list_vertically(10, "A", 3)
+        assert field_list == ["A10", "A9", "A8"]
+
+        field_list = self.instance.get_field_list_vertically(9, "E", 3)
+        assert field_list == ["E9", "E8", "E7"]
     
-#     @pytest.mark.asyncio
-#     async def test_get_field_list(self, copy_board: dict, copy_ships: list, instance: mixins.RandomPlacementMixin):
-#         """Testing the get_field_list method"""
+    async def test_get_field_list(self):
+        """Testing the get_field_list method"""
 
-#         old_board = deepcopy(copy_board)
+        old_board = deepcopy(self.board)
 
-#         new_board = await instance.get_field_list("horizontal", 4, copy_board, copy_ships)
-#         assert type(new_board) == dict
-#         assert new_board == copy_board
-#         assert new_board != old_board
+        with self.assertLogs():
+            new_board = await self.instance.get_field_list("horizontal", 4, self.board, self.ships)
+        assert type(new_board) == dict
+        assert new_board == self.board
+        assert new_board != old_board
     
-#     @pytest.mark.asyncio
-#     async def test_random_placement(self, copy_board: dict, copy_ships: list, instance: mixins.RandomPlacementMixin):
-#         """Testing the random_placement method"""
+    async def test_random_placement(self):
+        """Testing the random_placement method"""
 
-#         old_board = deepcopy(copy_board)
+        old_board = deepcopy(self.board)
 
-#         new_board = await instance.get_field_list("horizontal", 4, copy_board, copy_ships)
-#         assert type(new_board) == dict
-#         assert new_board == copy_board
-#         assert new_board != old_board
+        with self.assertLogs():
+            new_board = await self.instance.get_field_list("horizontal", 4, self.board, self.ships)
+        assert type(new_board) == dict
+        assert new_board == self.board
+        assert new_board != old_board
 
-#         is_full = sum(1 for column_name in column_name_list if new_board[column_name][f"{column_name}1"])
-#         assert is_full > 0
+        is_full = sum(1 for column_name in column_name_list if new_board[column_name][f"{column_name}1"])
+        assert is_full > 0
 
 
-# class TestChooseWhoWillShotFirstMixin:
-#     """Testing the ChooseWhoWillShotFirstMixin class methods"""
+class TestChooseWhoWillShotFirstMixin(APITransactionTestCase):
+    """Testing the ChooseWhoWillShotFirstMixin class methods"""
 
-#     def test_is_turn_determined(self):
-#         """Testing the is_turn_determined method"""
+    fixtures = ["./src/game/consumers/test/test_data.json"]
 
-#     def test_choose_first_shooter(self):
-#         """Testing the choose_first_shooter method"""
-    
+    def setUp(self) -> None:
+        super().setUp()
+        self.user_1 = user_models.User.objects.get(id=1)
+
+        self.lobby_1 = models.Lobby.objects.get(id=1)
+        self.lobby_2 = models.Lobby.objects.get(id=2)
+
+        self.board_1 = models.Board.objects.get(id=1)
+        self.board_2 = models.Board.objects.get(id=2)
+        self.board_3 = models.Board.objects.get(id=3)
+        self.board_4 = models.Board.objects.get(id=4)
+
+        self.lobby_1_slug = str(self.lobby_1.slug)
+        self.lobby_2_slug = str(self.lobby_2.slug)
+
+        self.instance = mixins.ChooseWhoWillShotFirstMixin()
+        self.instance.user = self.user_1
+
+    async def test_is_turn_determined(self):
+        """Testing the is_turn_determined method"""
+
+        is_turn_determined = await self.instance.is_turn_determined(self.board_1, self.board_2)
+        assert is_turn_determined == True, is_turn_determined
+
+        is_turn_determined = await self.instance.is_turn_determined(self.board_3, self.board_4)
+        assert is_turn_determined == False, is_turn_determined
+
+    async def test_choose_first_shooter(self):
+        """Testing the choose_first_shooter method"""
+
+        response = await self.instance.choose_first_shooter(self.lobby_1_slug)
+        assert response is None, response
+
+        response = await self.instance.choose_first_shooter(self.lobby_2_slug)
+        assert type(response) == bool, response

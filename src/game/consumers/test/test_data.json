@@ -168,7 +168,7 @@
         "I": "{'I1': 'hit', 'I2': 'hit', 'I3': 'hit', 'I4': 'hit', 'I5': 'miss', 'I6': ' space 33.1 space 45.1', 'I7': 'miss', 'I8': ' space 33.1 space 45.1', 'I9': ' space 27.3 space 33.1', 'I10': 27.3}",
         "J": "{'J1': 'miss', 'J2': 'miss', 'J3': 'miss', 'J4': 'miss', 'J5': 'miss', 'J6': ' space 45.1', 'J7': 45.1, 'J8': ' space 45.1', 'J9': ' space 27.3', 'J10': ' space 27.3'}",
         "is_ready": true,
-        "is_my_turn": true,
+        "is_my_turn": false,
         "is_play_again": true,
         "lobby_id": 2,
         "user_id": 1
