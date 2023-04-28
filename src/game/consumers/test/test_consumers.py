@@ -1,15 +1,15 @@
 import logging
 
 from django.urls import path
-from django.test import TestCase
+from django.test.testcases import TransactionTestCase
 from rest_framework.authtoken.models import Token
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
 from channels.db import database_sync_to_async
 
-from .test_data import board, ships, column_name_list, row
+from .test_data import column_name_list
 from src.game.consumers import consumers
-from src.game import models
+from src.game import models, serializers
 from src.user.models import User
 from config.utilities import redis_instance
 from config.middlewares import TokenAuthMiddlewareStack
@@ -21,78 +21,69 @@ application = TokenAuthMiddlewareStack(URLRouter([
 ]))
 
 
-class Config(TestCase):
+class Config(TransactionTestCase):
+
+    fixtures = ["./src/game/consumers/test/test_data.json"]
         
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+    def setUp(self):
+        super().setUp()
         logging.warning(f"Number of keys in Redis database before running tests: {len(redis_instance.keys())}")
 
-        cls.user = User.objects.create(username='user1', password='password', email="user1@mail.ru")
-        cls.second_user = User.objects.create(username='second_user1', password='password', 
-                                                    email="second_user1@mail.ru")
-        cls.third_user = User.objects.create(username='third_user1', password='password',
-                                                  email="third_user1@gmail.com")
-
-        cls.user_token = Token.objects.create(user=cls.user)
-        cls.third_user_token = Token.objects.create(user=cls.third_user)
-    
-        cls.lobby = models.Lobby.objects.create(name="test", bet=10, time_to_move=30, time_to_placement=30)
-        cls.lobby.users.add(cls.user, cls.second_user)
-
-        cls.first_board = models.Board.objects.create(lobby_id_id=cls.lobby.id, user_id_id=cls.user.id, A=row)
-        cls.second_board = models.Board.objects.create(lobby_id_id=cls.lobby.id, user_id_id=cls.second_user.id)
-
-        models.Ship.objects.bulk_create([
-            models.Ship(name="singledeck", size=1, count=0, board_id_id=cls.first_board.id),
-            models.Ship(name="doubledeck", size=2, count=0, board_id_id=cls.first_board.id),
-            models.Ship(name="tripledeck", size=3, count=0, board_id_id=cls.first_board.id),
-            models.Ship(name="fourdeck", size=4, count=1, board_id_id=cls.first_board.id),
-            models.Ship(name="singledeck", size=1, count=4, board_id_id=cls.second_board.id),
-            models.Ship(name="doubledeck", size=2, count=3, board_id_id=cls.second_board.id),
-            models.Ship(name="tripledeck", size=3, count=2, board_id_id=cls.second_board.id),
-            models.Ship(name="fourdeck", size=4, count=1, board_id_id=cls.second_board.id),
-        ])
-
-        models.Message.objects.create(message="Hi, tester!", owner=cls.user.username, lobby_id_id=cls.lobby.id)
-        models.Message.objects.create(message="I'm a bot!", owner=cls.user.username, is_bot=True, lobby_id_id=cls.lobby.id)
+        self.lobby_1 = models.Lobby.objects.get(id=1)
+        self.lobby_2 = models.Lobby.objects.get(id=2)
+        self.user_1 = User.objects.get(id=1)
+        self.user_2 = User.objects.get(id=2)
+        self.token_1 = Token.objects.create(user_id=self.user_1.id)
+        self.token_2 = Token.objects.create(user_id=self.user_2.id)
         
-    @classmethod
-    def tearDownClass(cls) -> None:
+    def tearDown(self) -> None:
         logging.warning(f"Number of keys in Redis database before closing: {len(redis_instance.keys())}")
         redis_instance.flushall()
-        super().tearDownClass()
+        super().tearDown()
 
     async def launch_websocket_communicator(self, path: str):
         """Launch websocket communicator"""
 
         communicator = WebsocketCommunicator(application, path)
-        communicator.scope['url_route'] = {"kwargs": {"lobby_slug": self.lobby.slug}} if path != "/ws/lobbies/" else {}
-        communicator.scope["user"] = self.user
         connected, sub_protocol = await communicator.connect()
+
         assert connected
         assert sub_protocol is None
+
         return communicator
 
 
 class TestLobbyConsumer(Config):
     """Testing MainPageConsumer consumer"""
 
-    # async def test_refresh_board(self):
-    #     """Testing refresh board"""
+    def setUp(self):
+        super().setUp()
+        self.board_1 = models.Board.objects.get(id=1)
+        self.board_1_ships = models.Ship.objects.filter(board_id_id=self.board_1.id)
 
-    #     communicator = await self.launch_websocket_communicator(path=f"ws/lobby/{self.lobby.slug}/")
+        self.ser_board_1 = serializers.BoardSerializer(self.board_1).data
+        self.ser_board_1_ships = serializers.ShipSerializer(self.board_1_ships, many=True).data
 
-    #     assert communicator.scope["user"].id == self.user.id, communicator.scope["user"].id
-    #     assert self.first_board.A == row, self.first_board.A
+        self.board_column_list = {key: value for key, value in self.ser_board_1.items() if key in column_name_list}
 
-    #     test_data = {"type": "refresh_board", "board_id": self.first_board.id, "ships": ships, 
-    #             "board": board}
+    async def test_refresh_board(self):
+        """Testing refresh board"""
 
-    #     await communicator.send_json_to(test_data)
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        communicator = await self.launch_websocket_communicator(path=path)
+
+        assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
+        assert self.board_1.A[1:49] == "'A1': '', 'A2': ' space 7.1', 'A3': ' space 7.1'", self.board_1.A[1:49]
+
+        test_data = {"type": "refresh_board", "board_id": self.board_1.id, "ships": self.ser_board_1_ships, 
+                "board": self.board_column_list}
+
+        await communicator.send_json_to(test_data)
+        response = await communicator.receive_json_from()
+        assert False, response
 
 
-    #     await communicator.disconnect()
+        await communicator.disconnect()
 
     # async def test_create_new_game(self):
     #     """Testing create_new_game"""
