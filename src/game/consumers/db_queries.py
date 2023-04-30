@@ -1,6 +1,6 @@
 import uuid
 
-from datetime import datetime
+from django.utils import timezone
 from channels.db import database_sync_to_async
 
 from .. import models
@@ -98,7 +98,7 @@ def get_lobby_by_slug(slug: uuid) -> models.Lobby:
 def set_winner_in_lobby(lobby_slug: uuid, username: str) -> None:
     """Set winner in a lobby"""
 
-    models.Lobby.objects.filter(slug=lobby_slug).update(winner=username, finished_in=datetime.now())
+    models.Lobby.objects.filter(slug=lobby_slug).update(winner=username, finished_in=timezone.now())
 
 
 @database_sync_to_async

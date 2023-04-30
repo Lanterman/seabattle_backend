@@ -19,21 +19,14 @@ class RefreshBoardMixin:
     def _clear_board(board: dict) -> tuple:
         """Refresh a board and get a list of filled field names"""
 
-        field_name_list = []
-
         for column in board.values():
             for key in column:
                 if column[key]:
-                    if column[key] != "space":
-                        field_name_list.append(key)
                     column[key] = ""
-
-        return field_name_list
     
     async def clear_board(self, board_id: int, board: dict) -> list:
-        field_name_list = self._clear_board(board)
+        self._clear_board(board)
         await self.perform_refresh_board(board_id, board)
-        return field_name_list
     
     async def perform_refresh_board(self, board_id: int, board: dict) -> None:
         await db_queries.update_board(board_id, board)
@@ -220,7 +213,7 @@ class CountDownTimerMixin:
     def remove_lobby_from_redis(lobby_slug: uuid.uuid4) -> None:
         redis_instance.delete(lobby_slug)
 
-    async def _countdown(self, lobby_slug: uuid.uuid4, time_left: int) -> int:
+    async def _countdown(self, lobby_slug: uuid.uuid4, time_left: int | None) -> int:
         """Timer"""
 
         current_turn = redis_instance.hget(lobby_slug, "current_turn")
@@ -442,12 +435,11 @@ class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
     async def refresh(self, board_id: int, ships: list, board: dict) -> None:
         """Refresh a board model instance and ship model instances"""
 
-        field_name_list = await self.clear_board(board_id, board)
+        await self.clear_board(board_id, board)
         updated_ships = await self.update_ships(board_id, ships)
         content = {
             "type": "clear_board", 
             "board": board, 
-            "field_name_list": field_name_list, 
             "ships": updated_ships
         }
 

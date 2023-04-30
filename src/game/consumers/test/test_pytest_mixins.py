@@ -25,9 +25,8 @@ class TestRefreshBoardMixin:
 
         assert copy_board[test_input[0]][test_input] == output, copy_board[test_input[0]][test_input]
 
-        field_name_list = mixins.RefreshBoardMixin._clear_board(copy_board)
+        mixins.RefreshBoardMixin._clear_board(copy_board)
 
-        assert len(field_name_list) == 96, len(field_name_list)
         assert copy_board != board, copy_board
         assert board[test_input[0]][test_input] == output, board[test_input[0]][test_input]
         assert copy_board[test_input[0]][test_input] == "", copy_board[test_input[0]][test_input]

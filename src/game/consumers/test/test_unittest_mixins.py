@@ -36,18 +36,15 @@ class TestRefreshBoardMixin(APITestCase):
         assert self.ser_board_3["A"]["A2"] == "", self.ser_board_3["A"]["A2"]
 
         board = {key: value for key, value in self.ser_board_1.items() if key in column_name_list}
-        field_name_list = self.instance._clear_board(board)
-        assert len(field_name_list) == 85, len(field_name_list)
+        self.instance._clear_board(board)
         assert self.ser_board_1["A"]["A2"] == "", self.ser_board_1["A"]["A2"]
 
         board = {key: value for key, value in self.ser_board_2.items() if key in column_name_list}
-        field_name_list = self.instance._clear_board(board)
-        assert len(field_name_list) == 93, len(field_name_list)
+        self.instance._clear_board(board)
         assert self.ser_board_2["A"]["A2"] == "", self.ser_board_2["A"]["A2"]
 
         board = {key: value for key, value in self.ser_board_3.items() if key in column_name_list}
-        field_name_list = self.instance._clear_board(board)
-        assert len(field_name_list) == 97, len(field_name_list)
+        self.instance._clear_board(board)
         assert self.ser_board_3["A"]["A2"] == "", self.ser_board_3["A"]["A2"]
 
 
