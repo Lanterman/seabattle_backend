@@ -1,4 +1,15 @@
+import redis
+from . import settings
+
 from django.db import models
+
+
+redis_instance = redis.Redis(
+    host=settings.REDIS_HOST, 
+    port=settings.REDIS_PORT, 
+    decode_responses=True,
+    encoding="utf-8",
+    )
 
 
 class Bet(models.IntegerChoices):
@@ -14,8 +25,8 @@ class Bet(models.IntegerChoices):
     ONE_THOUSAND = 1000, "1000$"
 
 
-class TimePerMove(models.IntegerChoices):
-    """Time to move"""
+class ChooseTime(models.IntegerChoices):
+    """Choose time"""
 
     THIRTY_SECONDS = 30, "30 sec"
     SIXTY_SECONDS = 60, "60 sec"

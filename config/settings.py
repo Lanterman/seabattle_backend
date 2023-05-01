@@ -10,12 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
+import logging
 
 from pathlib import Path
 from dotenv import load_dotenv
 
 
 load_dotenv(dotenv_path=".env")
+logging.basicConfig(format="[%(asctime)s] | %(levelname)s: %(message)s", level=logging.INFO, datefmt='%m.%d.%Y %H:%M:%S')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'rest_framework.authtoken',
     'channels',
     'corsheaders',
     'debug_toolbar',
@@ -146,8 +149,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-USE_L10N = False
-
 DATETIME_FORMAT = "d.m.Y G:i:s"
 
 DATETIME_INPUT_FORMATS = ["d.m.Y G:i:s"]
@@ -169,7 +170,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
-    # 'DEFAULT_AUTHENTICATION_CLASSES': (
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
     #     'rest_framework.authentication.TokenAuthentication',
     #     'rest_framework_simplejwt.authentication.JWTAuthentication',
     # ),
@@ -192,3 +195,15 @@ INTERNAL_IPS = [
 LOGIN_REDIRECT_URL = "/api/v1/"
 
 AUTH_USER_MODEL = "user.User"
+
+REDIS_HOST = os.environ.get('DOC_HOST_CL', os.environ['REDIS_HOST'])
+REDIS_PORT = 6379
+REDIS_PASSWORD = os.environ.get('DOC_REDIS_PASSWORD', os.environ['REDIS_PASSWORD'])
+
+CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
+CELERY_BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_IGNORE_RESULT = True

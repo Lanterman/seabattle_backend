@@ -14,11 +14,18 @@ class Lobby(models.Model):
     """Lobby model"""
 
     name: str = models.CharField("lobby name", max_length=100, help_text="Required")
-    slug: uuid = models.UUIDField(max_length=250, verbose_name="URL", default=uuid.uuid4, help_text="Required")
+    slug: uuid.uuid4 = models.UUIDField(
+        max_length=250, verbose_name="URL", default=uuid.uuid4, help_text="Required", db_index=True
+        )
     created_in: datetime.datetime = models.DateTimeField(auto_now_add=True)
     finished_in: datetime.datetime = models.DateTimeField(blank=True, null=True)
     bet: int = models.IntegerField("game bet", choices=utilities.Bet.choices, help_text="Required")
-    time_to_move: int = models.IntegerField("time to move", choices=utilities.TimePerMove.choices, help_text="Required")
+    time_to_move: int = models.IntegerField(
+        choices=utilities.ChooseTime.choices, default=utilities.ChooseTime.THIRTY_SECONDS
+        )
+    time_to_placement: int = models.IntegerField(
+        choices=utilities.ChooseTime.choices, default=utilities.ChooseTime.THIRTY_SECONDS
+        )
     password: str = models.CharField(max_length=100, blank=True)
     winner: str = models.CharField(max_length=150, blank=True)
     users: Optional[list[User]] = models.ManyToManyField(to=User, related_name="lobbies", help_text="Required")
@@ -30,10 +37,10 @@ class Lobby(models.Model):
         unique_together = ["slug"]
 
     def __str__(self):
-        return f"{self.id} - name: {self.name}"
+        return f"lobby {self.name}"
 
     def get_absolute_url(self):
-        return reverse('lobby_detail', kwargs={'lobby_detail': self.slug})
+        return reverse('lobby-detail', kwargs={'slug': self.slug})
 
 
 class Board(models.Model):
@@ -49,6 +56,9 @@ class Board(models.Model):
     H: str = models.TextField("column H", default=utilities.column_generate("H"))
     I: str = models.TextField("column I", default=utilities.column_generate("I"))
     J: str = models.TextField("column J", default=utilities.column_generate("J"))
+    is_ready: bool = models.BooleanField("is ready", default=False)
+    is_my_turn: bool = models.BooleanField("is my turn", default=False)
+    is_play_again: bool = models.BooleanField("is play again", null=True)
     lobby_id: Lobby = models.ForeignKey(to=Lobby, verbose_name="lobby", on_delete=models.CASCADE, related_name="boards")
     user_id: User = models.ForeignKey(to=User, verbose_name="user", on_delete=models.CASCADE, related_name="board_set", blank=True, null=True)
 
@@ -58,7 +68,7 @@ class Board(models.Model):
         ordering = ["id"]
 
     def __str__(self):
-        return f"{self.id} - name: {self.lobby_id}"
+        return f"board {self.id}: {self.lobby_id}"
 
 
 class Ship(models.Model):
@@ -77,3 +87,21 @@ class Ship(models.Model):
 
     def __str__(self):
         return f"{self.id} - name: {self.name}"
+
+
+class Message(models.Model):
+    """Message model"""
+
+    message: str = models.TextField("message", max_length=300)
+    owner: str = models.CharField("owner", max_length=150)
+    is_bot: bool = models.BooleanField("is bot", default=False)
+    created_in: datetime.datetime = models.DateTimeField(auto_now_add=True)
+    lobby_id: Lobby = models.ForeignKey(to=Lobby, on_delete=models.CASCADE, related_name="messages", verbose_name="lobby")
+
+    class Meta:
+        verbose_name = "Message"
+        verbose_name_plural = "Messages"
+        ordering = ["-id"]
+    
+    def _str_(self):
+        return f"Chat message {self.id}"

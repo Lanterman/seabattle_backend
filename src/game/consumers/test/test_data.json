@@ -1,0 +1,407 @@
+[
+{
+    "model": "user.user",
+    "pk": 1,
+    "fields": {
+        "password": "pbkdf2_sha256$390000$Y3k9VgvSWahH5B1Hnhx4Jj$FWBCvZYz79au/4rMrZWjZUb9SfN61b2xBrYv9V49gc4=",
+        "last_login": "2023-04-13T16:00:23.175Z",
+        "is_superuser": true,
+        "username": "admin",
+        "first_name": "admin",
+        "last_name": "Dima",
+        "is_staff": true,
+        "is_active": true,
+        "date_joined": "2023-04-03T15:35:40.133Z",
+        "slug": "admin",
+        "mobile_number": "",
+        "cash": 100,
+        "created_in": "2023-04-03T15:35:40.354Z",
+        "updated_in": null,
+        "photo": "",
+        "email": "admin@mail.ru",
+        "hashed_password": "admin",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "user.user",
+    "pk": 2,
+    "fields": {
+        "password": "pbkdf2_sha256$390000$hV4dwnnvZKaRkAoKNoI1I0$gtviiAmetarJ9tH1pKbHQPpYI3RNt5/03acTeNESHCM=",
+        "last_login": null,
+        "is_superuser": true,
+        "username": "lanterman",
+        "first_name": "Dima",
+        "last_name": "kliv",
+        "is_staff": true,
+        "is_active": true,
+        "date_joined": "2023-04-03T15:36:24.376Z",
+        "slug": "lanterman",
+        "mobile_number": "",
+        "cash": 100,
+        "created_in": "2023-04-03T15:36:24.599Z",
+        "updated_in": null,
+        "photo": "",
+        "email": "kliv@mail.ru",
+        "hashed_password": "admin",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "user.user",
+    "pk": 3,
+    "fields": {
+        "password": "",
+        "last_login": null,
+        "is_superuser": false,
+        "username": "user",
+        "first_name": "test",
+        "last_name": "user",
+        "is_staff": true,
+        "is_active": true,
+        "date_joined": "2023-04-08T07:12:24.790Z",
+        "slug": "test-user",
+        "mobile_number": "",
+        "cash": 100,
+        "created_in": "2023-04-08T07:12:24.792Z",
+        "updated_in": null,
+        "photo": "",
+        "email": "admin@mail.ru",
+        "hashed_password": "admin",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "game.lobby",
+    "pk": 1,
+    "fields": {
+        "name": "string",
+        "slug": "acf08b23-eed2-4fbf-9d60-53062500aff3",
+        "created_in": "2023-04-03T15:41:24.572Z",
+        "finished_in": "2023-04-18T00:18:42Z",
+        "bet": 100,
+        "time_to_move": 30,
+        "time_to_placement": 30,
+        "password": "admin",
+        "winner": "",
+        "users": [
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "game.lobby",
+    "pk": 2,
+    "fields": {
+        "name": "string1",
+        "slug": "15505266-28a3-4620-b616-a1cfbe6ce300",
+        "created_in": "2023-04-03T15:41:38.043Z",
+        "finished_in": "2023-04-22T17:06:39.270Z",
+        "bet": 50,
+        "time_to_move": 30,
+        "time_to_placement": 30,
+        "password": "admin",
+        "winner": "lanterman",
+        "users": [
+            1
+        ]
+    }
+},
+{
+    "model": "game.board",
+    "pk": 1,
+    "fields": {
+        "A": "{'A1': '', 'A2': ' space 7.1', 'A3': ' space 7.1', 'A4': ' space 7.1', 'A5': ' space 7.1', 'A6': '', 'A7': ' space 13.1', 'A8': ' space 13.1', 'A9': ' space 1.3 space 13.1', 'A10': ' space 1.3'}",
+        "B": "{'B1': ' space 1.2', 'B2': ' space 1.2 space 7.1', 'B3': 7.1, 'B4': 7.1, 'B5': ' space 7.1 space 7.2', 'B6': ' space 7.2', 'B7': ' space 7.2 space 13.1', 'B8': 13.1, 'B9': ' space 1.3 space 13.1', 'B10': 1.3}",
+        "C": "{'C1': 1.2, 'C2': ' space 1.2 space 7.1 space 7.3', 'C3': ' space 7.1 space 7.3', 'C4': ' space 7.1 space 7.3', 'C5': ' space 7.1 space 7.2', 'C6': 7.2, 'C7': ' space 7.2 space 13.1', 'C8': 13.1, 'C9': ' space 1.3 space 13.1', 'C10': ' space 1.3'}",
+        "D": "{'D1': ' space 1.2', 'D2': ' space 1.2 space 7.3', 'D3': 7.3, 'D4': ' space 7.3', 'D5': ' space 7.2', 'D6': 7.2, 'D7': ' space 7.2 space 13.1', 'D8': 13.1, 'D9': ' space 13.1', 'D10': ''}",
+        "E": "{'E1': '', 'E2': ' space 7.3', 'E3': 7.3, 'E4': ' space 7.3', 'E5': ' space 7.2', 'E6': ' space 7.2', 'E7': ' space 7.2 space 13.1', 'E8': ' space 13.1', 'E9': ' space 13.1', 'E10': ''}",
+        "F": "{'F1': ' space 19.1', 'F2': ' space 7.3 space 19.1', 'F3': ' space 7.3', 'F4': ' space 7.3', 'F5': '', 'F6': '', 'F7': '', 'F8': ' space 1.1', 'F9': ' space 1.1', 'F10': ' space 1.1'}",
+        "G": "{'G1': 19.1, 'G2': ' space 19.1', 'G3': '', 'G4': '', 'G5': '', 'G6': '', 'G7': '', 'G8': ' space 1.1', 'G9': 1.1, 'G10': ' space 1.1'}",
+        "H": "{'H1': 19.1, 'H2': ' space 19.1', 'H3': ' space 1.4', 'H4': ' space 1.4', 'H5': ' space 1.4', 'H6': '', 'H7': '', 'H8': ' space 1.1', 'H9': ' space 1.1', 'H10': ' space 1.1'}",
+        "I": "{'I1': 19.1, 'I2': ' space 19.1', 'I3': ' space 1.4', 'I4': 1.4, 'I5': ' space 1.4', 'I6': ' space 13.2', 'I7': ' space 13.2', 'I8': ' space 13.2', 'I9': ' space 13.2', 'I10': ' space 13.2'}",
+        "J": "{'J1': 19.1, 'J2': ' space 19.1', 'J3': ' space 1.4', 'J4': ' space 1.4', 'J5': ' space 1.4', 'J6': ' space 13.2', 'J7': 13.2, 'J8': 13.2, 'J9': 13.2, 'J10': ' space 13.2'}",
+        "is_ready": false,
+        "is_my_turn": false,
+        "is_play_again": null,
+        "lobby_id": 1,
+        "user_id": 1
+    }
+},
+{
+    "model": "game.board",
+    "pk": 2,
+    "fields": {
+        "A": "{'A1': ' space 26.3', 'A2': 26.3, 'A3': 26.3, 'A4': 26.3, 'A5': 26.3, 'A6': ' space 26.3 space 32.1', 'A7': 32.1, 'A8': 32.1, 'A9': 32.1, 'A10': ' space 32.1'}",
+        "B": "{'B1': ' space 26.3', 'B2': ' space 26.3', 'B3': ' space 26.3', 'B4': ' space 26.3', 'B5': ' space 26.3', 'B6': ' space 26.3 space 32.1', 'B7': ' space 32.1', 'B8': ' space 32.1 space 38.1', 'B9': ' space 32.1 space 38.1', 'B10': ' space 32.1 space 38.1'}",
+        "C": "{'C1': '', 'C2': ' space 26.2', 'C3': ' space 26.2', 'C4': ' space 26.2', 'C5': ' space 38.2', 'C6': ' space 38.2', 'C7': ' space 38.2', 'C8': ' space 38.1 space 38.2', 'C9': 38.1, 'C10': 38.1}",
+        "D": "{'D1': '', 'D2': ' space 26.2', 'D3': 26.2, 'D4': ' space 26.2', 'D5': ' space 38.2', 'D6': 38.2, 'D7': 38.2, 'D8': ' space 38.1 space 38.2', 'D9': ' space 38.1', 'D10': ' space 38.1'}",
+        "E": "{'E1': ' space 32.2', 'E2': ' space 26.2 space 32.2', 'E3': 26.2, 'E4': ' space 26.2', 'E5': ' space 26.1 space 38.2', 'E6': ' space 26.1 space 38.2', 'E7': ' space 26.1 space 38.2', 'E8': ' space 26.1 space 38.2', 'E9': ' space 26.1', 'E10': ' space 26.1'}",
+        "F": "{'F1': 32.2, 'F2': ' space 26.2 space 32.2', 'F3': 26.2, 'F4': ' space 26.2', 'F5': ' space 26.1', 'F6': 26.1, 'F7': 26.1, 'F8': 26.1, 'F9': 26.1, 'F10': ' space 26.1'}",
+        "G": "{'G1': 32.2, 'G2': ' space 26.2 space 32.2', 'G3': 26.2, 'G4': ' space 26.2', 'G5': ' space 26.1', 'G6': ' space 26.1', 'G7': ' space 26.1', 'G8': ' space 26.1', 'G9': ' space 26.1 space 32.3', 'G10': ' space 26.1 space 32.3'}",
+        "H": "{'H1': 32.2, 'H2': ' space 26.2 space 32.2', 'H3': ' space 26.2', 'H4': ' space 26.2', 'H5': '', 'H6': '', 'H7': '', 'H8': '', 'H9': ' space 32.3', 'H10': 32.3}",
+        "I": "{'I1': ' space 32.2', 'I2': ' space 32.2 space 44.1', 'I3': ' space 44.1', 'I4': ' space 26.4 space 44.1', 'I5': ' space 26.4', 'I6': ' space 26.4', 'I7': ' space 26.4', 'I8': ' space 26.4', 'I9': ' space 26.4 space 32.3', 'I10': 32.3}",
+        "J": "{'J1': '', 'J2': ' space 44.1', 'J3': 44.1, 'J4': ' space 26.4 space 44.1', 'J5': 26.4, 'J6': 26.4, 'J7': 26.4, 'J8': 26.4, 'J9': ' space 26.4 space 32.3', 'J10': 32.3}",
+        "is_ready": false,
+        "is_my_turn": true,
+        "is_play_again": null,
+        "lobby_id": 1,
+        "user_id": 2
+    }
+},
+{
+    "model": "game.board",
+    "pk": 3,
+    "fields": {
+        "A": "{'A1': '', 'A2': '', 'A3': 'miss', 'A4': 'miss', 'A5': 'miss', 'A6': 'miss', 'A7': 'miss', 'A8': 'miss', 'A9': ' space 33.3', 'A10': 33.3}",
+        "B": "{'B1': 'miss', 'B2': 'miss', 'B3': 'miss', 'B4': 'hit', 'B5': 'hit', 'B6': 'hit', 'B7': 'hit', 'B8': 'miss', 'B9': ' space 33.3', 'B10': 33.3}",
+        "C": "{'C1': 'hit', 'C2': 'miss', 'C3': 'miss', 'C4': 'miss', 'C5': 'miss', 'C6': 'miss', 'C7': 'miss', 'C8': 'miss', 'C9': ' space 33.2 space 33.3', 'C10': 33.3}",
+        "D": "{'D1': 'hit', 'D2': 'miss', 'D3': 'miss', 'D4': 'hit', 'D5': 'miss', 'D6': 33.2, 'D7': 33.2, 'D8': 33.2, 'D9': ' space 33.2 space 33.3', 'D10': ' space 33.3'}",
+        "E": "{'E1': 'miss', 'E2': 'miss', 'E3': 'miss', 'E4': 'hit', 'E5': 'miss', 'E6': ' space 33.2 space 45.1', 'E7': 'miss', 'E8': ' space 33.2', 'E9': ' space 27.3 space 33.2', 'E10': ' space 27.3'}",
+        "F": "{'F1': ' space 39.2', 'F2': 39.2, 'F3': 'miss', 'F4': 'hit', 'F5': 'miss', 'F6': 45.1, 'F7': ' space 45.1', 'F8': '', 'F9': ' space 27.3', 'F10': 27.3}",
+        "G": "{'G1': ' space 39.2', 'G2': 39.2, 'G3': 'miss', 'G4': 'hit', 'G5': 'miss', 'G6': ' space 33.1 space 45.1', 'G7': ' space 33.1 space 45.1', 'G8': ' space 33.1', 'G9': ' space 27.3 space 33.1', 'G10': 27.3}",
+        "H": "{'H1': 'miss', 'H2': 'miss', 'H3': 'miss', 'H4': 'miss', 'H5': 'miss', 'H6': 33.1, 'H7': 33.1, 'H8': 33.1, 'H9': ' space 27.3 space 33.1', 'H10': 27.3}",
+        "I": "{'I1': 'hit', 'I2': 'hit', 'I3': 'hit', 'I4': 'hit', 'I5': 'miss', 'I6': ' space 33.1 space 45.1', 'I7': 'miss', 'I8': ' space 33.1 space 45.1', 'I9': ' space 27.3 space 33.1', 'I10': 27.3}",
+        "J": "{'J1': 'miss', 'J2': 'miss', 'J3': 'miss', 'J4': 'miss', 'J5': 'miss', 'J6': ' space 45.1', 'J7': 45.1, 'J8': ' space 45.1', 'J9': ' space 27.3', 'J10': ' space 27.3'}",
+        "is_ready": true,
+        "is_my_turn": false,
+        "is_play_again": true,
+        "lobby_id": 2,
+        "user_id": 1
+    }
+},
+{
+    "model": "game.board",
+    "pk": 4,
+    "fields": {
+        "A": "{'A1': 34.3, 'A2': 34.3, 'A3': 34.3, 'A4': ' space 34.3 space 40.1', 'A5': 40.1, 'A6': ' space 40.1', 'A7': '', 'A8': ' space 28.2', 'A9': 28.2, 'A10': ' space 28.2'}",
+        "B": "{'B1': ' space 34.3', 'B2': ' space 34.3', 'B3': ' space 34.3', 'B4': ' space 34.3 space 40.1', 'B5': 40.1, 'B6': ' space 40.1', 'B7': '', 'B8': ' space 28.2', 'B9': 28.2, 'B10': ' space 28.2'}",
+        "C": "{'C1': ' space 28.4', 'C2': ' space 28.4', 'C3': ' space 28.4', 'C4': ' space 28.4 space 40.1', 'C5': ' space 28.4 space 40.1', 'C6': ' space 40.1', 'C7': '', 'C8': ' space 28.2', 'C9': 28.2, 'C10': ' space 28.2'}",
+        "D": "{'D1': 28.4, 'D2': 28.4, 'D3': 28.4, 'D4': 'hit', 'D5': 'miss', 'D6': '', 'D7': '', 'D8': ' space 28.2', 'D9': 28.2, 'D10': ' space 28.2'}",
+        "E": "{'E1': 'miss', 'E2': 'miss', 'E3': 'miss', 'E4': 'miss', 'E5': 'miss', 'E6': 'miss', 'E7': '', 'E8': ' space 28.2', 'E9': ' space 28.2 space 34.2', 'E10': ' space 28.2 space 34.2'}",
+        "F": "{'F1': 'miss', 'F2': 'hit', 'F3': 'hit', 'F4': 'hit', 'F5': 'hit', 'F6': 'miss', 'F7': ' space 28.3', 'F8': ' space 28.3', 'F9': ' space 28.3 space 34.2', 'F10': 34.2}",
+        "G": "{'G1': 'miss', 'G2': 'miss', 'G3': 'miss', 'G4': 'miss', 'G5': 'miss', 'G6': 'miss', 'G7': ' space 28.3', 'G8': 28.3, 'G9': ' space 28.3 space 34.2', 'G10': 34.2}",
+        "H": "{'H1': 'hit', 'H2': 'miss', 'H3': 'hit', 'H4': 'hit', 'H5': 'hit', 'H6': 'miss', 'H7': ' space 28.3', 'H8': 28.3, 'H9': ' space 28.3 space 34.2', 'H10': 34.2}",
+        "I": "{'I1': 'miss', 'I2': 'miss', 'I3': 'miss', 'I4': 'miss', 'I5': 'miss', 'I6': 'miss', 'I7': ' space 28.3', 'I8': 28.3, 'I9': ' space 28.3 space 34.2', 'I10': ' space 34.2'}",
+        "J": "{'J1': 'miss', 'J2': 'hit', 'J3': 'hit', 'J4': 'miss', 'J5': '', 'J6': '', 'J7': ' space 28.3', 'J8': 28.3, 'J9': ' space 28.3', 'J10': ''}",
+        "is_ready": true,
+        "is_my_turn": false,
+        "is_play_again": false,
+        "lobby_id": 2,
+        "user_id": null
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 1,
+    "fields": {
+        "name": "fourdeck",
+        "plane": "horizontal",
+        "size": 4,
+        "count": 1,
+        "board_id": 1
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 2,
+    "fields": {
+        "name": "fourdeck",
+        "plane": "horizontal",
+        "size": 4,
+        "count": 0,
+        "board_id": 2
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 3,
+    "fields": {
+        "name": "fourdeck",
+        "plane": "horizontal",
+        "size": 4,
+        "count": 0,
+        "board_id": 3
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 4,
+    "fields": {
+        "name": "fourdeck",
+        "plane": "horizontal",
+        "size": 4,
+        "count": 0,
+        "board_id": 4
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 5,
+    "fields": {
+        "name": "tripledeck",
+        "plane": "horizontal",
+        "size": 3,
+        "count": 2,
+        "board_id": 1
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 6,
+    "fields": {
+        "name": "tripledeck",
+        "plane": "horizontal",
+        "size": 3,
+        "count": 0,
+        "board_id": 2
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 7,
+    "fields": {
+        "name": "tripledeck",
+        "plane": "horizontal",
+        "size": 3,
+        "count": 0,
+        "board_id": 3
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 8,
+    "fields": {
+        "name": "tripledeck",
+        "plane": "horizontal",
+        "size": 3,
+        "count": 0,
+        "board_id": 4
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 9,
+    "fields": {
+        "name": "doubledeck",
+        "plane": "horizontal",
+        "size": 2,
+        "count": 3,
+        "board_id": 1
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 10,
+    "fields": {
+        "name": "doubledeck",
+        "plane": "horizontal",
+        "size": 2,
+        "count": 0,
+        "board_id": 2
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 11,
+    "fields": {
+        "name": "doubledeck",
+        "plane": "horizontal",
+        "size": 2,
+        "count": 0,
+        "board_id": 3
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 12,
+    "fields": {
+        "name": "doubledeck",
+        "plane": "horizontal",
+        "size": 2,
+        "count": 0,
+        "board_id": 4
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 13,
+    "fields": {
+        "name": "singledeck",
+        "plane": "horizontal",
+        "size": 1,
+        "count": 4,
+        "board_id": 1
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 14,
+    "fields": {
+        "name": "singledeck",
+        "plane": "horizontal",
+        "size": 1,
+        "count": 0,
+        "board_id": 2
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 15,
+    "fields": {
+        "name": "singledeck",
+        "plane": "horizontal",
+        "size": 1,
+        "count": 0,
+        "board_id": 3
+    }
+},
+{
+    "model": "game.ship",
+    "pk": 16,
+    "fields": {
+        "name": "singledeck",
+        "plane": "horizontal",
+        "size": 1,
+        "count": 0,
+        "board_id": 4
+    }
+},
+{
+    "model": "game.message",
+    "pk": 1,
+    "fields": {
+        "message": "Admin connected to the game.",
+        "owner": "admin",
+        "is_bot": true,
+        "created_in": "2023-04-18T00:22:43.770Z",
+        "lobby_id": 2
+    }
+},
+{
+    "model": "game.message",
+    "pk": 2,
+    "fields": {
+        "message": "Admin want to play again.",
+        "owner": "admin",
+        "is_bot": true,
+        "created_in": "2023-04-18T00:23:07.359Z",
+        "lobby_id": 2
+    }
+},
+{
+    "model": "game.message",
+    "pk": 3,
+    "fields": {
+        "message": "qwe",
+        "owner": "admin",
+        "is_bot": false,
+        "created_in": "2023-04-22T17:04:57.612Z",
+        "lobby_id": 2
+    }
+}
+]

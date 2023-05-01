@@ -1,45 +1,31 @@
 import logging
-
-from channels.db import database_sync_to_async
-
-from .. import models
+import json
 
 
-def create_column_dict(column_name_list: list, board: list) -> dict:
-    """Create dictionary of columns from list board of columns"""
+def confert_to_json(board: dict) -> None:
+    """Convert board to json format"""
 
-    column_dict = {column_name: board[index] for index, column_name in enumerate(column_name_list)}
-    return column_dict
-
-
-@database_sync_to_async
-def update_board(board_id: int, column_dict: dict) -> None:
-    """Get board for update"""
-
-    models.Board.objects.filter(id=board_id).update(**column_dict)
+    for key, value in board.items():
+        board[key] = json.loads(value.replace("'", '"'))
 
 
-@database_sync_to_async
-def get_ships(board_id: int) -> list:
-    """Get ships for the board"""
+def clear_board(board_columns: dict) -> dict:
+    """Clear board"""
 
-    query = models.Ship.objects.filter(board_id=board_id)
-    return list(query)
-
-
-@database_sync_to_async
-def update_count_of_ship(ship_id: int, ship_count: int) -> None:
-    """Update count of a ship"""
-
-    models.Ship.objects.filter(id=ship_id).update(count=ship_count - 1)
+    for column_name, column_value in board_columns.items():
+        for field_name, field_value in column_value.items():
+            if field_value:
+                board_columns[column_name][field_name] = ""
 
 
-@database_sync_to_async
-def update_count_of_ships(ships: list, ship_count_tuple: tuple) -> None:
-    """Update ships to database"""
+def determine_number_of_enemy_ships(board: dict) -> int:
+        """Determine number of living enemy ships"""
 
-    ships[0].count = ship_count_tuple[0]
-    ships[1].count = ship_count_tuple[1]
-    ships[2].count = ship_count_tuple[2]
-    ships[3].count = ship_count_tuple[3]
-    models.Ship.objects.bulk_update(ships, ["count"])
+        enemy_ships_list = []
+
+        for _, column_value in board.items():
+            for _, value in column_value.items():
+                if value not in enemy_ships_list and type(value) == float:
+                    enemy_ships_list.append(value)
+        
+        return len(enemy_ships_list)
