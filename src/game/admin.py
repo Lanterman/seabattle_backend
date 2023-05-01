@@ -27,7 +27,7 @@ class LobbyAdmin(admin.ModelAdmin):
     raw_id_fields = ("users", )
     actions = ["delete_winner"]
 
-    @admin.action(description="Delete winner")
+    @admin.action(description="Delete winner of selected boards")
     def delete_winner(self, request, queryset):
         updated = queryset.update(winner="", finished_in=None)
         self.message_user(request, ngettext(
@@ -51,9 +51,10 @@ class BoardAdmin(admin.ModelAdmin):
     list_select_related = True
     inlines = [ShipInlince]
     raw_id_fields = ("lobby_id", "user_id")
-    actions = ["make_prepared", "make_unprepared", "clear_is_play_again_field", "clear_all_boolean_fields"]
+    actions = ["make_prepared", "make_unprepared", "clear_is_play_again_field", "clear_all_boolean_fields", 
+               "remove_board_owner", "clear_columns"]
 
-    @admin.action(description="Make prepared")
+    @admin.action(description="Prepare selected boards")
     def make_prepared(self, request, queryset):
         updated = queryset.update(is_ready=True)
         self.message_user(request, ngettext(
@@ -62,7 +63,7 @@ class BoardAdmin(admin.ModelAdmin):
             updated,
         ) % updated, messages.SUCCESS)
     
-    @admin.action(description="Make unprepared")
+    @admin.action(description="Cancel preparation of selected boards")
     def make_unprepared(self, request, queryset):
         updated = queryset.update(is_ready=False)
         self.message_user(request, ngettext(
@@ -71,7 +72,7 @@ class BoardAdmin(admin.ModelAdmin):
             updated,
         ) % updated, messages.SUCCESS)
     
-    @admin.action(description="Clear an is_play_again field")
+    @admin.action(description="Clear the 'Is play Again' field of selected boards")
     def clear_is_play_again_field(self, request, queryset):
         updated = queryset.update(is_play_again=None)
         self.message_user(request, ngettext(
@@ -80,12 +81,21 @@ class BoardAdmin(admin.ModelAdmin):
             updated,
         ) % updated, messages.SUCCESS)
     
-    @admin.action(description="Clear all boolean field")
+    @admin.action(description="Clear all boolean field of selected boards")
     def clear_all_boolean_fields(self, request, queryset):
         updated = queryset.update(is_ready=False, is_my_turn=False, is_play_again=None)
         self.message_user(request, ngettext(
             'Сleared all boolean fields on %d board.',
             'Сleared all boolean fields on %d boards.',
+            updated,
+        ) % updated, messages.SUCCESS)
+    
+    @admin.action(description="Remove owner of selected boards")
+    def remove_board_owner(self, request, queryset):
+        updated = queryset.update(user_id=None)
+        self.message_user(request, ngettext(
+            '%d board owner was successfully deleted.',
+            '%d boards owner were successfully deleted.',
             updated,
         ) % updated, messages.SUCCESS)
 

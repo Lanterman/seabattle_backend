@@ -78,7 +78,7 @@ def get_lobby_boards(lobby_slug: uuid) -> list:
 
 
 @database_sync_to_async
-def update_boards(bool_value: bool, my_board, enemy_board) -> list:
+def update_boards(bool_value: bool, my_board, enemy_board) -> None:
     """Update your_turn field of Boards model instances"""
 
     my_board.is_my_turn = bool_value
@@ -124,7 +124,7 @@ def update_user_id_of_board(board_id: int, user_id: int) -> None:
 
 
 @database_sync_to_async
-def create_message(lobby_id: int, username: str, message: str, is_bot: bool) -> None:
+def create_message(lobby_id: int, username: str, message: str, is_bot: bool) -> models.Message:
     """Create message model instance and return it"""
 
     query = models.Message.objects.create(message=message, owner=username, is_bot=is_bot, lobby_id_id=lobby_id)

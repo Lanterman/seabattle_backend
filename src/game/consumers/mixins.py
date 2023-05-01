@@ -16,7 +16,7 @@ class RefreshBoardMixin:
     """Update a model instance"""
 
     @staticmethod
-    def _clear_board(board: dict) -> tuple:
+    def _clear_board(board: dict) -> None:
         """Refresh a board and get a list of filled field names"""
 
         for column in board.values():
@@ -24,7 +24,7 @@ class RefreshBoardMixin:
                 if column[key]:
                     column[key] = ""
     
-    async def clear_board(self, board_id: int, board: dict) -> list:
+    async def clear_board(self, board_id: int, board: dict) -> None:
         self._clear_board(board)
         await self.perform_refresh_board(board_id, board)
     
@@ -83,7 +83,7 @@ class BaseChooseWhoWillShotMixin:
     """Basic class that chooses a player who will shot"""
 
     @staticmethod
-    async def get_lobby_boards(lobby_slug: uuid.uuid4):
+    async def get_lobby_boards(lobby_slug: uuid.uuid4) -> list:
         return await db_queries.get_lobby_boards(lobby_slug)
 
     @database_sync_to_async
@@ -94,8 +94,8 @@ class BaseChooseWhoWillShotMixin:
             return boards[0], boards[1]
         return boards[1], boards[0]
 
-    async def perform_update_boards(self, bool_value: bool, my_board, enemy_board) -> list:
-        return await db_queries.update_boards(bool_value, my_board, enemy_board)
+    async def perform_update_boards(self, bool_value: bool, my_board, enemy_board) -> None:
+        await db_queries.update_boards(bool_value, my_board, enemy_board)
 
 
 class IsReadyToPlayMixin:
@@ -117,10 +117,10 @@ class IsReadyToPlayMixin:
 class DetermineWinnerMixin:
     """Determine a winner of a game"""
 
-    async def determine_winner_of_game(self, lobby_slug: uuid.uuid4, username: str) -> str:
+    async def determine_winner_of_game(self, lobby_slug: uuid.uuid4, username: str) -> None:
         await self.preform_set_winner_in_lobby(lobby_slug, username)
 
-    async def preform_set_winner_in_lobby(self, lobby_slug: uuid.uuid4, username: str) -> str:
+    async def preform_set_winner_in_lobby(self, lobby_slug: uuid.uuid4, username: str) -> None:
         await db_queries.set_winner_in_lobby(lobby_slug, username)
 
 
@@ -213,7 +213,7 @@ class CountDownTimerMixin:
     def remove_lobby_from_redis(lobby_slug: uuid.uuid4) -> None:
         redis_instance.delete(lobby_slug)
 
-    async def _countdown(self, lobby_slug: uuid.uuid4, time_left: int | None) -> int:
+    async def _countdown(self, lobby_slug: uuid.uuid4, time_left: int | None) -> dict:
         """Timer"""
 
         current_turn = redis_instance.hget(lobby_slug, "current_turn")
@@ -278,7 +278,7 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
         my_board, enemy_board = await self.determine_whoose_boards(boards)
         await self.perform_update_boards(False, my_board, enemy_board)
 
-    async def take_shot(self, lobby_slug: uuid.uuid4, board_id: int, field_name: str) -> None:
+    async def take_shot(self, lobby_slug: uuid.uuid4, board_id: int, field_name: str) -> tuple:
         board = await db_queries.get_board(board_id, self.column_name_list)
         services.confert_to_json(board)
         shot_type = self._get_type_shot(board, field_name)
@@ -400,7 +400,7 @@ class ChooseWhoWillShotFirstMixin(BaseChooseWhoWillShotMixin):
             return True
         return False
 
-    async def choose_first_shooter(self, lobby_slug: uuid.uuid4) -> int:
+    async def choose_first_shooter(self, lobby_slug: uuid.uuid4) -> bool or None:
         """Choose who will take first shot"""
 
         boards = await self.get_lobby_boards(lobby_slug)
