@@ -48,7 +48,8 @@ class DetailLobbyView(RetrieveDestroyAPIView):
         if not serializer["winner"]:
             serializer["time_left"] = self.add_countdown(self.kwargs["slug"], serializer)
 
-        return Response(serializer)
+        headers = {"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"}
+        return Response(serializer, headers=headers)
 
     def add_countdown(self, slug: uuid, data: dict) -> int:
         """Add time_left variable with countdown"""

@@ -37,7 +37,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         self.lobby_group_name = None
         self.column_name_list = services.column_name_list
         self.string_number_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        self.ship_count_tuple = (1, 2, 3, 4)
+        self.ship_count_tuple = (1, 2, 3, 4)  # Когда меняешь порядочность, проверь в правильной ли ты порядочности сохранил корабли
 
     async def connect(self):
         self.user = self.scope["user"]

@@ -16,7 +16,9 @@ def countdown(lobby_slug: uuid, time_left: int, old_turn: str):
         current_turn = redis_instance.hget(lobby_slug, "current_turn")
         logging.info(msg=(current_turn, number))
         async_to_sync(asyncio.sleep)(1)
-        redis_instance.hmset(lobby_slug, {"time_left": number})
+
+        if current_turn is not None:
+            redis_instance.hmset(lobby_slug, {"time_left": number})
 
         if current_turn != old_turn or time_left <= 0:
             logging.info(msg="Task closed.")
