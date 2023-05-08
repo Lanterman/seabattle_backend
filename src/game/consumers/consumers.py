@@ -2,6 +2,7 @@ import logging
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
+from config.utilities import redis_instance
 from . import mixins, db_queries, bot_mixins
 from .. import services
 
@@ -43,9 +44,8 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         self.user = self.scope["user"]
         self.lobby_name = self.scope["url_route"]["kwargs"]["lobby_slug"]
         self.lobby_group_name = f"lobby_{self.lobby_name}"
-        # from config.utilities import redis_instance
         # redis_instance.flushall()
-        # logging.warning(redis_instance.keys())
+        logging.warning(redis_instance.keys())
         await self.channel_layer.group_add(self.lobby_group_name, self.channel_name)
 
         await self.accept()

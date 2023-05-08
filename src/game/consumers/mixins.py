@@ -5,9 +5,11 @@ import logging
 
 from channels.db import database_sync_to_async
 
+from ..celery_tasks import tasks
+
 from . import services, db_queries
 from .addspace import add_space
-from .. import serializers, tasks, models as game_models
+from .. import serializers, models as game_models
 from ...user import serializers as user_serializers
 from config.utilities import redis_instance
 

@@ -6,6 +6,7 @@ from asgiref.sync import async_to_sync
 from celery import shared_task
 
 from config.utilities import redis_instance
+from . import services
 
 
 @shared_task
@@ -17,9 +18,20 @@ def countdown(lobby_slug: uuid, time_left: int, old_turn: str):
         logging.info(msg=(current_turn, number))
         async_to_sync(asyncio.sleep)(1)
 
-        if current_turn is not None:
+        if number > 0 and current_turn == old_turn:
             redis_instance.hmset(lobby_slug, {"time_left": number})
 
-        if current_turn != old_turn or time_left <= 0:
+        else:
+            if current_turn == "0":
+                async_to_sync(asyncio.sleep)(5)
+                if redis_instance.hget(lobby_slug, "current_turn") == "0":
+                    services.determine_winner_at_preparation_stage(lobby_slug)
+                    logging.info(msg="preparation")
+                    
+            elif current_turn != None and number == 0:
+                async_to_sync(asyncio.sleep)(3)
+                services.determine_winner_at_shot_stage(lobby_slug)
+                logging.info(msg="shot")
+
             logging.info(msg="Task closed.")
             break
