@@ -1,4 +1,10 @@
 column_name_list = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+ship_count_dict = {
+    "fourdeck": 1,
+    "tripledeck": 2,
+    "singledeck": 4,
+    "doubledeck": 3    
+}
 
 
 def clear_enemy_board(user, boards) -> tuple:

@@ -52,13 +52,12 @@ def update_count_of_ship(ship_id: int, ship_count: int) -> None:
 
 
 @database_sync_to_async
-def update_count_of_ships(ships: list, ship_count_tuple: tuple) -> None:
+def update_count_of_ships(ships: list, ship_count_dict: dict) -> None:
     """Update ships to database"""
 
-    ships[0].count = ship_count_tuple[0]
-    ships[1].count = ship_count_tuple[1]
-    ships[2].count = ship_count_tuple[2]
-    ships[3].count = ship_count_tuple[3]
+    for ship in ships:
+        ship.count = ship_count_dict[ship.name]
+    
     models.Ship.objects.bulk_update(ships, ["count"])
 
 
@@ -172,12 +171,12 @@ def create_ships_for_boards(first_board_id: int, second_board_id: int) -> None:
     """Create shipf for boards"""
 
     models.Ship.objects.bulk_create([
-        models.Ship(name="fourdeck", size=4, count=1, board_id_id=first_board_id),
-        models.Ship(name="tripledeck", size=3, count=2, board_id_id=first_board_id),
-        models.Ship(name="doubledeck", size=2, count=3, board_id_id=first_board_id),
         models.Ship(name="singledeck", size=1, count=4, board_id_id=first_board_id),
-        models.Ship(name="fourdeck", size=4, count=1, board_id_id=second_board_id),
-        models.Ship(name="tripledeck", size=3, count=2, board_id_id=second_board_id),
-        models.Ship(name="doubledeck", size=2, count=3, board_id_id=second_board_id),
+        models.Ship(name="doubledeck", size=2, count=3, board_id_id=first_board_id),
+        models.Ship(name="tripledeck", size=3, count=2, board_id_id=first_board_id),
+        models.Ship(name="fourdeck", size=4, count=1, board_id_id=first_board_id),
         models.Ship(name="singledeck", size=1, count=4, board_id_id=second_board_id),
+        models.Ship(name="doubledeck", size=2, count=3, board_id_id=second_board_id),
+        models.Ship(name="tripledeck", size=3, count=2, board_id_id=second_board_id),
+        models.Ship(name="fourdeck", size=4, count=1, board_id_id=second_board_id),
     ])

@@ -2,7 +2,7 @@ import pytest
 
 from copy import deepcopy
 
-from .test_data import board, ships, column_name_list
+from .test_data import board, ships, column_name_list, ship_count_dict
 from src.game.consumers import services, mixins
 
 
@@ -178,7 +178,7 @@ class TestRandomPlacementMixin:
         ins = mixins.RandomPlacementMixin()
         ins.column_name_list = column_name_list
         ins.string_number_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        ins.ship_count_tuple = (4, 3, 2, 1)
+        ins.ship_count_tuple = ship_count_dict
         return ins
 
     @pytest.mark.parametrize(

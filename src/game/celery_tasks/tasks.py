@@ -19,19 +19,17 @@ def countdown(lobby_slug: uuid, time_left: int, old_turn: str):
         async_to_sync(asyncio.sleep)(1)
 
         if number > 0 and current_turn == old_turn:
-            redis_instance.hmset(lobby_slug, {"time_left": number})
+            redis_instance.hset(lobby_slug, mapping={"time_left": number})
 
         else:
             if current_turn == "0":
                 async_to_sync(asyncio.sleep)(5)
                 if redis_instance.hget(lobby_slug, "current_turn") == "0":
                     services.determine_winner_at_preparation_stage(lobby_slug)
-                    logging.info(msg="preparation")
                     
             elif current_turn != None and number == 0:
                 async_to_sync(asyncio.sleep)(3)
                 services.determine_winner_at_shot_stage(lobby_slug)
-                logging.info(msg="shot")
 
             logging.info(msg="Task closed.")
             break

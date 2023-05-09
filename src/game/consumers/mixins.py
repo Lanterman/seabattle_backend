@@ -42,10 +42,10 @@ class RefreshShipsMixin:
 
         ship_from_bd = await db_queries.get_ships(board_id)
         await self.perform_ships_updates(ship_from_bd)
-        return [ship | {"plane": "horizontal", "count": count} for ship, count in zip(ships, self.ship_count_tuple)]
+        return [ship | {"plane": "horizontal", "count": self.ship_count_dict[ship["name"]]} for ship in ships]
     
     async def perform_ships_updates(self, ships: list) -> None:
-        await db_queries.update_count_of_ships(ships, self.ship_count_tuple)
+        await db_queries.update_count_of_ships(ships, self.ship_count_dict)
 
 
 class DropShipOnBoardMixin:
@@ -376,7 +376,8 @@ class RandomPlacementMixin(AddSpaceAroundShipMixin):
 
         services.clear_board(board)
 
-        for ship, count in zip(ships, self.ship_count_tuple):
+        for ship in ships:
+            count = self.ship_count_dict[ship["name"]]
             for ship_number in range(1, count + 1):
                 plane = random.choice(("horizontal", "vertical"))
                 field_list = await self.get_field_list(plane, ship["size"], board, ships)
