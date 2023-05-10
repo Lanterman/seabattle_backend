@@ -178,7 +178,7 @@ class TestRandomPlacementMixin:
         ins = mixins.RandomPlacementMixin()
         ins.column_name_list = column_name_list
         ins.string_number_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        ins.ship_count_tuple = ship_count_dict
+        ins.ship_count_dict = ship_count_dict
         return ins
 
     @pytest.mark.parametrize(

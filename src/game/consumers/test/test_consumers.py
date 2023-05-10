@@ -286,10 +286,10 @@ class TestLobbyConsumer(Config):
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 
         # admin is winner
-        redis_instance.hset(str(self.lobby_1.slug), "time_left", 30)
+        redis_instance.hset(str(self.lobby_1.slug), mapping={"time_left": 30, "current_turn": 1})
         await communicator.send_json_to({"type": "determine_winner"})
         response = await communicator.receive_json_from()
-        key_in_redis = redis_instance.get(str(self.lobby_1.slug))
+        key_in_redis = redis_instance.hget(str(self.lobby_1.slug), "current_turn")
         assert response == {"type": "determine_winner", "winner": "admin"}, response
         assert key_in_redis == None, key_in_redis
         
@@ -297,7 +297,7 @@ class TestLobbyConsumer(Config):
         redis_instance.hset(str(self.lobby_1.slug), "time_left", 30)
         await communicator.send_json_to({"type": "determine_winner", "enemy_id": 2})
         response = await communicator.receive_json_from()
-        key_in_redis = redis_instance.get(str(self.lobby_1.slug))
+        key_in_redis = redis_instance.hget(str(self.lobby_1.slug), "current_turn")
         assert response == {"type": "determine_winner", "winner": "lanterman"}, response
         assert key_in_redis == None, key_in_redis
 

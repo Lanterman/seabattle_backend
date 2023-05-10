@@ -212,8 +212,10 @@ class CountDownTimerMixin:
     """
 
     @staticmethod
-    def remove_lobby_from_redis(lobby_slug: uuid.uuid4) -> None:
-        redis_instance.delete(lobby_slug)
+    def remove_current_turn_in_lobby_from_redis(lobby_slug: uuid.uuid4) -> None:
+        """Remove current turn in lobby key from redis"""
+
+        redis_instance.hdel(lobby_slug, "current_turn")
 
     async def _countdown(self, lobby_slug: uuid.uuid4, time_left: int | None) -> dict:
         """Timer"""

@@ -45,7 +45,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         self.lobby_name = self.scope["url_route"]["kwargs"]["lobby_slug"]
         self.lobby_group_name = f"lobby_{self.lobby_name}"
         # redis_instance.flushall()
-        logging.warning(redis_instance.keys())
+        # logging.warning(redis_instance.keys())
         await self.channel_layer.group_add(self.lobby_group_name, self.channel_name)
 
         await self.accept()
@@ -100,7 +100,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         elif content["type"] == "determine_winner":
             winner = await db_queries.get_user(content["enemy_id"]) if len(content) == 2 else self.user.username
             await self.determine_winner_of_game(self.lobby_name, winner)
-            self.remove_lobby_from_redis(self.lobby_name)
+            self.remove_current_turn_in_lobby_from_redis(self.lobby_name)
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "determine_winner", "winner": winner})
 
         elif content["type"] == "countdown":
