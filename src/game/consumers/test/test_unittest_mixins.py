@@ -7,7 +7,7 @@ from rest_framework.test import APITestCase, APITransactionTestCase
 from src.game import models, serializers
 from src.user import models as user_models, serializers as user_serializers
 from src.game.consumers import services, mixins, db_queries
-from .test_data import column_name_list
+from .test_data import column_name_list, ship_count_dict
 from config.utilities import redis_instance
 
 
@@ -63,7 +63,7 @@ class TestRefreshShipsMixin(APITransactionTestCase):
         self.ser_ships_of_board_2 = serializers.ShipSerializer(self.ships_of_board_2, many=True).data
         self.ser_ships_of_board_3 = serializers.ShipSerializer(self.ships_of_board_3, many=True).data
         self.instance = mixins.RefreshShipsMixin()
-        self.instance.ship_count_tuple = (1, 2, 3, 4)
+        self.instance.ship_count_dict = ship_count_dict
 
     async def test_update_ships(self):
         """Testing the update_ships method"""
@@ -612,7 +612,7 @@ class TestRandomPlacementMixin(APITestCase):
         self.instance = mixins.RandomPlacementMixin()
         self.instance.column_name_list = column_name_list
         self.instance.string_number_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        self.instance.ship_count_tuple = (1, 2, 3, 4)
+        self.instance.ship_count_dict = ship_count_dict
 
     def test_is_put_on_board(self):
         """Testing the _is_put_on_board method"""

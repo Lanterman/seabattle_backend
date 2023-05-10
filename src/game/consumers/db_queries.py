@@ -52,13 +52,12 @@ def update_count_of_ship(ship_id: int, ship_count: int) -> None:
 
 
 @database_sync_to_async
-def update_count_of_ships(ships: list, ship_count_tuple: tuple) -> None:
+def update_count_of_ships(ships: list, ship_count_dict: dict) -> None:
     """Update ships to database"""
 
-    ships[0].count = ship_count_tuple[0]
-    ships[1].count = ship_count_tuple[1]
-    ships[2].count = ship_count_tuple[2]
-    ships[3].count = ship_count_tuple[3]
+    for ship in ships:
+        ship.count = ship_count_dict[ship.name]
+    
     models.Ship.objects.bulk_update(ships, ["count"])
 
 

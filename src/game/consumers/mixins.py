@@ -5,9 +5,11 @@ import logging
 
 from channels.db import database_sync_to_async
 
+from ..celery_tasks import tasks
+
 from . import services, db_queries
 from .addspace import add_space
-from .. import serializers, tasks, models as game_models
+from .. import serializers, models as game_models
 from ...user import serializers as user_serializers
 from config.utilities import redis_instance
 
@@ -40,10 +42,10 @@ class RefreshShipsMixin:
 
         ship_from_bd = await db_queries.get_ships(board_id)
         await self.perform_ships_updates(ship_from_bd)
-        return [ship | {"plane": "horizontal", "count": count} for ship, count in zip(ships, self.ship_count_tuple)]
+        return [ship | {"plane": "horizontal", "count": self.ship_count_dict[ship["name"]]} for ship in ships]
     
     async def perform_ships_updates(self, ships: list) -> None:
-        await db_queries.update_count_of_ships(ships, self.ship_count_tuple)
+        await db_queries.update_count_of_ships(ships, self.ship_count_dict)
 
 
 class DropShipOnBoardMixin:
@@ -210,8 +212,10 @@ class CountDownTimerMixin:
     """
 
     @staticmethod
-    def remove_lobby_from_redis(lobby_slug: uuid.uuid4) -> None:
-        redis_instance.delete(lobby_slug)
+    def remove_current_turn_in_lobby_from_redis(lobby_slug: uuid.uuid4) -> None:
+        """Remove current turn in lobby key from redis"""
+
+        redis_instance.hdel(lobby_slug, "current_turn")
 
     async def _countdown(self, lobby_slug: uuid.uuid4, time_left: int | None) -> dict:
         """Timer"""
@@ -374,7 +378,8 @@ class RandomPlacementMixin(AddSpaceAroundShipMixin):
 
         services.clear_board(board)
 
-        for ship, count in zip(ships, self.ship_count_tuple):
+        for ship in ships:
+            count = self.ship_count_dict[ship["name"]]
             for ship_number in range(1, count + 1):
                 plane = random.choice(("horizontal", "vertical"))
                 field_list = await self.get_field_list(plane, ship["size"], board, ships)

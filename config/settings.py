@@ -113,7 +113,8 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [(os.environ.get('DOC_HOST_CL', os.environ['HOST_DB']), 6379)]
+            "hosts": [(os.environ.get('DOC_HOST_CL', os.environ['HOST_DB']), 6379)],
+            "group_expiry": 10800,
         },
     },
 }
@@ -206,4 +207,5 @@ CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_IGNORE_RESULT = True
+# CELERY_RESULT_EXPIRES = 3
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True

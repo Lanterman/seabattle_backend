@@ -1,4 +1,10 @@
 column_name_list = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+ship_count_dict = {
+    "fourdeck": 1,
+    "tripledeck": 2,
+    "singledeck": 4,
+    "doubledeck": 3    
+}
 
 row = "{'A1': '', 'A2': 'qwe', 'A3': '', 'A4': '', 'A5': '12', 'A6': '', 'A7': 'qwe', 'A8': '', 'A9': '', 'A10': ''}"
 
