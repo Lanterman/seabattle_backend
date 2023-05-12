@@ -9,7 +9,7 @@ from ..celery_tasks import tasks
 
 from . import services, db_queries
 from .addspace import add_space
-from .. import serializers, models as game_models
+from .. import serializers, models as game_models, db_queries as game_queries
 from ...user import serializers as user_serializers
 from config.utilities import redis_instance
 
@@ -199,8 +199,8 @@ class CreateNewGameMixin:
         new_name = self._create_new_name(name)
         lobby_id, lobby_slug = await db_queries.create_lobby(new_name, bet, time_to_move, time_to_placement, 
                                                              (self.user, enemy))
-        first_board_id, second_board_id = await db_queries.create_lobby_boards(lobby_id, self.user.id, enemy.id)
-        await db_queries.create_ships_for_boards(first_board_id, second_board_id)
+        first_board_id, second_board_id = await database_sync_to_async(game_queries.create_lobby_boards)(lobby_id, self.user.id, enemy.id)
+        await database_sync_to_async(game_queries.create_ships_for_boards)(first_board_id, second_board_id)
         return str(lobby_slug)
 
 

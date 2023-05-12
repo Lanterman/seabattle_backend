@@ -1,4 +1,5 @@
 import json
+
 from rest_framework import serializers
 from . import models, services
 from ..user import serializers as user_serializers
@@ -51,15 +52,19 @@ class ListLobbySerializer(serializers.HyperlinkedModelSerializer):
 
 
 class CreateLobbySerializer(serializers.ModelSerializer):
-    """Lobby serializer"""
+    """Create lobby serializer"""
 
     class Meta:
         model = models.Lobby
         fields = ["name", "bet", "time_to_move", "time_to_placement", "password", "slug"]
-        extra_kwargs = {"slug": {"read_only": True}}
-
-    def create(self, validated_data):
-        return super().create(validated_data)
+        extra_kwargs = {
+            "slug": {"read_only": True},
+            "name": {"write_only": True},
+            "bet": {"write_only": True},
+            "time_to_move": {"write_only": True},
+            "time_to_placement": {"write_only": True},
+            "password": {"write_only": True},
+        }
 
 
 class RetrieveLobbySerializer(serializers.ModelSerializer):

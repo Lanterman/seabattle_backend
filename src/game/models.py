@@ -60,7 +60,9 @@ class Board(models.Model):
     is_my_turn: bool = models.BooleanField("is my turn", default=False)
     is_play_again: bool = models.BooleanField("is play again", null=True)
     lobby_id: Lobby = models.ForeignKey(to=Lobby, verbose_name="lobby", on_delete=models.CASCADE, related_name="boards")
-    user_id: User = models.ForeignKey(to=User, verbose_name="user", on_delete=models.CASCADE, related_name="board_set", blank=True, null=True)
+    user_id: User = models.ForeignKey(
+        to=User, verbose_name="user", on_delete=models.CASCADE, related_name="board_set", blank=True, null=True
+    )
 
     class Meta:
         verbose_name = "Board"

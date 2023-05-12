@@ -1,12 +1,10 @@
 import uuid
 
-from django.http import HttpResponseRedirect
-from rest_framework.reverse import reverse
 from rest_framework.response import Response
-from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 
-from . import models as game_models, serializers, services, permissions
+from . import models as game_models, serializers, services, permissions, db_queries
 from config.utilities import redis_instance
 
 
@@ -25,13 +23,11 @@ class LobbyListView(ListCreateAPIView):
     def perform_create(self, serializer):
         lobby = serializer.save()
         lobby.users.add(self.request.user)
-
-    def create(self, request, *args, **kwargs):
-        data = super().create(request, *args, **kwargs).data
-        return HttpResponseRedirect(redirect_to=reverse(viewname="lobby-detail", kwargs={"slug": data["slug"]}))
+        first_board_id, second_board_id = db_queries.create_lobby_boards(lobby.id, self.request.user.id)
+        db_queries.create_ships_for_boards(first_board_id, second_board_id)
 
 
-class DetailLobbyView(RetrieveDestroyAPIView):
+class DetailLobbyView(RetrieveAPIView):
     """Detailed description of the lobby, update and destroy lobby"""
 
     queryset = game_models.Lobby.objects.all().prefetch_related("users", "boards", "boards__ships", "messages")
