@@ -1,5 +1,6 @@
 import uuid
 
+from rest_framework import filters as drf_filters
 from rest_framework.response import Response
 from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -14,8 +15,9 @@ class LobbyListView(ListCreateAPIView):
 
     queryset = game_models.Lobby.objects.all().prefetch_related("users")
     permission_classes = [IsAuthenticated]
-    filter_backends = (dj_filters.DjangoFilterBackend,)
+    filter_backends = (drf_filters.SearchFilter, dj_filters.DjangoFilterBackend)
     filterset_class = filters.LobbyFilter
+    search_fields = ["name"]
 
     def get_serializer_class(self):
         if self.request.method == "GET":
