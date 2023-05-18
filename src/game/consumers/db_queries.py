@@ -153,3 +153,10 @@ def create_lobby(name: str, bet: int, time_to_move: int, time_to_placement: int,
                                         time_to_placement=time_to_placement)
     query.users.add(*users)
     return query.id, query.slug
+
+
+@database_sync_to_async
+def delete_lobby(lobby_id: int) -> None:
+    """Delete lobby"""
+
+    models.Lobby.objects.get(id=lobby_id).delete()
