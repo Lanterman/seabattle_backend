@@ -144,7 +144,8 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "new_group", "lobby_slug": lobby_slug})
         
         elif content["type"] == "delete_game":
-            await db_queries.delete_lobby(content["lobby_id"])
+            await db_queries.delete_lobby(self.lobby_name)
+            redis_instance.delete(self.lobby_name)
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""

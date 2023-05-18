@@ -156,7 +156,7 @@ def create_lobby(name: str, bet: int, time_to_move: int, time_to_placement: int,
 
 
 @database_sync_to_async
-def delete_lobby(lobby_id: int) -> None:
+def delete_lobby(lobby_slug: str) -> None:
     """Delete lobby"""
 
-    models.Lobby.objects.get(id=lobby_id).delete()
+    models.Lobby.objects.get(slug=lobby_slug).delete()
