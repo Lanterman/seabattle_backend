@@ -7,14 +7,36 @@ from . import mixins, db_queries, bot_mixins
 from .. import services
 
 
-class LobbyListConsumer(AsyncJsonWebsocketConsumer):
-    """Lobby list consumer"""
+class MainConsumer(AsyncJsonWebsocketConsumer, mixins.CreateNewGameMixin):
+    """Main consumer"""
 
     async def connect(self):
+        self.lobby_group_name = "lobby_list"
+        await self.channel_layer.group_add(self.lobby_group_name, self.channel_name)
+        # redis_instance.flushall()
+        # logging.warning(redis_instance.keys())
+
         await self.accept()
 
     async def receive_json(self, content, **kwargs):
-        await self.send_json(content=content)
+        if content["type"] == "created_game":
+            lobby = await self.get_new_game(content["lobby_slug"])
+            data = {"type": content["type"], "lobby": lobby, "user_id": self.scope["user"].id}
+            await self.channel_layer.group_send(self.lobby_group_name, data)
+        
+        elif content["type"] == "deleted_game":
+            await self.channel_layer.group_send(self.lobby_group_name, content)
+    
+    async def created_game(self, event):
+        """Called when created new game"""
+
+        if self.scope["user"].id != event["user_id"]:
+            await self.send_json(event)
+    
+    async def deleted_game(self, event):
+        """Called when deleted game"""
+
+        await self.send_json(event)
 
 
 class LobbyConsumer(AsyncJsonWebsocketConsumer, 

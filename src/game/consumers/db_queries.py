@@ -94,6 +94,14 @@ def get_lobby_by_slug(slug: uuid) -> models.Lobby:
 
 
 @database_sync_to_async
+def get_lobby_with_owner_by_slug(slug: uuid) -> models.Lobby:
+    """Get the Lobby models instance with owner"""
+
+    query = models.Lobby.objects.prefetch_related("users").get(slug=slug)
+    return query
+
+
+@database_sync_to_async
 def set_winner_in_lobby(lobby_slug: uuid, username: str) -> None:
     """Set winner in a lobby"""
 

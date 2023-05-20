@@ -1,5 +1,6 @@
 import uuid
 
+from django.db.models import Count
 from rest_framework import filters as drf_filters
 from rest_framework.response import Response
 from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
@@ -13,11 +14,14 @@ from config.utilities import redis_instance
 class LobbyListView(ListCreateAPIView):
     """List of lobbies and create lobby"""
 
-    queryset = game_models.Lobby.objects.all().prefetch_related("users")
     permission_classes = [IsAuthenticated]
     filter_backends = (drf_filters.SearchFilter, dj_filters.DjangoFilterBackend)
     filterset_class = filters.LobbyFilter
     search_fields = ["name"]
+
+    def get_queryset(self):
+        return game_models.Lobby.objects.annotate(
+            num_users=Count("users")).filter(num_users=1).prefetch_related("users")
 
     def get_serializer_class(self):
         if self.request.method == "GET":

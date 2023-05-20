@@ -202,6 +202,13 @@ class CreateNewGameMixin:
         first_board_id, second_board_id = await database_sync_to_async(game_queries.create_lobby_boards)(lobby_id, self.user.id, enemy.id)
         await database_sync_to_async(game_queries.create_ships_for_boards)(first_board_id, second_board_id)
         return str(lobby_slug)
+    
+    async def get_new_game(self, lobby_slug: uuid) -> dict:
+        """Get new game"""
+
+        lobby = await db_queries.get_lobby_with_owner_by_slug(lobby_slug)
+        serializer = serializers.RetrieveLobbyWithUsersSerializer(lobby).data
+        return serializer
 
 
 class CountDownTimerMixin:
