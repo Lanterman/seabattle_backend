@@ -26,6 +26,10 @@ class MainConsumer(AsyncJsonWebsocketConsumer, mixins.CreateNewGameMixin):
         
         elif content["type"] == "deleted_game":
             await self.channel_layer.group_send(self.lobby_group_name, content)
+        
+        elif content["type"] == "add_user_to_game":
+            data = {"type": content["type"], "lobby_id": content["lobby_id"], "user_id": self.scope["user"].id}
+            await self.channel_layer.group_send(self.lobby_group_name, data)
     
     async def created_game(self, event):
         """Called when created new game"""
@@ -37,6 +41,12 @@ class MainConsumer(AsyncJsonWebsocketConsumer, mixins.CreateNewGameMixin):
         """Called when deleted game"""
 
         await self.send_json(event)
+    
+    async def add_user_to_game(self, event):
+        """Called when added user to game"""
+
+        if self.scope["user"].id != event["user_id"]: 
+            await self.send_json(event)
 
 
 class LobbyConsumer(AsyncJsonWebsocketConsumer, 
