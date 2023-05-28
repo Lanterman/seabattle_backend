@@ -1,9 +1,8 @@
 from rest_framework import generics, response, views
-
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 
-from . import models as user_models, serializers, services
+from . import models as user_models, serializers, services, permissions
 
 
 class LoginView(views.APIView):
@@ -27,14 +26,19 @@ class LoginView(views.APIView):
         serializer = serializers.BaseTokenSerializer(token)
 
         return response.Response(data=serializer.data)
-        
 
 
 class ProfileView(generics.RetrieveUpdateDestroyAPIView):
     """User profile endpoint"""
 
     queryset = user_models.User.objects.all()
-    serializer_class = serializers.ProfileSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, permissions.IsMyProfile]
     lookup_field = "slug"
 
+    def get_serializer_class(self):
+        if self.kwargs["slug"] == self.request.user.username:
+            return serializers.MyProfileSerializer
+        else:
+            return serializers.UserProfileSerializer
+
+print("Поработать над заголовками, показывать разрешенные методы")

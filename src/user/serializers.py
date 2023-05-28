@@ -13,13 +13,26 @@ class BaseUserSerializer(serializers.HyperlinkedModelSerializer):
         # extra_kwargs = {"url": {"lookup_field": "slug"}}
 
 
-class ProfileSerializer(serializers.ModelSerializer):
+class MyProfileSerializer(serializers.ModelSerializer):
     """Profile user serializer"""
 
     class Meta:
         model = models.User
         fields = ["id", "username", "slug", "first_name", "last_name", "email", "mobile_number", "cash", 
                   "created_in", "updated_in", "photo"]
+        extra_kwargs = {
+            "slug": {"read_only": True},
+            "cash": {"read_only": True},
+            "updated_in": {"read_only": True},
+        }
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Profile user serializer"""
+
+    class Meta:
+        model = models.User
+        fields = ["username", "first_name", "last_name", "email", "mobile_number", "created_in", "updated_in", "photo"]
 
 
 class LoginRequestSerializer(serializers.Serializer):
