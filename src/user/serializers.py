@@ -9,8 +9,7 @@ class BaseUserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ("id", "username", "first_name", "last_name", "email", "slug")
-        # extra_kwargs = {"url": {"lookup_field": "slug"}}
+        fields = ("id", "username", "first_name", "last_name", "email")
 
 
 class MyProfileSerializer(serializers.ModelSerializer):
@@ -18,13 +17,9 @@ class MyProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ["id", "username", "slug", "first_name", "last_name", "email", "mobile_number", "cash", 
+        fields = ["id", "username", "first_name", "last_name", "email", "mobile_number", "cash", "rating",
                   "created_in", "updated_in", "photo"]
-        extra_kwargs = {
-            "slug": {"read_only": True},
-            "cash": {"read_only": True},
-            "updated_in": {"read_only": True},
-        }
+        extra_kwargs = {"cash": {"read_only": True}, "updated_in": {"read_only": True}}
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

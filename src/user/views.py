@@ -33,12 +33,10 @@ class ProfileView(generics.RetrieveUpdateDestroyAPIView):
 
     queryset = user_models.User.objects.all()
     permission_classes = [IsAuthenticated, permissions.IsMyProfile]
-    lookup_field = "slug"
+    lookup_field = "username"
 
     def get_serializer_class(self):
-        if self.kwargs["slug"] == self.request.user.username:
+        if self.kwargs["username"] == self.request.user.username:
             return serializers.MyProfileSerializer
         else:
             return serializers.UserProfileSerializer
-
-print("Поработать над заголовками, показывать разрешенные методы")

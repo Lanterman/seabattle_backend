@@ -8,9 +8,9 @@ from django.urls import reverse
 class User(AbstractUser):
     """User model"""
 
-    slug: str = models.SlugField(max_length=250, verbose_name="URL", help_text="Required. Populated by username!")
     mobile_number: str = models.CharField(max_length=50, verbose_name="mobile number", blank=True)
     cash: int = models.IntegerField(default=100)
+    rating: int = models.IntegerField(default=0)
     created_in: datetime.datetime = models.DateTimeField(auto_now_add=True)
     updated_in: datetime.datetime = models.DateTimeField(blank=True, null=True)
     photo: bytes = models.ImageField(blank=True, upload_to="users/")
@@ -23,7 +23,7 @@ class User(AbstractUser):
         verbose_name = "User"
         verbose_name_plural = "Users"
         ordering = ["-created_in"]
-        unique_together = ["slug", "email"]
+        unique_together = ["email"]
 
     def __str__(self):
         return self.username
