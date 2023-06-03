@@ -37,7 +37,6 @@ class ProfileView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = "username"
 
     def get_serializer_class(self):
-        print(self.request.data)
         if self.request.method == "PATCH":
             if "photo" in self.request.data.keys():
                 return serializers.UpdateUserPhotoSerializer
@@ -50,4 +49,9 @@ class ProfileView(generics.RetrieveUpdateDestroyAPIView):
                 return serializers.UserProfileSerializer
     
     def perform_update(self, serializer):
-        serializer.save(updated_in=timezone.now())
+        pre_data = {"updated_in": timezone.now()}
+
+        if not self.request.data:
+            pre_data["photo"] = ""
+
+        serializer.save(**pre_data)

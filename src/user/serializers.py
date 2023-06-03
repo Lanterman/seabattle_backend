@@ -37,6 +37,11 @@ class UpdateUserPhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.User
         fields = ["photo"]
+    
+    def validate_photo(self, value):
+        if value.name.split(".")[-1] not in ["jpeg", "jpg", "png", "ico"]:
+            raise serializers.ValidationError('Only JPEG, PNG, ICO files are accepted!!')
+        return value
 
 
 class UpdateUserInfoSerializer(serializers.ModelSerializer):
