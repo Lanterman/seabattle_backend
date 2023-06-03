@@ -31,6 +31,22 @@ class UserProfileSerializer(serializers.ModelSerializer):
                   "updated_in", "photo"]
 
 
+class UpdateUserPhotoSerializer(serializers.ModelSerializer):
+    """Profile user serializer"""
+
+    class Meta:
+        model = models.User
+        fields = ["photo"]
+
+
+class UpdateUserInfoSerializer(serializers.ModelSerializer):
+    """Profile user serializer"""
+
+    class Meta:
+        model = models.User
+        fields = ["first_name", "last_name", "email", "mobile_number"]
+
+
 class LoginRequestSerializer(serializers.Serializer):
     model = models.User
 

@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import generics, response, views
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -36,7 +37,17 @@ class ProfileView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = "username"
 
     def get_serializer_class(self):
-        if self.kwargs["username"] == self.request.user.username:
-            return serializers.MyProfileSerializer
-        else:
-            return serializers.UserProfileSerializer
+        print(self.request.data)
+        if self.request.method == "PATCH":
+            if "photo" in self.request.data.keys():
+                return serializers.UpdateUserPhotoSerializer
+            else:
+                return serializers.UpdateUserInfoSerializer
+        elif self.request.method == "GET":
+            if self.kwargs["username"] == self.request.user.username:
+                return serializers.MyProfileSerializer
+            else:
+                return serializers.UserProfileSerializer
+    
+    def perform_update(self, serializer):
+        serializer.save(updated_in=timezone.now())
