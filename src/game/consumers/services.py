@@ -29,3 +29,12 @@ def determine_number_of_enemy_ships(board: dict) -> int:
                     enemy_ships_list.append(value)
         
         return len(enemy_ships_list)
+
+
+def determine_winner_and_loser(winner: str, users) -> tuple:
+    """Determine winner and loser users"""
+
+    if users[0].username == winner:
+        return users
+    else :
+        return users[1], users[0]

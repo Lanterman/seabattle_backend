@@ -206,7 +206,7 @@ class CreateNewGameMixin:
     async def get_new_game(self, lobby_slug: uuid) -> dict:
         """Get new game"""
 
-        lobby = await db_queries.get_lobby_with_owner_by_slug(lobby_slug)
+        lobby = await db_queries.get_lobby_with_users_by_slug(lobby_slug)
         serializer = serializers.RetrieveLobbyWithUsersSerializer(lobby).data
         return serializer
 
@@ -228,6 +228,7 @@ class CountDownTimerMixin:
         """Timer"""
 
         current_turn = redis_instance.hget(lobby_slug, "current_turn")
+        logging.warning(current_turn)
         is_task_in_progress = redis_instance.hget(lobby_slug, "is_running")
 
         if time_left is None:
@@ -242,6 +243,34 @@ class CountDownTimerMixin:
 
         return {"type": "countdown", "time_left": time_left}
 
+
+class CalculateRatingAndCash:
+    """Calculate current user rating and cash"""
+
+    def calculate_rating(self, rating: int, winning_user, losing_user) -> None:
+        """Calculate rating"""
+
+        winning_user.rating += rating
+        losing_user.rating -= rating
+    
+    def calculate_cash(self, bet: int, winning_user, losing_user) -> None:
+        """Calculate rating"""
+
+        winning_user.cash += bet
+        losing_user.cash -= bet
+
+    async def calculate_rating_and_cash_of_game(self, winner: str, bet: int) -> None:
+        """Calculate current user rating and cash"""
+
+        lobby = await db_queries.get_lobby_with_users_by_slug(self.lobby_name)
+        winning_user, losing_user = services.determine_winner_and_loser(winner, lobby.users.all())
+        random_rating = random.choice(range(25, 31))
+        self.calculate_rating(random_rating, winning_user, losing_user)
+        self.calculate_cash(bet, winning_user, losing_user)
+        await self.perform_update_user_statistics(winning_user, losing_user)
+
+    async def perform_update_user_statistics(self, winning_user, losing_user) -> None:
+        await db_queries.update_user_statistics(winning_user, losing_user)
 
 class TakeShotMixin(BaseChooseWhoWillShotMixin):
     """Update a model instance"""

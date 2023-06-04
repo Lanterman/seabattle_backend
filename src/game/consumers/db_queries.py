@@ -94,7 +94,7 @@ def get_lobby_by_slug(slug: uuid) -> models.Lobby:
 
 
 @database_sync_to_async
-def get_lobby_with_owner_by_slug(slug: uuid) -> models.Lobby:
+def get_lobby_with_users_by_slug(slug: uuid) -> models.Lobby:
     """Get the Lobby models instance with owner"""
 
     query = models.Lobby.objects.prefetch_related("users").get(slug=slug)
@@ -168,3 +168,10 @@ def delete_lobby(lobby_slug: str) -> None:
     """Delete lobby"""
 
     models.Lobby.objects.get(slug=lobby_slug).delete()
+
+
+@database_sync_to_async
+def update_user_statistics(winning_user: user_models.User, losing_user: user_models.User) -> None:
+    """Update the bet and the rating of the user model instance"""
+
+    user_models.User.objects.bulk_update([winning_user, losing_user], ["cash", "rating"])

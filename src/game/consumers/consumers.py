@@ -62,6 +62,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                     mixins.SendMessageMixin,
                     mixins.PlayAgainMixin,
                     mixins.CreateNewGameMixin,
+                    mixins.CalculateRatingAndCash,
                     bot_mixins.GenericBotMixin):
 
     def __init__(self, *args, **kwargs):
@@ -130,8 +131,9 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                 logging.info(f"For lobby '{self.lobby_name}' turn is determined!")
 
         elif content["type"] == "determine_winner":
-            winner = await db_queries.get_user(content["enemy_id"]) if len(content) == 2 else self.user.username
+            winner = await db_queries.get_user(content["enemy_id"]) if len(content) == 3 else self.user.username
             await self.determine_winner_of_game(self.lobby_name, winner)
+            await self.calculate_rating_and_cash_of_game(winner, content["bet"])
             self.remove_current_turn_in_lobby_from_redis(self.lobby_name)
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "determine_winner", "winner": winner})
 
