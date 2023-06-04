@@ -3,11 +3,12 @@ import uuid
 from django.db.models import Count
 from rest_framework import filters as drf_filters
 from rest_framework.response import Response
-from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from django_filters import rest_framework as dj_filters
 
 from . import models as game_models, serializers, services, permissions, db_queries, filters
+from ..user import models as user_models
 from config.utilities import redis_instance
 
 
@@ -37,7 +38,7 @@ class LobbyListView(ListCreateAPIView):
 
 
 class DetailLobbyView(RetrieveAPIView):
-    """Detailed description of the lobby, update and destroy lobby"""
+    """Detailed description of the lobby"""
 
     queryset = game_models.Lobby.objects.all().prefetch_related("users", "boards", "boards__ships", "messages")
     permission_classes = [IsAuthenticated, permissions.IsLobbyFree]
@@ -72,3 +73,11 @@ class DetailLobbyView(RetrieveAPIView):
             redis_instance.hset(name=slug, mapping={"time_left": time_to_serializer, "current_turn": 0})
             return time_to_serializer
         return int(time_from_redis)
+
+
+class LeadBoardView(ListAPIView):
+    """LeadBoard page API"""
+
+    queryset = user_models.User.objects.all().order_by("-rating").all()[:10]
+    permission_classes = [IsAuthenticated]
+    serializer_class = serializers.LeadBoardSerializer

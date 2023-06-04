@@ -3,7 +3,7 @@ from rest_framework import generics, response, views
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 
-from . import models as user_models, serializers, services, permissions
+from . import models, serializers, services, permissions
 
 
 class LoginView(views.APIView):
@@ -32,12 +32,12 @@ class LoginView(views.APIView):
 class ProfileView(generics.RetrieveUpdateDestroyAPIView):
     """User profile endpoint"""
 
-    queryset = user_models.User.objects.all()
+    queryset = models.User.objects.all()
     permission_classes = [IsAuthenticated, permissions.IsMyProfile]
     lookup_field = "username"
 
     def get_serializer_class(self):
-        if self.request.method == "PATCH":
+        if self.request.method in ("PUT", "PATCH", "POST"):
             if "photo" in self.request.data.keys():
                 return serializers.UpdateUserPhotoSerializer
             else:
@@ -46,7 +46,7 @@ class ProfileView(generics.RetrieveUpdateDestroyAPIView):
             if self.kwargs["username"] == self.request.user.username:
                 return serializers.MyProfileSerializer
             else:
-                return serializers.UserProfileSerializer
+                return serializers.EnemyProfileSerializer
     
     def perform_update(self, serializer):
         pre_data = {"updated_in": timezone.now()}

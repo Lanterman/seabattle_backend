@@ -22,7 +22,6 @@ class User(AbstractUser):
     class Meta:
         verbose_name = "User"
         verbose_name_plural = "Users"
-        ordering = ["-created_in"]
         unique_together = ["email"]
 
     def __str__(self):

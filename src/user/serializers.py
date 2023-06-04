@@ -19,16 +19,17 @@ class MyProfileSerializer(serializers.ModelSerializer):
         model = models.User
         fields = ["id", "username", "first_name", "last_name", "email", "mobile_number", "cash", "rating",
                   "created_in", "updated_in", "photo"]
-        extra_kwargs = {"cash": {"read_only": True}, "updated_in": {"read_only": True}}
+        extra_kwargs = {"cash": {"read_only": True}, "rating": {"read_only": True}, "updated_in": {"read_only": True}}
 
 
-class UserProfileSerializer(serializers.ModelSerializer):
+class EnemyProfileSerializer(serializers.ModelSerializer):
     """Profile user serializer"""
 
     class Meta:
         model = models.User
         fields = ["username", "first_name", "last_name", "email", "mobile_number", "rating", "created_in", 
                   "updated_in", "photo"]
+        extra_kwargs = {"rating": {"read_only": True}, "updated_in": {"read_only": True}}
 
 
 class UpdateUserPhotoSerializer(serializers.ModelSerializer):

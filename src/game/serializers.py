@@ -2,7 +2,7 @@ import json
 
 from rest_framework import serializers
 from . import models, services
-from ..user import serializers as user_serializers
+from ..user import serializers as user_serializers, models as user_models
 
 
 class ShipSerializer(serializers.ModelSerializer):
@@ -87,3 +87,13 @@ class RetrieveLobbyWithUsersSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Lobby
         fields = ["id", "name", "created_in", "bet", "password", "time_to_move", "time_to_placement", "slug", "users"]
+
+
+class LeadBoardSerializer(serializers.HyperlinkedModelSerializer):
+    """Base user serializer"""
+
+    url = serializers.HyperlinkedIdentityField(lookup_field="username", view_name="user-detail")
+
+    class Meta:
+        model = user_models.User
+        fields = ("url", "username", "rating")

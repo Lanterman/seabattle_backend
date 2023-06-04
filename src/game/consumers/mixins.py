@@ -228,7 +228,6 @@ class CountDownTimerMixin:
         """Timer"""
 
         current_turn = redis_instance.hget(lobby_slug, "current_turn")
-        logging.warning(current_turn)
         is_task_in_progress = redis_instance.hget(lobby_slug, "is_running")
 
         if time_left is None:
