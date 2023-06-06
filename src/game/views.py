@@ -78,6 +78,6 @@ class DetailLobbyView(RetrieveAPIView):
 class LeadBoardView(ListAPIView):
     """LeadBoard page API"""
 
-    queryset = user_models.User.objects.all().order_by("-rating").all()[:10]
+    queryset = user_models.User.objects.all().order_by("-rating")[:15]
     permission_classes = [IsAuthenticated]
     serializer_class = serializers.LeadBoardSerializer

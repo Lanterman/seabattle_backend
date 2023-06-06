@@ -3,6 +3,13 @@ import datetime
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
+
+
+AbstractUser._meta.get_field('username').max_length = 30
+AbstractUser._meta.get_field('username').help_text = _(
+            "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
+        )
 
 
 class User(AbstractUser):

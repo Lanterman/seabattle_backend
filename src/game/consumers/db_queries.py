@@ -85,10 +85,10 @@ def update_boards(bool_value: bool, my_board, enemy_board) -> None:
     models.Board.objects.bulk_update([my_board, enemy_board], ["is_my_turn"])
 
 
-def get_lobby_by_slug(slug: uuid) -> models.Lobby:
+async def get_lobby_by_slug(slug: uuid) -> models.Lobby:
     """Get the Lobby models instance"""
 
-    query = models.Lobby.objects.aget(slug=slug)
+    query = await models.Lobby.objects.aget(slug=slug)
     return query
 
 
@@ -128,10 +128,10 @@ def update_user_id_of_board(board_id: int, user_id: int) -> None:
     models.Board.objects.filter(id=board_id).update(user_id=user_id)
 
 
-def create_message(lobby_id: int, username: str, message: str, is_bot: bool) -> models.Message:
+async def create_message(lobby_id: int, username: str, message: str, is_bot: bool) -> models.Message:
     """Create message model instance and return it"""
 
-    query = models.Message.objects.acreate(message=message, owner=username, is_bot=is_bot, lobby_id_id=lobby_id)
+    query = await models.Message.objects.acreate(message=message, owner=username, is_bot=is_bot, lobby_id_id=lobby_id)
     return query
 
 
@@ -142,10 +142,10 @@ def update_play_again_field(board_id: int, answer: bool) -> None:
     models.Board.objects.filter(id=board_id).update(is_play_again=answer)
 
 
-def get_user_by_id(enemy_id: int) -> user_models.User:
+async def get_user_by_id(enemy_id: int) -> user_models.User:
     """Get user by id"""
 
-    query = user_models.User.objects.aget(id=enemy_id)
+    query = await user_models.User.objects.aget(id=enemy_id)
     return query
 
 
