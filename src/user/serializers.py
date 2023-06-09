@@ -82,12 +82,63 @@ class UpdateUserPhotoSerializer(serializers.ModelSerializer):
         return value
 
 
-class UpdateUserInfoSerializer(serializers.ModelSerializer):
+class UpdateUserInfoSerializer(serializers.ModelSerializer, ValidateClass):
     """Profile user serializer"""
 
     class Meta:
         model = models.User
         fields = ["first_name", "last_name", "email", "mobile_number"]
+    
+    def validate_first_name(self, value: str) -> str:
+        value = value.strip()
+        error_list = []
+
+        self.validate_symbols(value, "First name", error_list)
+        self.validate_min_length(value, "First name", error_list)
+        self.validate_max_length(value, "First name", error_list)
+        
+        if error_list:
+            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
+        
+        return value
+    
+    def validate_last_name(self, value: str) -> str:
+        value = value.strip()
+        error_list = []
+
+        self.validate_symbols(value, "Last name", error_list)
+        self.validate_min_length(value, "Last name", error_list)
+        self.validate_max_length(value, "Last name", error_list)
+        
+        if error_list:
+            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
+        
+        return value
+    
+    def validate_email(self, value: str) -> str:
+        value = value.strip()
+        check_value = value.split("@")
+        error_list = []
+
+        self.validate_first_character(value, "Email", error_list)
+        self.validate_min_length(value, check_value, error_list)
+        self.validate_max_length(value, check_value, error_list)
+        
+        if error_list:
+            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
+        
+        return value
+    
+    def validate_mobile_number(self, value: str) -> str:
+        value = value.strip()
+        error_list = []
+
+        self.validate_min_length(value, "mobile_number", error_list, 12)
+        
+        if error_list:
+            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
+        
+        return value
 
 
 class SignInSerializer(serializers.ModelSerializer, ValidateClass):
@@ -201,3 +252,7 @@ class BaseTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = Token
         fields = ["key", "user", "created"]
+        extra_kwargs = {
+            "key": {"read_only": True},
+            "user": {"read_only": True},
+        }

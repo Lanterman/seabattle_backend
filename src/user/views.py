@@ -1,13 +1,15 @@
 from django.utils import timezone
-from rest_framework import generics, response, views, status
+from rest_framework import generics, response, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 
 from . import models, serializers, services, permissions, db_queries
 
 
-class SignInView(views.APIView):
+class SignInView(generics.CreateAPIView):
     """Sign in endpoint"""
+
+    serializer_class = serializers.SignInSerializer
 
     def post(self, request, *args, **kwargs):
         error = ValidationError(detail="Incorrect username or password.", code=status.HTTP_400_BAD_REQUEST)
@@ -29,18 +31,24 @@ class SignInView(views.APIView):
         return response.Response(data=serializer.data)
 
 
-class SignUpView(views.APIView):
+class SignUpView(generics.CreateAPIView):
     """Sign up endpoint"""
 
-    def post(self, request, *args, **kwargs):
-        serializered_data = serializers.SignUpSerializer(data=request.data)
+    serializer_class = serializers.SignUpSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializered_data = self.get_serializer(data=request.data)
         serializered_data.is_valid(raise_exception=True)
 
-        user = models.User.objects.create(hashed_password=request.data["password1"], **serializered_data.data)
-        token = db_queries.create_user_token(user=user)
+        token = self.perform_create(serializered_data)
 
-        serializer = serializers.BaseTokenSerializer(token)
-        return response.Response(data=serializer.data)
+        headers = self.get_success_headers(serializered_data.data)
+        serializered_token = serializers.BaseTokenSerializer(token)
+        return response.Response(serializered_token.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+    def perform_create(self, serializer):
+        user = models.User.objects.create(hashed_password=self.request.data["password1"], **serializer.data)
+        return db_queries.create_user_token(user=user)
 
 
 class ProfileView(generics.RetrieveUpdateDestroyAPIView):
