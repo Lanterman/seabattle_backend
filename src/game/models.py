@@ -106,5 +106,5 @@ class Message(models.Model):
         verbose_name_plural = "Messages"
         ordering = ["-id"]
     
-    def _str_(self):
+    def __str__(self):
         return f"Chat message {self.id}"

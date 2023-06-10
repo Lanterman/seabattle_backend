@@ -1,5 +1,4 @@
 from rest_framework.test import APITestCase, APIClient
-from rest_framework.authtoken.models import Token
 
 from src.user.models import User
 from src.game import models, services, serializers

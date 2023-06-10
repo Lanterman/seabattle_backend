@@ -1,12 +1,51 @@
 import logging
 
-from rest_framework.test import APIClient, APITestCase
+from rest_framework.test import APIClient, APITestCase, APIRequestFactory
 from rest_framework.authtoken.models import Token
 from rest_framework.reverse import reverse
 
 from src.user.models import User
-from src.game import models, serializers
+from src.game import models, serializers, views
 from config.utilities import redis_instance
+
+
+class TestLobbyListView(APITestCase):
+    """Testing LobbyListView view"""
+
+    fixtures = ["./src/game/consumers/test/test_data.json"]
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.user = User.objects.get(id=2)
+        cls.user_token = Token.objects.create(user=cls.user)
+        cls.lobby = models.Lobby.objects.get(id=1)
+
+        cls.instance = views.LobbyListView()
+        cls.request = APIRequestFactory()
+        cls.instance.request = cls.request
+        cls.instance.user = cls.user
+        
+        cls.client = APIClient()
+        cls.url = reverse('lobby-list')
+    
+    def test_get_queryset(self):
+        """Testing get_queryset method"""
+
+        queryset = self.instance.get_queryset()
+        assert len(queryset) == 1, queryset
+        assert queryset[0].name == "string1", queryset
+    
+    def test_get_serializer_class(self):
+        """Testing get_serializer_class method"""
+
+        self.instance.request.method = "GET"
+        queryset = self.instance.get_serializer_class()
+        assert queryset.__doc__ == "List lobby serializer", queryset.__doc__
+
+        self.instance.request.method = "POST"
+        queryset = self.instance.get_serializer_class()
+        assert queryset.__doc__ == "Create lobby serializer", queryset.__doc__
 
 
 class TestDetailLobbyView(APITestCase):

@@ -14,7 +14,7 @@ from config.middlewares import TokenAuthMiddlewareStack
 
 
 application = TokenAuthMiddlewareStack(URLRouter([
-    path("ws/lobbies/", consumers.LobbyListConsumer.as_asgi()),
+    path("ws/main/", consumers.MainConsumer.as_asgi()),
     path(r"ws/lobby/<lobby_slug>/", consumers.LobbyConsumer.as_asgi()),
 ]))
 
@@ -22,7 +22,7 @@ application = TokenAuthMiddlewareStack(URLRouter([
 class Config(TransactionTestCase):
 
     fixtures = ["./src/game/consumers/test/test_data.json"]
-        
+    
     def setUp(self):
         super().setUp()
         self.user_1 = user_models.User.objects.get(id=1)
@@ -45,6 +45,62 @@ class Config(TransactionTestCase):
         assert connected
         assert sub_protocol is None
         return communicator
+
+
+class TestMainConsumer(Config):
+    """Testing MainConsumer consumer"""
+
+    def setUp(self):
+        super().setUp()
+        self.lobby_1 = models.Lobby.objects.get(id=1)
+        self.lobby_2 = models.Lobby.objects.get(id=2)
+
+        self.ser_lobby_1 = serializers.RetrieveLobbyWithUsersSerializer(self.lobby_1).data
+        self.ser_lobby_2 = serializers.RetrieveLobbyWithUsersSerializer(self.lobby_2).data
+    
+    async def test_created_game(self):
+        """Testing created_game event"""
+
+        path_1 = f"ws/main/?token={self.token_1.key}"
+        path_2 = f"ws/main/?token={self.token_3.key}"
+        communicator_1 = await self.launch_websocket_communicator(path=path_1)
+        communicator_2 = await self.launch_websocket_communicator(path=path_2)
+        assert communicator_1.scope["user"].id == self.user_1.id, communicator_1.scope["user"].id
+
+        await communicator_1.send_json_to({"type": "created_game", "lobby_slug": str(self.lobby_1.slug)})
+        response_1 = await communicator_1.receive_nothing()
+        response_2 = await communicator_2.receive_json_from()
+        assert response_1 == True, response_1
+        assert response_2 == {"type": "created_game", "lobby": self.ser_lobby_1, "user_id": self.user_1.id}, response_2
+        
+    async def test_deleted_game(self):
+        """Testing deleted_game event"""
+
+        path = f"ws/main/?token={self.token_1.key}"
+        communicator = await self.launch_websocket_communicator(path=path)
+        assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
+
+        await communicator.send_json_to({"type": "deleted_game", "lobby_id": self.lobby_1.id})
+        response = await communicator.receive_json_from()
+        assert response == {"type": "deleted_game", "lobby_id": self.lobby_1.id}, response
+    
+    async def test_add_user_to_game(self):
+        """Testing add_user_to_game event"""
+
+        path_1 = f"ws/main/?token={self.token_1.key}"
+        path_2 = f"ws/main/?token={self.token_3.key}"
+        communicator_1 = await self.launch_websocket_communicator(path=path_1)
+        communicator_2 = await self.launch_websocket_communicator(path=path_2)
+        assert communicator_1.scope["user"].id == self.user_1.id, communicator_1.scope["user"].id
+        assert communicator_2.scope["user"].id == self.user_3.id, communicator_2.scope["user"].id
+
+        await communicator_1.send_json_to({"type": "add_user_to_game", "lobby_id": self.lobby_1.id})
+        response_1 = await communicator_1.receive_nothing()
+        response_2 = await communicator_2.receive_json_from()
+        data = {"type": "add_user_to_game", "lobby_id": 1, "user_id": self.user_1.id}
+        assert response_1 == True, response_1
+        assert response_2 == data, response_2
+
 
 
 class TestLobbyConsumer(Config):
@@ -287,7 +343,7 @@ class TestLobbyConsumer(Config):
 
         # admin is winner
         redis_instance.hset(str(self.lobby_1.slug), mapping={"time_left": 30, "current_turn": 1})
-        await communicator.send_json_to({"type": "determine_winner"})
+        await communicator.send_json_to({"type": "determine_winner", "bet": 50})
         response = await communicator.receive_json_from()
         key_in_redis = redis_instance.hget(str(self.lobby_1.slug), "current_turn")
         assert response == {"type": "determine_winner", "winner": "admin"}, response
@@ -295,7 +351,7 @@ class TestLobbyConsumer(Config):
         
         # enemy is winner
         redis_instance.hset(str(self.lobby_1.slug), "time_left", 30)
-        await communicator.send_json_to({"type": "determine_winner", "enemy_id": 2})
+        await communicator.send_json_to({"type": "determine_winner", "bet": 50, "enemy_id": 2})
         response = await communicator.receive_json_from()
         key_in_redis = redis_instance.hget(str(self.lobby_1.slug), "current_turn")
         assert response == {"type": "determine_winner", "winner": "lanterman"}, response
@@ -484,3 +540,27 @@ class TestLobbyConsumer(Config):
 
         with self.assertLogs(level="INFO"):
             await communicator.disconnect()
+
+    async def test_delete_game(self):
+        """Testing delete_game event"""
+
+        @database_sync_to_async
+        def is_exist_fun(lobby_id):
+            """Check if a lobby instance is exists"""
+
+            query = models.Lobby.objects.filter(id=lobby_id).exists()
+            return query
+
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        communicator = await self.launch_websocket_communicator(path=path)
+        assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
+
+        is_exists = await is_exist_fun(1)
+        assert is_exists == True, is_exists
+
+        await communicator.send_json_to({"type": "delete_game"})
+        response = await communicator.receive_nothing()
+        is_exists = await is_exist_fun(1)
+        assert response == True, response
+        assert is_exists == False, is_exists
+

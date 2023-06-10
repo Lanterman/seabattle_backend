@@ -1,6 +1,7 @@
+import re
 import json
 
-from rest_framework import serializers
+from rest_framework import serializers, status
 from . import models, services
 from ..user import serializers as user_serializers, models as user_models
 
@@ -65,6 +66,21 @@ class CreateLobbySerializer(serializers.ModelSerializer):
             "time_to_placement": {"write_only": True},
             "password": {"write_only": True},
         }
+    
+    def validate_name(self, value: str):
+        value = value.strip()
+        error_list = []
+
+        if re.search(r"\W", value):
+            error_list.append("Field can only contain numbers and letters.")
+        
+        if re.match(r'\d|\W', value[0]):
+            error_list.append(f"First character of field can only contain characters.")
+        
+        if error_list:
+            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
+        
+        return value
 
 
 class RetrieveLobbySerializer(serializers.ModelSerializer):
