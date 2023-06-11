@@ -72,6 +72,9 @@ class TestMainConsumer(Config):
         response_2 = await communicator_2.receive_json_from()
         assert response_1 == True, response_1
         assert response_2 == {"type": "created_game", "lobby": self.ser_lobby_1, "user_id": self.user_1.id}, response_2
+
+        await communicator_1.disconnect()
+        await communicator_2.disconnect()
         
     async def test_deleted_game(self):
         """Testing deleted_game event"""
@@ -83,6 +86,8 @@ class TestMainConsumer(Config):
         await communicator.send_json_to({"type": "deleted_game", "lobby_id": self.lobby_1.id})
         response = await communicator.receive_json_from()
         assert response == {"type": "deleted_game", "lobby_id": self.lobby_1.id}, response
+
+        await communicator.disconnect()
     
     async def test_add_user_to_game(self):
         """Testing add_user_to_game event"""
@@ -101,6 +106,8 @@ class TestMainConsumer(Config):
         assert response_1 == True, response_1
         assert response_2 == data, response_2
 
+        await communicator_1.disconnect()
+        await communicator_2.disconnect()
 
 
 class TestLobbyConsumer(Config):
@@ -117,6 +124,28 @@ class TestLobbyConsumer(Config):
         self.ser_board_1_ships = serializers.ShipSerializer(self.board_1_ships, many=True).data
 
         self.board_column_list = {key: value for key, value in self.ser_board_1.items() if key in column_name_list}
+    
+    async def test_disconect(self):
+        """Testing disconect method"""
+
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        communicator = await self.launch_websocket_communicator(path=path)
+        assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
+        
+        with self.assertLogs(level="INFO"):
+            await communicator.disconnect(code=None)
+        
+        communicator = await self.launch_websocket_communicator(path=path)
+        assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
+
+        with self.assertLogs(level="INFO"):
+            await communicator.disconnect()
+        
+        communicator = await self.launch_websocket_communicator(path=path)
+        assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
+        
+        with self.assertLogs(level="WARNING"):
+            await communicator.disconnect(code=1003)
 
     async def test_refresh_board(self):
         """Testing refresh_board event"""
@@ -564,3 +593,5 @@ class TestLobbyConsumer(Config):
         assert response == True, response
         assert is_exists == False, is_exists
 
+        with self.assertLogs(level="INFO"):
+            await communicator.disconnect()
