@@ -86,11 +86,14 @@ class TestUpdateUserInfoSerializer(APITestCase):
         response = self.instance.validate_email("  string@gmail.com ")
         assert response == "string@gmail.com", response
 
-        response = self.instance.validate_email("  str123ing@gmail.com ")
+        response = self.instance.validate_email("str123ing@gmail.com")
         assert response == "str123ing@gmail.com", response
 
-        response = self.instance.validate_email(" stqqqr`@gmail.com ")
-        assert response == "stqqqr`@gmail.com", response
+        response = self.instance.validate_email("email_123@gmail.com")
+        assert response == "email_123@gmail.com", response
+
+        with self.assertRaises(ValidationError):
+            response = self.instance.validate_email(" stqqqr`@gmail.com ")
 
         with self.assertRaises(ValidationError):
             response = self.instance.validate_email("1stri@gmail.com ")
@@ -126,15 +129,21 @@ class TestSignUpSerializer(APITestCase):
     def test_validate_username(self):
         """Testing validate_username method"""
         
-        response = self.instance.validate_username("  string@gmail.com ")
-        assert response == "string@gmail.com", response
+        response = self.instance.validate_username("  string ")
+        assert response == "string", response
 
-        response = self.instance.validate_username("  str123ing@gmail.com ")
-        assert response == "str123ing@gmail.com", response
+        response = self.instance.validate_username("str123ing")
+        assert response == "str123ing", response
 
-        response = self.instance.validate_username(" stqqqr`@gmail.com ")
-        assert response == "stqqqr`@gmail.com", response
+        response = self.instance.validate_username(" stqqqr ")
+        assert response == "stqqqr", response
 
+        with self.assertRaises(ValidationError):
+            response = self.instance.validate_username("stri")
+
+        with self.assertRaises(ValidationError):
+            response = self.instance.validate_username("1stri")
+        
         with self.assertRaises(ValidationError):
             response = self.instance.validate_username("1stri@gmail.com ")
         
@@ -183,14 +192,20 @@ class TestSignUpSerializer(APITestCase):
         response = self.instance.validate_email("  string@gmail.com ")
         assert response == "string@gmail.com", response
 
-        response = self.instance.validate_email("  str123ing@gmail.com ")
+        response = self.instance.validate_email("str123ing@gmail.com")
         assert response == "str123ing@gmail.com", response
 
-        response = self.instance.validate_email(" stqqqr`@gmail.com ")
-        assert response == "stqqqr`@gmail.com", response
+        response = self.instance.validate_email("email_123@gmail.com")
+        assert response == "email_123@gmail.com", response
+
+        with self.assertRaises(ValidationError):
+            response = self.instance.validate_email(" stqqqr`@gmail.com ")
 
         with self.assertRaises(ValidationError):
             response = self.instance.validate_email("1stri@gmail.com ")
+        
+        with self.assertRaises(ValidationError):
+            response = self.instance.validate_email(" 1ema@gmail.com ")
         
         with self.assertRaises(ValidationError):
             response = self.instance.validate_email("  stringstrings stringstringstringstring@gmail.com  ")

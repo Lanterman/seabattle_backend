@@ -20,14 +20,26 @@ class ValidateClass:
             error_list.append(f"First character of '{field_name}' field can only contain characters!")
 
     @staticmethod
-    def validate_symbols_only_numbers(value: str, field_name: str, error_list: list) -> None:
-        """Checks if a field numbers only characters"""
+    def validate_only_numbers(value: str, field_name: str, error_list: list) -> None:
+        """Check field contains only numbers"""
 
         if re.search(r'\D', value):
             error_list.append(f"'{field_name}' field can only numbers characters!")
+    
+    @staticmethod
+    def validate_only_numbers_contains_and_underscore(value: str, field_name: str, error_list: list) -> None:
+        """Check field contains only numbers, letters and underscore"""
+
+        if re.search(r'\W', value):
+            error_list.append(f"'{field_name}' field can only contain characters!")
+        
+        if error_list:
+            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
+        
+        return value
 
     @staticmethod
-    def validate_symbols(value: str, field_name: str, error_list: list) -> None:
+    def validate_only_contains(value: str, field_name: str, error_list: list) -> None:
         """Checks if a field contains only characters"""
 
         if re.search(r'\d|\W', value):
@@ -100,7 +112,7 @@ class UpdateUserInfoSerializer(serializers.ModelSerializer, ValidateClass):
         value = value.strip()
         error_list = []
 
-        self.validate_symbols(value, "First name", error_list)
+        self.validate_only_contains(value, "First name", error_list)
         self.validate_min_length(value, "First name", error_list)
         self.validate_max_length(value, "First name", error_list)
         
@@ -113,7 +125,7 @@ class UpdateUserInfoSerializer(serializers.ModelSerializer, ValidateClass):
         value = value.strip()
         error_list = []
 
-        self.validate_symbols(value, "Last name", error_list)
+        self.validate_only_contains(value, "Last name", error_list)
         self.validate_min_length(value, "Last name", error_list)
         self.validate_max_length(value, "Last name", error_list)
         
@@ -128,19 +140,17 @@ class UpdateUserInfoSerializer(serializers.ModelSerializer, ValidateClass):
         error_list = []
 
         self.validate_first_character(value, "Email", error_list)
+        self.validate_only_numbers_contains_and_underscore(check_value, "Email", error_list)
         self.validate_min_length(value, check_value, error_list)
         self.validate_max_length(value, check_value, error_list)
-        
-        if error_list:
-            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
-        
+
         return value
     
     def validate_mobile_number(self, value: str) -> str:
         value = value.strip()
         error_list = []
 
-        self.validate_symbols_only_numbers(value, "mobile_number", error_list)
+        self.validate_only_numbers(value, "mobile_number", error_list)
         self.validate_min_length(value, "mobile_number", error_list, 12)
         self.validate_max_length(value, "mobile_number", error_list, 20)
         
@@ -176,6 +186,7 @@ class SignUpSerializer(serializers.ModelSerializer, ValidateClass):
         error_list = []
 
         self.validate_first_character(value, "Username", error_list)
+        self.validate_only_numbers_contains_and_underscore(value, "Username", error_list)
         self.validate_min_length(value, "Username", error_list)
         self.validate_max_length(value, "Username", error_list)
         
@@ -188,7 +199,7 @@ class SignUpSerializer(serializers.ModelSerializer, ValidateClass):
         value = value.strip()
         error_list = []
 
-        self.validate_symbols(value, "First name", error_list)
+        self.validate_only_contains(value, "First name", error_list)
         self.validate_min_length(value, "First name", error_list)
         self.validate_max_length(value, "First name", error_list)
         
@@ -201,7 +212,7 @@ class SignUpSerializer(serializers.ModelSerializer, ValidateClass):
         value = value.strip()
         error_list = []
 
-        self.validate_symbols(value, "Last name", error_list)
+        self.validate_only_contains(value, "Last name", error_list)
         self.validate_min_length(value, "Last name", error_list)
         self.validate_max_length(value, "Last name", error_list)
         
@@ -212,12 +223,13 @@ class SignUpSerializer(serializers.ModelSerializer, ValidateClass):
     
     def validate_email(self, value: str) -> str:
         value = value.strip()
-        check_value = value.split("@")
+        check_value = value.split("@")[0]
         error_list = []
 
         self.validate_first_character(value, "Email", error_list)
-        self.validate_min_length(value, check_value, error_list)
-        self.validate_max_length(value, check_value, error_list)
+        self.validate_only_numbers_contains_and_underscore(check_value, "Email", error_list)
+        self.validate_min_length(check_value, "Email", error_list)
+        self.validate_max_length(check_value, "Email", error_list)
         
         if error_list:
             raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
@@ -228,7 +240,7 @@ class SignUpSerializer(serializers.ModelSerializer, ValidateClass):
         value = value.strip()
         error_list = []
 
-        self.validate_symbols_only_numbers(value, "mobile_number", error_list)
+        self.validate_only_numbers(value, "mobile_number", error_list)
         self.validate_min_length(value, "mobile_number", error_list, 12)
         self.validate_max_length(value, "mobile_number", error_list, 20)
         

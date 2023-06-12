@@ -28,7 +28,7 @@ class SignInView(generics.CreateAPIView):
         token = db_queries.create_user_token(user=user)
         serializer = serializers.BaseTokenSerializer(token)
 
-        return response.Response(data=serializer.data)
+        return response.Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
 
 class SignUpView(generics.CreateAPIView):
