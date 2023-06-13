@@ -106,16 +106,13 @@ class TestProfileView(APITestCase):
 
     fixtures = ["./src/game/consumers/test/test_data.json"]
 
-    class Photo:
-        def __init__(self, name) -> None:
-            self.name = name
-
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
 
-        cls.user = models.User.objects.get(id=1)
-        cls.token = Token.objects.create(user=cls.user)
+        cls.user_1 = models.User.objects.get(id=1)
+        cls.user_2 = models.User.objects.get(id=2)
+        cls.token = Token.objects.create(user=cls.user_1)
 
         cls.client = APIClient()
 
@@ -134,14 +131,6 @@ class TestProfileView(APITestCase):
             "last_name": "name", 
             "email": "email_123!@mail.ru", 
             "mobile_number": 12345678912
-        }
-
-        cls.valid_data_photo = {
-            "photo": cls.Photo(name="string.jpg")
-        }
-
-        cls.invalid_data_photo = {
-            "photo": cls.Photo(name="photo.py")
         }
     
     def test_get_method_unauthorization(self):
@@ -192,9 +181,34 @@ class TestProfileView(APITestCase):
     def test_patch_method_photo(self):
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
 
-        response_1 = self.client.patch(self.path_1, data=self.valid_data_photo)
-        assert response_1.status_code == 200, response_1.status_code
+        assert self.user_1.photo == "", self.user_1.photo
+        assert self.user_2.photo == "", self.user_2.photo
 
-        with self.assertLogs(level="WARNING"):
-            response_2 = self.client.patch(self.path_1, data=self.invalid_data_photo)
-        assert response_2.status_code == 400, response_2.status_code
+        # valid
+        with open("src/user/test/test_data/test_valid_image.jpg", 'rb') as f:
+            response = self.client.patch(self.path_1, format='multipart', data={'photo': f})
+            assert response.status_code == 200, response
+        
+        updated_user_1 = models.User.objects.get(id=1)
+        assert updated_user_1.photo != self.user_1.photo, updated_user_1.photo
+
+        # invalid format
+        with open("src/user/test/test_data/test_invalid_data.mp4", 'rb') as f:
+            with self.assertLogs(level="WARNING"):
+                response = self.client.patch(self.path_1, format='multipart', data={'photo': f})
+            
+            assert response.status_code == 400, response
+        
+        updated_user_2 = models.User.objects.get(id=1)
+        assert updated_user_2.photo != self.user_1.photo, updated_user_2.photo
+        assert updated_user_2.photo == updated_user_1.photo, updated_user_2.photo
+
+        # Forbidden
+        with open("src/user/test/test_data/test_valid_image.jpg", 'rb') as f:
+            with self.assertLogs(level="WARNING"):
+                response = self.client.patch(self.path_2, format='multipart', data={'photo': f})
+            
+            assert response.status_code == 403, response
+        
+        updated_user_3 = models.User.objects.get(id=2)
+        assert updated_user_3.photo == self.user_2.photo, updated_user_3.photo
