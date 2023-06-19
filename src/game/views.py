@@ -41,7 +41,7 @@ class DetailLobbyView(RetrieveAPIView):
     """Detailed description of the lobby"""
 
     queryset = game_models.Lobby.objects.all().prefetch_related("users", "boards", "boards__ships", "messages")
-    permission_classes = [IsAuthenticated, permissions.IsLobbyFree]
+    permission_classes = [IsAuthenticated, permissions.IsLobbyFree, permissions.IsEnoughMoney]
     serializer_class = serializers.RetrieveLobbySerializer
     lookup_field = "slug"
 
