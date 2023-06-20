@@ -13,6 +13,11 @@ class BotMessage:
         """Get a message from a bot with a connected player"""
 
         return f"{self.user.username.capitalize()} connected to the game."
+    
+    def get_bot_message_dont_have_enough_money(self) -> str:
+        """Get a message about don't have enough money to play"""
+
+        return f"{self.user.username.capitalize()} don't have enough money to play."
 
 
 class GenericBotMixin(BotMessage):

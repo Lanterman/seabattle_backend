@@ -553,11 +553,12 @@ class TestLobbyConsumer(Config):
 
         test_data = {
             "type": "create_new_game", 
-            "bet": 100, 
+            "bet": 50, 
             "name": "string", 
             "time_to_move": 30, 
             "time_to_placement": 60, 
-            "enemy_id": 2
+            "enemy_id": 2,
+            "lobby_id": 1
         }
 
         await communicator.send_json_to(test_data)
@@ -566,6 +567,12 @@ class TestLobbyConsumer(Config):
         assert response["type"] == "new_group", response["type"]
         assert type(response["lobby_slug"]) == str, response
         assert number_of_lobby_1 != number_of_lobby_2
+
+        test_data["bet"] = 101
+        await communicator.send_json_to(test_data)
+        response = await communicator.receive_json_from()
+        assert response["type"] == "send_message", response["type"]
+        assert response["message"]["message"] == "Admin don't have enough money to play.", response
 
         with self.assertLogs(level="INFO"):
             await communicator.disconnect()

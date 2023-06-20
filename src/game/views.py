@@ -1,6 +1,8 @@
 import uuid
 
 from django.db.models import Count
+from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework import filters as drf_filters
 from rest_framework.response import Response
 from rest_framework.generics import ListCreateAPIView, RetrieveAPIView, ListAPIView
@@ -31,6 +33,9 @@ class LobbyListView(ListCreateAPIView):
             return serializers.CreateLobbySerializer
 
     def perform_create(self, serializer):
+        if self.request.user.cash < int(self.request.data["bet"]):
+            raise ValidationError(detail={"bet": ["You don't have enough money to play"]}, code=status.HTTP_400_BAD_REQUEST)
+
         lobby = serializer.save()
         lobby.users.add(self.request.user)
         first_board_id, second_board_id = db_queries.create_lobby_boards(lobby.id, self.request.user.id)

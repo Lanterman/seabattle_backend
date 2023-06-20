@@ -172,10 +172,16 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.channel_layer.group_send(self.lobby_group_name, dict_answer)       
 
         elif content["type"] == "create_new_game":
-            lobby_slug = await self.create_new_game(content["bet"], content["name"], content["time_to_move"],
-                                              content["time_to_placement"], content["enemy_id"])
+            if self.user.cash - int(content["bet"]) >= int(content["bet"]):
+                lobby_slug = await self.create_new_game(content["bet"], content["name"], content["time_to_move"],
+                                                        content["time_to_placement"], content["enemy_id"])
+                data = {"type": "new_group", "lobby_slug": lobby_slug}
             
-            await self.channel_layer.group_send(self.lobby_group_name, {"type": "new_group", "lobby_slug": lobby_slug})
+            else:
+                message = self.get_bot_message_dont_have_enough_money()
+                data = await self._send_message(content["lobby_id"], message, True)
+            
+            await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "delete_game":
             await db_queries.delete_lobby(self.lobby_name)
