@@ -4,6 +4,7 @@ from rest_framework import serializers, status
 from rest_framework.authtoken.models import Token
 
 from src.user import models
+from src.game import serializers as game_serializers
 
 
 class ValidateClass:
@@ -60,21 +61,15 @@ class ValidateClass:
             error_list.append(f"'{field_name}' field must be less than or equal to {count} characters!")
 
 
-class BaseUserSerializer(serializers.HyperlinkedModelSerializer):
-    """Base user serializer"""
-
-    class Meta:
-        model = models.User
-        fields = ("id", "username", "first_name", "last_name", "email", "rating", "cash")
-
-
 class MyProfileSerializer(serializers.ModelSerializer):
     """Profile user serializer"""
+
+    lobbies = game_serializers.BaseLobbySerializer(many=True)
 
     class Meta:
         model = models.User
         fields = ["id", "username", "first_name", "last_name", "email", "mobile_number", "cash", "rating",
-                  "created_in", "updated_in", "photo"]
+                  "created_in", "updated_in", "photo", "lobbies"]
         extra_kwargs = {"cash": {"read_only": True}, "rating": {"read_only": True}, "updated_in": {"read_only": True}}
 
 

@@ -3,7 +3,16 @@ import json
 
 from rest_framework import serializers, status
 from . import models, services
-from ..user import serializers as user_serializers, models as user_models
+from ..user import models as user_models
+
+
+class BaseUserSerializer(serializers.HyperlinkedModelSerializer):
+    """Base user serializer"""
+
+    class Meta:
+        model = user_models.User
+        fields = ("url", "id", "username", "first_name", "last_name", "email", "rating", "cash")
+        extra_kwargs = {"url": {"lookup_field": "username"}}
 
 
 class ShipSerializer(serializers.ModelSerializer):
@@ -41,10 +50,19 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = ["message", "owner", "is_bot", "created_in"]
 
 
+class BaseLobbySerializer(serializers.HyperlinkedModelSerializer):
+    """Base Lobby serializer"""
+
+    class Meta:
+        model = models.Lobby
+        fields = ["url", "name", "slug", "created_in", "finished_in", "password", "winner"]
+        extra_kwargs = {"url": {"lookup_field": "slug"}}
+
+
 class ListLobbySerializer(serializers.HyperlinkedModelSerializer):
     """List lobby serializer"""
 
-    users = user_serializers.BaseUserSerializer(many=True)
+    users = BaseUserSerializer(many=True)
 
     class Meta:
         model = models.Lobby
@@ -86,7 +104,7 @@ class CreateLobbySerializer(serializers.ModelSerializer):
 class RetrieveLobbySerializer(serializers.ModelSerializer):
     """Retrieve serializer"""
 
-    users = user_serializers.BaseUserSerializer(many=True, read_only=True)
+    users = BaseUserSerializer(many=True, read_only=True)
     boards = BoardSerializer(many=True, read_only=True)
     messages = MessageSerializer(many=True)
 
@@ -98,7 +116,7 @@ class RetrieveLobbySerializer(serializers.ModelSerializer):
 class RetrieveLobbyWithUsersSerializer(serializers.ModelSerializer):
     """Retrieve serializer"""
 
-    users = user_serializers.BaseUserSerializer(many=True, read_only=True)
+    users = BaseUserSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.Lobby

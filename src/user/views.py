@@ -54,7 +54,7 @@ class SignUpView(generics.CreateAPIView):
 class ProfileView(generics.RetrieveUpdateDestroyAPIView):
     """User profile endpoint"""
 
-    queryset = models.User.objects.all()
+    queryset = models.User.objects.all().prefetch_related("lobbies")
     permission_classes = [IsAuthenticated, permissions.IsMyProfile]
     lookup_field = "username"
 
