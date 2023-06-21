@@ -1,9 +1,11 @@
 from django.utils import timezone
+from django.db.models import Prefetch
 from rest_framework import generics, response, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 
 from . import models, serializers, services, permissions, db_queries
+from src.game import models as game_models
 
 
 class SignInView(generics.CreateAPIView):
@@ -54,7 +56,9 @@ class SignUpView(generics.CreateAPIView):
 class ProfileView(generics.RetrieveUpdateDestroyAPIView):
     """User profile endpoint"""
 
-    queryset = models.User.objects.all().prefetch_related("lobbies")
+    queryset = models.User.objects.all().prefetch_related(Prefetch(
+        "lobbies", queryset=game_models.Lobby.objects.filter(finished_in__isnull=False)
+    ))
     permission_classes = [IsAuthenticated, permissions.IsMyProfile]
     lookup_field = "username"
 
