@@ -5,6 +5,7 @@ from typing import Optional
 from django.db import models
 from django.urls.base import reverse
 from config import settings, utilities
+from .services import Bet, ChooseTime
 
 
 User = settings.AUTH_USER_MODEL
@@ -19,12 +20,12 @@ class Lobby(models.Model):
         )
     created_in: datetime.datetime = models.DateTimeField(auto_now_add=True)
     finished_in: datetime.datetime = models.DateTimeField(blank=True, null=True)
-    bet: int = models.IntegerField("game bet", choices=utilities.Bet.choices, help_text="Required")
+    bet: int = models.IntegerField("game bet", choices=Bet.choices, help_text="Required")
     time_to_move: int = models.IntegerField(
-        choices=utilities.ChooseTime.choices, default=utilities.ChooseTime.THIRTY_SECONDS
+        choices=ChooseTime.choices, default=ChooseTime.THIRTY_SECONDS
         )
     time_to_placement: int = models.IntegerField(
-        choices=utilities.ChooseTime.choices, default=utilities.ChooseTime.THIRTY_SECONDS
+        choices=ChooseTime.choices, default=ChooseTime.THIRTY_SECONDS
         )
     password: str = models.CharField(max_length=100, blank=True)
     winner: str = models.CharField(max_length=150, blank=True)
@@ -60,7 +61,9 @@ class Board(models.Model):
     is_my_turn: bool = models.BooleanField("is my turn", default=False)
     is_play_again: bool = models.BooleanField("is play again", null=True)
     lobby_id: Lobby = models.ForeignKey(to=Lobby, verbose_name="lobby", on_delete=models.CASCADE, related_name="boards")
-    user_id: User = models.ForeignKey(to=User, verbose_name="user", on_delete=models.CASCADE, related_name="board_set", blank=True, null=True)
+    user_id: User = models.ForeignKey(
+        to=User, verbose_name="user", on_delete=models.CASCADE, related_name="board_set", blank=True, null=True
+    )
 
     class Meta:
         verbose_name = "Board"
@@ -103,5 +106,5 @@ class Message(models.Model):
         verbose_name_plural = "Messages"
         ordering = ["-id"]
     
-    def _str_(self):
+    def __str__(self):
         return f"Chat message {self.id}"

@@ -5,7 +5,7 @@ from channels.db import database_sync_to_async
 from rest_framework.test import APITestCase, APITransactionTestCase
 
 from src.game import models, serializers
-from src.user import models as user_models, serializers as user_serializers
+from src.user import models as user_models
 from src.game.consumers import services, mixins, db_queries
 from .test_data import column_name_list, ship_count_dict
 from config.utilities import redis_instance
@@ -246,8 +246,8 @@ class TestAddUserToGameMixin(APITransactionTestCase):
         self.user_1 = user_models.User.objects.get(id=1)
         self.user_2 = user_models.User.objects.get(id=3)
 
-        self.ser_user_1 = user_serializers.BaseUserSerializer(self.user_1).data
-        self.ser_user_2 = user_serializers.BaseUserSerializer(self.user_2).data
+        self.ser_user_1 = serializers.BaseUserSerializer(self.user_1).data
+        self.ser_user_2 = serializers.BaseUserSerializer(self.user_2).data
 
         self.lobby_1 = models.Lobby.objects.get(id=1)
         self.lobby_2 = models.Lobby.objects.get(id=2)
@@ -358,6 +358,9 @@ class TestCreateNewGameMixin(APITransactionTestCase):
         super().setUp()
 
         self.user = user_models.User.objects.get(id=1)
+        self.lobby = models.Lobby.objects.get(id=1)
+
+        self.ser_lobby = serializers.RetrieveLobbyWithUsersSerializer(self.lobby).data
 
         self.instance = mixins.CreateNewGameMixin()
 
@@ -391,6 +394,12 @@ class TestCreateNewGameMixin(APITransactionTestCase):
         assert new_lobby.name == "(1) qwe test (4)", new_lobby.name
         assert new_lobby.id == 4, new_lobby.id
         assert len(new_board_list) == 2, new_board_list
+    
+    async def test_get_new_game(self):
+        """Testing the get_new_game method"""
+
+        lobby = await self.instance.get_new_game(self.lobby.slug)
+        assert lobby == self.ser_lobby, lobby
 
 
 class TestCountDownTimerMixin(APITestCase):
@@ -542,7 +551,7 @@ class TestTakeShotMixin(APITransactionTestCase):
         """Testing the take_shot method"""
 
         self.instance.column_name_list = column_name_list
-        self.instance.user = self.user_2
+        self.instance.user = self.user_1
         assert self.board_1.A[1:29] == "'A1': '', 'A2': ' space 7.1'", self.board_1.A[1:29]
 
         response = await self.instance.take_shot(self.lobby_slug, self.board_1.id, "A1")
@@ -555,7 +564,7 @@ class TestTakeShotMixin(APITransactionTestCase):
         assert updated_board_1.A[1:33] == "'A1': 'miss', 'A2': ' space 7.1'", updated_board_1.A[1:33]
         assert updated_board_1.A[1:33] != self.board_1.A[1:33], updated_board_1.A[1:33]
 
-        self.instance.user = self.user_1
+        self.instance.user = self.user_2
         assert self.board_2.A[1:32] == "'A1': ' space 26.3', 'A2': 26.3", self.board_2.A[1:32]
 
         response = await self.instance.take_shot(self.lobby_slug, self.board_2.id, "A1")

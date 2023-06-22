@@ -1,4 +1,5 @@
 import os
+import logging
 
 from celery import Celery
 
@@ -19,4 +20,4 @@ app.autodiscover_tasks(packages=["src.game.celery_tasks"])
 
 @app.task(bind=True)
 def debug_task(self):
-    print(f'Request: {self.request!r}')
+    logging.info(f'Request: {self.request!r}')

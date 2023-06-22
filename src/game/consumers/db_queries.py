@@ -85,11 +85,18 @@ def update_boards(bool_value: bool, my_board, enemy_board) -> None:
     models.Board.objects.bulk_update([my_board, enemy_board], ["is_my_turn"])
 
 
-@database_sync_to_async
-def get_lobby_by_slug(slug: uuid) -> models.Lobby:
+async def get_lobby_by_slug(slug: uuid) -> models.Lobby:
     """Get the Lobby models instance"""
 
-    query = models.Lobby.objects.get(slug=slug)
+    query = await models.Lobby.objects.aget(slug=slug)
+    return query
+
+
+@database_sync_to_async
+def get_lobby_with_users_by_slug(slug: uuid) -> models.Lobby:
+    """Get the Lobby models instance with owner"""
+
+    query = models.Lobby.objects.prefetch_related("users").get(slug=slug)
     return query
 
 
@@ -100,11 +107,10 @@ def set_winner_in_lobby(lobby_slug: uuid, username: str) -> None:
     models.Lobby.objects.filter(slug=lobby_slug).update(winner=username, finished_in=timezone.now())
 
 
-@database_sync_to_async
-def get_user(id: int) -> str:
+async def get_user(id: int) -> str:
     """Get user by ID and return his username"""
 
-    query = user_models.User.objects.get(id=id)
+    query = await user_models.User.objects.aget(id=id)
     return query.username
 
 
@@ -122,11 +128,10 @@ def update_user_id_of_board(board_id: int, user_id: int) -> None:
     models.Board.objects.filter(id=board_id).update(user_id=user_id)
 
 
-@database_sync_to_async
-def create_message(lobby_id: int, username: str, message: str, is_bot: bool) -> models.Message:
+async def create_message(lobby_id: int, username: str, message: str, is_bot: bool) -> models.Message:
     """Create message model instance and return it"""
 
-    query = models.Message.objects.create(message=message, owner=username, is_bot=is_bot, lobby_id_id=lobby_id)
+    query = await models.Message.objects.acreate(message=message, owner=username, is_bot=is_bot, lobby_id_id=lobby_id)
     return query
 
 
@@ -137,11 +142,10 @@ def update_play_again_field(board_id: int, answer: bool) -> None:
     models.Board.objects.filter(id=board_id).update(is_play_again=answer)
 
 
-@database_sync_to_async
-def get_user_by_id(enemy_id: int) -> user_models.User:
+async def get_user_by_id(enemy_id: int) -> user_models.User:
     """Get user by id"""
 
-    query = user_models.User.objects.get(id=enemy_id)
+    query = await user_models.User.objects.aget(id=enemy_id)
     return query
 
 
@@ -156,27 +160,14 @@ def create_lobby(name: str, bet: int, time_to_move: int, time_to_placement: int,
 
 
 @database_sync_to_async
-def create_lobby_boards(lobby_id: int, first_user_id: int, second_user_id: int) -> tuple[int]:
-    """Create lobby boards"""
+def delete_lobby(lobby_slug: str) -> None:
+    """Delete lobby"""
 
-    first_board, second_board = models.Board.objects.bulk_create([
-        models.Board(lobby_id_id=lobby_id, user_id_id=first_user_id),
-        models.Board(lobby_id_id=lobby_id, user_id_id=second_user_id)
-    ])
-    return first_board.id, second_board.id
+    models.Lobby.objects.get(slug=lobby_slug).delete()
 
 
 @database_sync_to_async
-def create_ships_for_boards(first_board_id: int, second_board_id: int) -> None:
-    """Create shipf for boards"""
+def update_user_statistics(winning_user: user_models.User, losing_user: user_models.User) -> None:
+    """Update the bet and the rating of the user model instance"""
 
-    models.Ship.objects.bulk_create([
-        models.Ship(name="singledeck", size=1, count=4, board_id_id=first_board_id),
-        models.Ship(name="doubledeck", size=2, count=3, board_id_id=first_board_id),
-        models.Ship(name="tripledeck", size=3, count=2, board_id_id=first_board_id),
-        models.Ship(name="fourdeck", size=4, count=1, board_id_id=first_board_id),
-        models.Ship(name="singledeck", size=1, count=4, board_id_id=second_board_id),
-        models.Ship(name="doubledeck", size=2, count=3, board_id_id=second_board_id),
-        models.Ship(name="tripledeck", size=3, count=2, board_id_id=second_board_id),
-        models.Ship(name="fourdeck", size=4, count=1, board_id_id=second_board_id),
-    ])
+    user_models.User.objects.bulk_update([winning_user, losing_user], ["cash", "rating"])

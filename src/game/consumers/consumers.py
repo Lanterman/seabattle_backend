@@ -7,14 +7,46 @@ from . import mixins, db_queries, bot_mixins
 from .. import services
 
 
-class LobbyListConsumer(AsyncJsonWebsocketConsumer):
-    """Lobby list consumer"""
+class MainConsumer(AsyncJsonWebsocketConsumer, mixins.CreateNewGameMixin):
+    """Main consumer"""
 
     async def connect(self):
+        self.lobby_group_name = "lobby_list"
+        await self.channel_layer.group_add(self.lobby_group_name, self.channel_name)
+        # redis_instance.flushall()
+        # logging.warning(redis_instance.keys())
+
         await self.accept()
 
     async def receive_json(self, content, **kwargs):
-        await self.send_json(content=content)
+        if content["type"] == "created_game":
+            lobby = await self.get_new_game(content["lobby_slug"])
+            data = {"type": content["type"], "lobby": lobby, "user_id": self.scope["user"].id}
+            await self.channel_layer.group_send(self.lobby_group_name, data)
+        
+        elif content["type"] == "deleted_game":
+            await self.channel_layer.group_send(self.lobby_group_name, content)
+        
+        elif content["type"] == "add_user_to_game":
+            data = {"type": content["type"], "lobby_id": content["lobby_id"], "user_id": self.scope["user"].id}
+            await self.channel_layer.group_send(self.lobby_group_name, data)
+    
+    async def created_game(self, event):
+        """Called when created new game"""
+
+        if self.scope["user"].id != event["user_id"]:
+            await self.send_json(event)
+    
+    async def deleted_game(self, event):
+        """Called when deleted game"""
+
+        await self.send_json(event)
+    
+    async def add_user_to_game(self, event):
+        """Called when added user to game"""
+
+        if self.scope["user"].id != event["user_id"]: 
+            await self.send_json(event)
 
 
 class LobbyConsumer(AsyncJsonWebsocketConsumer, 
@@ -30,6 +62,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                     mixins.SendMessageMixin,
                     mixins.PlayAgainMixin,
                     mixins.CreateNewGameMixin,
+                    mixins.CalculateRatingAndCash,
                     bot_mixins.GenericBotMixin):
 
     def __init__(self, *args, **kwargs):
@@ -98,8 +131,9 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                 logging.info(f"For lobby '{self.lobby_name}' turn is determined!")
 
         elif content["type"] == "determine_winner":
-            winner = await db_queries.get_user(content["enemy_id"]) if len(content) == 2 else self.user.username
+            winner = await db_queries.get_user(content["enemy_id"]) if len(content) == 3 else self.user.username
             await self.determine_winner_of_game(self.lobby_name, winner)
+            await self.calculate_rating_and_cash_of_game(winner, content["bet"])
             self.remove_current_turn_in_lobby_from_redis(self.lobby_name)
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "determine_winner", "winner": winner})
 
@@ -138,10 +172,20 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.channel_layer.group_send(self.lobby_group_name, dict_answer)       
 
         elif content["type"] == "create_new_game":
-            lobby_slug = await self.create_new_game(content["bet"], content["name"], content["time_to_move"],
-                                              content["time_to_placement"], content["enemy_id"])
+            if self.user.cash - int(content["bet"]) >= int(content["bet"]):
+                lobby_slug = await self.create_new_game(content["bet"], content["name"], content["time_to_move"],
+                                                        content["time_to_placement"], content["enemy_id"])
+                data = {"type": "new_group", "lobby_slug": lobby_slug}
             
-            await self.channel_layer.group_send(self.lobby_group_name, {"type": "new_group", "lobby_slug": lobby_slug})
+            else:
+                message = self.get_bot_message_dont_have_enough_money()
+                data = await self._send_message(content["lobby_id"], message, True)
+            
+            await self.channel_layer.group_send(self.lobby_group_name, data)
+        
+        elif content["type"] == "delete_game":
+            await db_queries.delete_lobby(self.lobby_name)
+            redis_instance.delete(self.lobby_name)
 
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""

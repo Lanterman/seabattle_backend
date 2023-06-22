@@ -1,0 +1,89 @@
+version: "3.9"
+
+services:
+  postgres_db:
+    image: postgres:14
+    restart: always
+    volumes:
+      - postgres_data:/app/backend/var/lib/postgresql/data/
+    networks:
+      - seaBattleNetwork
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    container_name: postgres_db
+
+  backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    restart: always
+    command: bash -c "python manage.py makemigrations &&
+                      python manage.py migrate --noinput &&
+                      python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - backend_media_data:/app/backend/media
+      - ./:/app/backend/
+    networks:
+      - seaBattleNetwork
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env.dev
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    depends_on:
+      - postgres_db
+      - redis
+    container_name: backend
+
+  redis:
+    image: redis:5
+    restart: always
+    command: "redis-server"
+    ports:
+      - "6379:6379"
+    container_name: redis
+    volumes:
+      - redis_data:/app/backend/var/lib/redis/data
+    networks:
+      - seaBattleNetwork
+  
+  celery:
+    build: .
+    restart: always
+    command: "celery -A config worker -l INFO"
+    volumes:
+      - celery_data:/app/backend/var/lib/celery/data
+    networks:
+      - seaBattleNetwork
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - backend
+      - redis
+    container_name: celery
+  
+  frontend:
+    build: ../frontend
+    container_name: frontend
+    restart: always
+    ports:
+      - 3000:3000
+    command: npm start
+    depends_on:
+      - backend
+    networks:
+      - seaBattleNetwork
+
+volumes:
+  postgres_data:
+  backend_media_data:
+  redis_data:
+  celery_data:
+
+networks:
+  seaBattleNetwork:

@@ -1,5 +1,5 @@
 from django.urls import path, include
-from rest_framework import permissions
+from rest_framework import permissions, authentication
 from rest_framework.settings import api_settings
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -15,13 +15,16 @@ schema_view = get_schema_view(
    openapi.Info(
       title="Sea Battle",
       default_version=api_settings.DEFAULT_VERSION,
-      description="Test description",
+      description=(
+          "For authenticated requests, create a user and enter the resulting token along with the word 'Token'."
+          "Example: 'Token d8175af2fac77d4ee16b984769a7251775e6be48'."),
       license=openapi.License(name="BSD License"),
       contact=contact,
    ),
    public=True,
    patterns=schema_url_patterns,
    permission_classes=[permissions.AllowAny],
+   authentication_classes=[authentication.TokenAuthentication]
 )
 
 urlpatterns = [

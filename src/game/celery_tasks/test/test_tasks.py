@@ -4,6 +4,7 @@ from rest_framework.test import APITestCase
 
 from src.game.celery_tasks import tasks
 from src.game.models import Lobby, Board
+from config.celery import debug_task
 from config.utilities import redis_instance
 
 
@@ -96,3 +97,13 @@ class TestCountDownTask(APITestCase):
         assert self.lobby_2.winner == "Both lose!", self.lobby_2.winner
         assert self.boards_lobby_2[0].is_play_again == False, self.boards_lobby_2[0].is_play_again
         assert self.boards_lobby_2[1].is_play_again == False, self.boards_lobby_2[1].is_play_again
+
+
+class TestDebugTask(APITestCase):
+    """Testing debug_task celery task"""
+
+    def test_debug_task(self):
+        with self.assertLogs(level="INFO"):
+            response = debug_task()
+        
+        assert response == None, response

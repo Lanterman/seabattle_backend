@@ -9,8 +9,7 @@ from ..celery_tasks import tasks
 
 from . import services, db_queries
 from .addspace import add_space
-from .. import serializers, models as game_models
-from ...user import serializers as user_serializers
+from .. import serializers, models as game_models, db_queries as game_queries
 from config.utilities import redis_instance
 
 
@@ -146,7 +145,7 @@ class AddUserToGameMixin:
         if await self.is_lobby_free(self.user, lobby):
             await db_queries.add_user_to_lobby(lobby, self.user)
             await db_queries.update_user_id_of_board(board_id, self.user.id)
-            serializer = user_serializers.BaseUserSerializer(self.user)
+            serializer = serializers.BaseUserSerializer(self.user)
             return serializer.data
         else:
             logging.info(msg=f"User '{self.user.username}' not added because lobby is full!")
@@ -199,9 +198,16 @@ class CreateNewGameMixin:
         new_name = self._create_new_name(name)
         lobby_id, lobby_slug = await db_queries.create_lobby(new_name, bet, time_to_move, time_to_placement, 
                                                              (self.user, enemy))
-        first_board_id, second_board_id = await db_queries.create_lobby_boards(lobby_id, self.user.id, enemy.id)
-        await db_queries.create_ships_for_boards(first_board_id, second_board_id)
+        first_board_id, second_board_id = await database_sync_to_async(game_queries.create_lobby_boards)(lobby_id, self.user.id, enemy.id)
+        await database_sync_to_async(game_queries.create_ships_for_boards)(first_board_id, second_board_id)
         return str(lobby_slug)
+    
+    async def get_new_game(self, lobby_slug: uuid) -> dict:
+        """Get new game"""
+
+        lobby = await db_queries.get_lobby_with_users_by_slug(lobby_slug)
+        serializer = serializers.RetrieveLobbyWithUsersSerializer(lobby).data
+        return serializer
 
 
 class CountDownTimerMixin:
@@ -235,6 +241,34 @@ class CountDownTimerMixin:
 
         return {"type": "countdown", "time_left": time_left}
 
+
+class CalculateRatingAndCash:
+    """Calculate current user rating and cash"""
+
+    def calculate_rating(self, rating: int, winning_user, losing_user) -> None:
+        """Calculate rating"""
+
+        winning_user.rating += rating
+        losing_user.rating -= rating
+    
+    def calculate_cash(self, bet: int, winning_user, losing_user) -> None:
+        """Calculate rating"""
+
+        winning_user.cash += bet
+        losing_user.cash -= bet
+
+    async def calculate_rating_and_cash_of_game(self, winner: str, bet: int) -> None:
+        """Calculate current user rating and cash"""
+
+        lobby = await db_queries.get_lobby_with_users_by_slug(self.lobby_name)
+        winning_user, losing_user = services.determine_winner_and_loser(winner, lobby.users.all())
+        random_rating = random.choice(range(25, 31))
+        self.calculate_rating(random_rating, winning_user, losing_user)
+        self.calculate_cash(bet, winning_user, losing_user)
+        await self.perform_update_user_statistics(winning_user, losing_user)
+
+    async def perform_update_user_statistics(self, winning_user, losing_user) -> None:
+        await db_queries.update_user_statistics(winning_user, losing_user)
 
 class TakeShotMixin(BaseChooseWhoWillShotMixin):
     """Update a model instance"""

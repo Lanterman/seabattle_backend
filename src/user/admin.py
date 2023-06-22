@@ -10,18 +10,18 @@ class UserAdmin(admin.ModelAdmin):
     """Lobby admin"""
 
     list_display = (
-        "id", "username", "first_name", "last_name", "email", "cash", "created_in", "is_active", "is_staff", "photo"
+        "id", "username", "first_name", "last_name", "email", "cash", "rating", "created_in", "is_active", 
+        "is_staff", "photo"
     )
     list_display_links = ("id", "username", "first_name", "last_name")
     fields = (
-        "username", "slug", "first_name", "last_name", "email", "mobile_number", "cash", "is_active", "is_staff",
+        "username", "first_name", "last_name", "email", "mobile_number", "cash", "rating", "is_active", "is_staff",
         "updated_in", "hashed_password", "photo"
     )
     search_fields = ("username", "first_name", "last_name")
     list_filter = ("is_active", "is_staff")
     list_max_show_all = 250
     list_per_page = 150
-    prepopulated_fields = {"slug": ("username",)}
     actions = ["activate_user", "deactivate_user", "grant_access_to_admin_site", "deny_access_to_admin_site"]
 
     @admin.action(description="Activate user(-s)")

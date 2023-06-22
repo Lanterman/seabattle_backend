@@ -1,20 +1,30 @@
 import uuid
 
-from django.http import HttpResponseRedirect
-from rest_framework.reverse import reverse
+from django.db.models import Count
+from rest_framework import status
+from rest_framework.exceptions import ValidationError
+from rest_framework import filters as drf_filters
 from rest_framework.response import Response
-from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
+from django_filters import rest_framework as dj_filters
 
-from . import models as game_models, serializers, services, permissions
+from . import models as game_models, serializers, services, permissions, db_queries, filters
+from ..user import models as user_models
 from config.utilities import redis_instance
 
 
 class LobbyListView(ListCreateAPIView):
     """List of lobbies and create lobby"""
 
-    queryset = game_models.Lobby.objects.all().prefetch_related("users")
     permission_classes = [IsAuthenticated]
+    filter_backends = (drf_filters.SearchFilter, dj_filters.DjangoFilterBackend)
+    filterset_class = filters.LobbyFilter
+    search_fields = ["name"]
+
+    def get_queryset(self):
+        return game_models.Lobby.objects.annotate(
+            num_users=Count("users")).filter(num_users=1).prefetch_related("users")
 
     def get_serializer_class(self):
         if self.request.method == "GET":
@@ -23,19 +33,20 @@ class LobbyListView(ListCreateAPIView):
             return serializers.CreateLobbySerializer
 
     def perform_create(self, serializer):
+        if self.request.user.cash < int(self.request.data["bet"]):
+            raise ValidationError(detail={"bet": ["You don't have enough money to play"]}, code=status.HTTP_400_BAD_REQUEST)
+
         lobby = serializer.save()
         lobby.users.add(self.request.user)
-
-    def create(self, request, *args, **kwargs):
-        data = super().create(request, *args, **kwargs).data
-        return HttpResponseRedirect(redirect_to=reverse(viewname="lobby-detail", kwargs={"slug": data["slug"]}))
+        first_board_id, second_board_id = db_queries.create_lobby_boards(lobby.id, self.request.user.id)
+        db_queries.create_ships_for_boards(first_board_id, second_board_id)
 
 
-class DetailLobbyView(RetrieveDestroyAPIView):
-    """Detailed description of the lobby, update and destroy lobby"""
+class DetailLobbyView(RetrieveAPIView):
+    """Detailed description of the lobby"""
 
     queryset = game_models.Lobby.objects.all().prefetch_related("users", "boards", "boards__ships", "messages")
-    permission_classes = [IsAuthenticated, permissions.IsLobbyFree]
+    permission_classes = [IsAuthenticated, permissions.IsLobbyFree, permissions.IsEnoughMoney]
     serializer_class = serializers.RetrieveLobbySerializer
     lookup_field = "slug"
 
@@ -67,3 +78,11 @@ class DetailLobbyView(RetrieveDestroyAPIView):
             redis_instance.hset(name=slug, mapping={"time_left": time_to_serializer, "current_turn": 0})
             return time_to_serializer
         return int(time_from_redis)
+
+
+class LeadBoardView(ListAPIView):
+    """LeadBoard page API"""
+
+    queryset = user_models.User.objects.all().order_by("-rating")[:15]
+    permission_classes = [IsAuthenticated]
+    serializer_class = serializers.LeadBoardSerializer

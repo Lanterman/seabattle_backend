@@ -1,7 +1,17 @@
+import re
 import json
-from rest_framework import serializers
+
+from rest_framework import serializers, status
 from . import models, services
-from ..user import serializers as user_serializers
+from ..user import models as user_models
+
+
+class BaseUserSerializer(serializers.ModelSerializer):
+    """Base user serializer"""
+
+    class Meta:
+        model = user_models.User
+        fields = ("id", "username", "first_name", "last_name", "email", "rating", "cash")
 
 
 class ShipSerializer(serializers.ModelSerializer):
@@ -39,36 +49,84 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = ["message", "owner", "is_bot", "created_in"]
 
 
-class ListLobbySerializer(serializers.HyperlinkedModelSerializer):
-    """List lobby serializer"""
-
-    users = user_serializers.BaseUserSerializer(many=True)
+class BaseLobbySerializer(serializers.HyperlinkedModelSerializer):
+    """Base Lobby serializer"""
 
     class Meta:
         model = models.Lobby
-        fields = ["url", "name", "created_in", "bet", "password", "time_to_move", "time_to_placement", "slug", "users"]
+        fields = ["url", "name", "slug", "created_in", "finished_in", "password", "winner"]
+        extra_kwargs = {"url": {"lookup_field": "slug"}}
+
+
+class ListLobbySerializer(serializers.HyperlinkedModelSerializer):
+    """List lobby serializer"""
+
+    users = BaseUserSerializer(many=True)
+
+    class Meta:
+        model = models.Lobby
+        fields = ["url", "id", "name", "created_in", "bet", "password", "time_to_move", "time_to_placement", "slug", "users"]
         extra_kwargs = {"url": {"lookup_field": "slug"}}
 
 
 class CreateLobbySerializer(serializers.ModelSerializer):
-    """Lobby serializer"""
+    """Create lobby serializer"""
 
     class Meta:
         model = models.Lobby
         fields = ["name", "bet", "time_to_move", "time_to_placement", "password", "slug"]
-        extra_kwargs = {"slug": {"read_only": True}}
+        extra_kwargs = {
+            "slug": {"read_only": True},
+            "name": {"write_only": True},
+            "bet": {"write_only": True},
+            "time_to_move": {"write_only": True},
+            "time_to_placement": {"write_only": True},
+            "password": {"write_only": True},
+        }
+    
+    def validate_name(self, value: str):
+        value = value.strip()
+        error_list = []
 
-    def create(self, validated_data):
-        return super().create(validated_data)
+        if re.search(r"\W", value):
+            error_list.append("Field can only contain numbers and letters.")
+        
+        if re.match(r'\d|\W', value[0]):
+            error_list.append(f"First character of field can only contain characters.")
+        
+        if error_list:
+            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
+        
+        return value
 
 
 class RetrieveLobbySerializer(serializers.ModelSerializer):
     """Retrieve serializer"""
 
-    users = user_serializers.BaseUserSerializer(many=True, read_only=True)
+    users = BaseUserSerializer(many=True, read_only=True)
     boards = BoardSerializer(many=True, read_only=True)
     messages = MessageSerializer(many=True)
 
     class Meta:
         model = models.Lobby
         fields = ["id", "name", "bet", "winner", "password", "time_to_move", "time_to_placement", "users", "boards", "messages"]
+
+
+class RetrieveLobbyWithUsersSerializer(serializers.ModelSerializer):
+    """Retrieve serializer"""
+
+    users = BaseUserSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = models.Lobby
+        fields = ["id", "name", "created_in", "bet", "password", "time_to_move", "time_to_placement", "slug", "users"]
+
+
+class LeadBoardSerializer(serializers.HyperlinkedModelSerializer):
+    """Base user serializer"""
+
+    url = serializers.HyperlinkedIdentityField(lookup_field="username", view_name="user-detail")
+
+    class Meta:
+        model = user_models.User
+        fields = ("url", "username", "rating")
