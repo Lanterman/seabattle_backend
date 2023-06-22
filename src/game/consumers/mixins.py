@@ -10,7 +10,6 @@ from ..celery_tasks import tasks
 from . import services, db_queries
 from .addspace import add_space
 from .. import serializers, models as game_models, db_queries as game_queries
-from ...user import serializers as user_serializers
 from config.utilities import redis_instance
 
 
@@ -146,7 +145,7 @@ class AddUserToGameMixin:
         if await self.is_lobby_free(self.user, lobby):
             await db_queries.add_user_to_lobby(lobby, self.user)
             await db_queries.update_user_id_of_board(board_id, self.user.id)
-            serializer = user_serializers.BaseUserSerializer(self.user)
+            serializer = serializers.BaseUserSerializer(self.user)
             return serializer.data
         else:
             logging.info(msg=f"User '{self.user.username}' not added because lobby is full!")

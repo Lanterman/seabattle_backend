@@ -172,9 +172,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 15,
-    # 'DEFAULT_FILTER_BACKENDS': (
-    #     'django_filters.rest_framework.DjangoFilterBackend',
-    # ),
         'DEFAULT_AUTHENTICATION_CLASSES': (
             'rest_framework.authentication.TokenAuthentication',
         ),
@@ -185,11 +182,22 @@ REST_FRAMEWORK = {
     #     'user': '2/min'
     # },
     # 'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
-    'DEFAULT_VERSION': 'v1',
-    'ALLOWED_VERSIONS': ('v1',),
+    'DEFAULT_VERSION': 'v1.0.0',
+    'ALLOWED_VERSIONS': ('v1.0.0',),
     'DATETIME_FORMAT': '%d.%m.%Y %H:%M:%S',
     'DATETIME_INPUT_FORMATS': '%d.%m.%Y %H:%M:%S',
     'COMPACT_JSON': False,
+}
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    }
 }
 
 INTERNAL_IPS = [

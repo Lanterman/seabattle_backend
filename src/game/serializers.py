@@ -6,13 +6,12 @@ from . import models, services
 from ..user import models as user_models
 
 
-class BaseUserSerializer(serializers.HyperlinkedModelSerializer):
+class BaseUserSerializer(serializers.ModelSerializer):
     """Base user serializer"""
 
     class Meta:
         model = user_models.User
-        fields = ("url", "id", "username", "first_name", "last_name", "email", "rating", "cash")
-        extra_kwargs = {"url": {"lookup_field": "username"}}
+        fields = ("id", "username", "first_name", "last_name", "email", "rating", "cash")
 
 
 class ShipSerializer(serializers.ModelSerializer):

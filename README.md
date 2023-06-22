@@ -23,19 +23,28 @@ Coverage of the project with tests - 99%.
 
 ### Launch of the project
 
-#### 1) Clone the repository
+#### 1) Clone repositories
 ```
 git clone https://github.com/Lanterman/seabattle_backend.git
+git clone https://github.com/Lanterman/seabattle_frontend.git
 ```
 #### 2) Create and run docker-compose
 ```
 docker-compose up --build
 ```
-#### 3) Follow the link in the browser
-
-```
-http://0.0.0.0:8000/api/v1/
-```
+#### 3) Follow the link in the browser:
+ - ##### to launch the swagger openapi:
+    ```
+    http://127.0.0.1:8000/swagger/
+    ```
+ - ##### to launch the drf openapi:
+    ```
+    http://0.0.0.0:8000/api/v1/
+    ```
+ - ##### to launch the project:
+    ```
+    http://localhost:3000/
+    ```
 
 Future versions of the project will include:
  - advanced authentication with JWT tokens, using third-party applications (gmai, GitHub, etc.);

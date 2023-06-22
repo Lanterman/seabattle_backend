@@ -5,7 +5,7 @@ from channels.db import database_sync_to_async
 from rest_framework.test import APITestCase, APITransactionTestCase
 
 from src.game import models, serializers
-from src.user import models as user_models, serializers as user_serializers
+from src.user import models as user_models
 from src.game.consumers import services, mixins, db_queries
 from .test_data import column_name_list, ship_count_dict
 from config.utilities import redis_instance
@@ -246,8 +246,8 @@ class TestAddUserToGameMixin(APITransactionTestCase):
         self.user_1 = user_models.User.objects.get(id=1)
         self.user_2 = user_models.User.objects.get(id=3)
 
-        self.ser_user_1 = user_serializers.BaseUserSerializer(self.user_1).data
-        self.ser_user_2 = user_serializers.BaseUserSerializer(self.user_2).data
+        self.ser_user_1 = serializers.BaseUserSerializer(self.user_1).data
+        self.ser_user_2 = serializers.BaseUserSerializer(self.user_2).data
 
         self.lobby_1 = models.Lobby.objects.get(id=1)
         self.lobby_2 = models.Lobby.objects.get(id=2)

@@ -8,7 +8,7 @@ from channels.db import database_sync_to_async
 from .test_data import column_name_list
 from src.game.consumers import consumers, services
 from src.game import models, serializers
-from src.user import models as user_models, serializers as user_serializers
+from src.user import models as user_models
 from config.utilities import redis_instance
 from config.middlewares import TokenAuthMiddlewareStack
 
@@ -30,8 +30,8 @@ class Config(TransactionTestCase):
         self.token_1 = Token.objects.create(user_id=self.user_1.id)
         self.token_3 = Token.objects.create(user_id=self.user_3.id)
 
-        self.ser_user_1 = user_serializers.BaseUserSerializer(self.user_1).data
-        self.ser_user_3 = user_serializers.BaseUserSerializer(self.user_3).data
+        self.ser_user_1 = serializers.BaseUserSerializer(self.user_1).data
+        self.ser_user_3 = serializers.BaseUserSerializer(self.user_3).data
         
     def tearDown(self) -> None:
         redis_instance.flushall()
