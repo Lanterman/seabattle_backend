@@ -564,6 +564,20 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
+name = "pyjwt"
+version = "2.7.0"
+description = "JSON Web Token implementation in Python"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+crypto = ["cryptography (>=3.4.0)"]
+dev = ["sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.4.0)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)", "pre-commit"]
+docs = ["sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface"]
+tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)"]
+
+[[package]]
 name = "pyopenssl"
 version = "23.2.0"
 description = "Python wrapper module around the OpenSSL library"
@@ -809,7 +823,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "06bfa215966f5afd1e836b401bbaca67dbb832bb113739bc01ebb4757b103cf3"
+content-hash = "7e3c4ac8192c558598a8612d2c31689d8748db82672e28c68a4297aa04ef7ab3"
 
 [metadata.files]
 amqp = []
@@ -854,6 +868,7 @@ psycopg2 = []
 pyasn1 = []
 pyasn1-modules = []
 pycparser = []
+pyjwt = []
 pyopenssl = []
 python-dotenv = []
 pytz = []

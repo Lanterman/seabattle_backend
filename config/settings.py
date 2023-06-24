@@ -13,6 +13,7 @@ import os
 import json
 import logging
 
+from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -173,7 +174,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 15,
         'DEFAULT_AUTHENTICATION_CLASSES': (
-            'rest_framework.authentication.TokenAuthentication',
+            'src.user.auth.backends.CustomAuthBackend',
         ),
     #     'rest_framework.authentication.TokenAuthentication',
     #     'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -198,6 +199,23 @@ SWAGGER_SETTINGS = {
             'in': 'header'
         }
     }
+}
+
+JWTTOKEN_SETTINGS = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ALGORITHM': 'HS256',
+
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+
+    'AUTH_TOKEN_CLASSES': ('src.user.models.JWTToken',),
+    # 'TOKEN_TYPE_CLAIM': 'token_type',
+
+    # 'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+    # 'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    # 'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),   
 }
 
 INTERNAL_IPS = [

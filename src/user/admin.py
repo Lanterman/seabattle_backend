@@ -59,3 +59,25 @@ class UserAdmin(admin.ModelAdmin):
             '%d users were successfully denied access to the admin site.',
             updated,
         ) % updated, messages.SUCCESS)
+
+
+@admin.register(models.SecretKey)
+class SecretKeyAdmin(admin.ModelAdmin):
+    """Lobby admin"""
+
+    list_display = ("id", "user")
+    list_display_links = ("id", "user")
+    fields = ("key", "user")
+    list_max_show_all = 250
+    list_per_page = 150
+
+
+@admin.register(models.JWTToken)
+class JWTTokenAdmin(admin.ModelAdmin):
+    """Lobby admin"""
+
+    list_display = ("id", "user", "created")
+    list_display_links = ("id", "user", "created")
+    fields = ("access_token", "refresh_token", "user")
+    list_max_show_all = 250
+    list_per_page = 150

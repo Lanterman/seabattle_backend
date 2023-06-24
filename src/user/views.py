@@ -20,14 +20,14 @@ class SignInView(generics.CreateAPIView):
 
         if not user:
             raise error
-        
+
+        if not services.validate_password(request.data["password"], user.hashed_password):
+            raise error
+
         if not user.is_active:
             raise ValidationError(detail="Inactivate user.", code=status.HTTP_400_BAD_REQUEST)
         
-        if not services.validate_password(request.data["password"], user.hashed_password):
-            raise error
-        
-        token = db_queries.create_user_token(user=user)
+        token = db_queries.create_user_token(token="1q", user=user)
         serializer = serializers.BaseTokenSerializer(token)
 
         return response.Response(data=serializer.data, status=status.HTTP_201_CREATED)
@@ -39,18 +39,20 @@ class SignUpView(generics.CreateAPIView):
     serializer_class = serializers.SignUpSerializer
 
     def create(self, request, *args, **kwargs):
-        serializered_data = self.get_serializer(data=request.data)
-        serializered_data.is_valid(raise_exception=True)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        token = self.perform_create(serializered_data)
+        token = self.perform_create(serializer)
 
-        headers = self.get_success_headers(serializered_data.data)
+        headers = self.get_success_headers(serializer.data)
         serializered_token = serializers.BaseTokenSerializer(token)
         return response.Response(serializered_token.data, status=status.HTTP_201_CREATED, headers=headers)
     
     def perform_create(self, serializer):
-        user = models.User.objects.create(hashed_password=self.request.data["password1"], **serializer.data)
-        return db_queries.create_user_token(user=user)
+        user = models.User.objects.create(
+            hashed_password=services.create_hashed_password(self.request.data["password1"]), **serializer.data
+        )
+        return db_queries.create_user_token(token="1q", user=user)
 
 
 class ProfileView(generics.RetrieveUpdateDestroyAPIView):
@@ -69,7 +71,7 @@ class ProfileView(generics.RetrieveUpdateDestroyAPIView):
             else:
                 return serializers.UpdateUserInfoSerializer
         elif self.request.method == "GET":
-            if self.kwargs["username"] == self.request.user.username:
+            if self.kwargs and self.kwargs["username"] == self.request.user.username:
                 return serializers.MyProfileSerializer
             else:
                 return serializers.EnemyProfileSerializer

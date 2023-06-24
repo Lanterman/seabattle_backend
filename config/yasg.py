@@ -1,8 +1,9 @@
 from django.urls import path, include
-from rest_framework import permissions, authentication
+from rest_framework import permissions
 from rest_framework.settings import api_settings
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from src.user.auth.backends import CustomAuthBackend
 
 
 contact = openapi.Contact(name="Lanterman", url="https://github.com/Lanterman", email='klivchinskydmitry@gmail.com')
@@ -24,7 +25,7 @@ schema_view = get_schema_view(
    public=True,
    patterns=schema_url_patterns,
    permission_classes=[permissions.AllowAny],
-   authentication_classes=[authentication.TokenAuthentication]
+   authentication_classes=[CustomAuthBackend]
 )
 
 urlpatterns = [
