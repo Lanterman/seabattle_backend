@@ -23,12 +23,12 @@ class SignInView(generics.CreateAPIView):
 
         if not services.validate_password(request.data["password"], user.hashed_password):
             raise error
-
+        
         if not user.is_active:
             raise ValidationError(detail="Inactivate user.", code=status.HTTP_400_BAD_REQUEST)
-        
-        token = db_queries.create_user_token(token="1q", user=user)
-        serializer = serializers.BaseTokenSerializer(token)
+
+        token = services.create_jwttoken(user=user)
+        serializer = serializers.BaseJWTTokenSerializer(token)
 
         return response.Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
@@ -45,14 +45,15 @@ class SignUpView(generics.CreateAPIView):
         token = self.perform_create(serializer)
 
         headers = self.get_success_headers(serializer.data)
-        serializered_token = serializers.BaseTokenSerializer(token)
+        serializered_token = serializers.BaseJWTTokenSerializer(token)
         return response.Response(serializered_token.data, status=status.HTTP_201_CREATED, headers=headers)
     
     def perform_create(self, serializer):
         user = models.User.objects.create(
             hashed_password=services.create_hashed_password(self.request.data["password1"]), **serializer.data
         )
-        return db_queries.create_user_token(token="1q", user=user)
+
+        return services.create_jwttoken(user=user)
 
 
 class ProfileView(generics.RetrieveUpdateDestroyAPIView):

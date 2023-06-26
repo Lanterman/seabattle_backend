@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib import admin
 
 from . import models
+from .auth import models as auth_models
 
 
 @admin.register(models.User)
@@ -61,18 +62,18 @@ class UserAdmin(admin.ModelAdmin):
         ) % updated, messages.SUCCESS)
 
 
-@admin.register(models.SecretKey)
+@admin.register(auth_models.SecretKey)
 class SecretKeyAdmin(admin.ModelAdmin):
     """Lobby admin"""
 
-    list_display = ("id", "user")
-    list_display_links = ("id", "user")
+    list_display = ("id", "user", "created")
+    list_display_links = ("id", "user", "created")
     fields = ("key", "user")
     list_max_show_all = 250
     list_per_page = 150
 
 
-@admin.register(models.JWTToken)
+@admin.register(auth_models.JWTToken)
 class JWTTokenAdmin(admin.ModelAdmin):
     """Lobby admin"""
 

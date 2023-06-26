@@ -50,7 +50,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    'rest_framework.authtoken',
     'channels',
     'corsheaders',
     'debug_toolbar',
@@ -111,16 +110,6 @@ DATABASES = {
     }
 }
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [(os.environ.get('DOC_HOST_CL', os.environ['HOST_DB']), 6379)],
-            "group_expiry": 10800,
-        },
-    },
-}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -170,15 +159,19 @@ MEDIA_ROOT = os.path.join(BASE_DIR.parent, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOGIN_REDIRECT_URL = "/api/v1/"
+
+AUTH_USER_MODEL = "user.User"
+
+
+# REST framework settings
+
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 15,
-        'DEFAULT_AUTHENTICATION_CLASSES': (
-            'src.user.auth.backends.CustomAuthBackend',
-        ),
-    #     'rest_framework.authentication.TokenAuthentication',
-    #     'rest_framework_simplejwt.authentication.JWTAuthentication',
-    # ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'src.user.auth.backends.JWTTokenAuthBackend',
+    ),
     # 'DEFAULT_THROTTLE_RATES': {
     #     'user': '2/min'
     # },
@@ -189,6 +182,9 @@ REST_FRAMEWORK = {
     'DATETIME_INPUT_FORMATS': '%d.%m.%Y %H:%M:%S',
     'COMPACT_JSON': False,
 }
+
+
+# Swagger settings
 
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
@@ -201,16 +197,19 @@ SWAGGER_SETTINGS = {
     }
 }
 
-JWTTOKEN_SETTINGS = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+
+# JWTToken settings
+
+JWT_SETTINGS = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=60),
     'ALGORITHM': 'HS256',
 
-    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_TYPES': 'Bearer',
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
 
-    'AUTH_TOKEN_CLASSES': ('src.user.models.JWTToken',),
+    'AUTH_TOKEN_CLASSES': ('src.user.auth.models.JWTToken',),
     # 'TOKEN_TYPE_CLAIM': 'token_type',
 
     # 'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
@@ -218,14 +217,21 @@ JWTTOKEN_SETTINGS = {
     # 'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),   
 }
 
-INTERNAL_IPS = [
-    '127.0.0.1',
-    '0.0.0.0'
-]
 
-LOGIN_REDIRECT_URL = "/api/v1/"
+# Channels settings
 
-AUTH_USER_MODEL = "user.User"
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [(os.environ.get('DOC_HOST_CL', os.environ['HOST_DB']), 6379)],
+            "group_expiry": 10800,
+        },
+    },
+}
+
+
+# Celery settings
 
 REDIS_HOST = os.environ.get('DOC_HOST_CL', os.environ['REDIS_HOST'])
 REDIS_PORT = 6379
@@ -239,3 +245,11 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 # CELERY_RESULT_EXPIRES = 3
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+
+# Other
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+    '0.0.0.0'
+]

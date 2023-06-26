@@ -26,7 +26,6 @@ Django==4.2
 django-cors-headers==3.14.0
 django-filter==23.2
 django_debug_toolbar==3.8.1
-djangochannelsrestframework==1.1.0
 djangorestframework==3.14.0
 drf-yasg==1.21.6
 exceptiongroup==1.1.1

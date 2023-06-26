@@ -39,29 +39,36 @@ def create_hashed_password(password: str) -> str:
 
     salt = create_salt()
     hashed = password_hashing(password, salt)
-    return  f"{salt}${hashed}"
+    return f"{salt}${hashed}"
 
 
 # action to JWT token
 def create_user_secret_key(user_id: int) -> hex:
     """Create a random user secret"""
 
-    query = secrets.token_hex()
+    secret_key = secrets.token_hex()
 
-    db_queries.delete_user_secret_key(user_id)
-    db_queries.create_user_secret_key(secret_key=query, user_id=user_id)
+    db_queries.create_user_secret_key(secret_key=secret_key, user_id=user_id)
 
-    return query
+    return secret_key
 
 
-def create_user_token(user_id: int):
+def create_jwttoken(user):
     """Create a JWTToken model instance"""
 
-    db_queries.delete_user_token(user_id)
+    _secret_key = create_user_secret_key(user_id=user.id)
+    _access_token= jwt.encode(
+        payload={settings.JWT_SETTINGS["USER_ID_CLAIM"]: user.id, "type_token": "access"},
+        key=_secret_key, 
+        algorithm=settings.JWT_SETTINGS["ALGORITHM"]
+    )
+    _refresh_token= jwt.encode(
+        payload={settings.JWT_SETTINGS["USER_ID_CLAIM"]: user.id, "type_token": "refresh"}, 
+        key=_secret_key, 
+        algorithm=settings.JWT_SETTINGS["ALGORITHM"]
+    )
 
-    _secret_key = create_user_secret_key(user_id=user_id)
-    _token = jwt.encode(payload={"user_id": user_id}, key=_secret_key, algorithm=settings.JWTTOKEN_SETTINGS["ALGORITHM"])
-    query = db_queries.create_user_token(token=_token, user=user_id)
+    query = db_queries.create_jwttoken(access_token=_access_token, refresh_token=_refresh_token, user_id=user.id)
 
     return query
 

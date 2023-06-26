@@ -1,9 +1,9 @@
 import re
 
 from rest_framework import serializers, status
-from rest_framework.authtoken.models import Token
 
 from src.user import models
+from src.user.auth import models as auth_models
 from src.game import serializers as game_serializers
 
 
@@ -265,13 +265,9 @@ class SignUpSerializer(serializers.ModelSerializer, ValidateClass):
         return value
 
 
-class BaseTokenSerializer(serializers.ModelSerializer):
+class BaseJWTTokenSerializer(serializers.ModelSerializer):
     """Base token serializer"""
 
     class Meta:
-        model = Token
-        fields = ["key", "user", "created"]
-        extra_kwargs = {
-            "key": {"read_only": True},
-            "user": {"read_only": True},
-        }
+        model = auth_models.JWTToken
+        fields = ["access_token", "refresh_token", "created", "user"]
