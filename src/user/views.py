@@ -1,11 +1,14 @@
 from django.utils import timezone
 from django.db.models import Prefetch
+from django.utils.translation import gettext_lazy as _
 from rest_framework import generics, response, status
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
+from drf_yasg.utils import swagger_auto_schema
 
 from . import models, serializers, services, permissions, db_queries
 from src.game import models as game_models
+from config import settings
 
 
 class SignInView(generics.CreateAPIView):
@@ -13,6 +16,7 @@ class SignInView(generics.CreateAPIView):
 
     serializer_class = serializers.SignInSerializer
 
+    @swagger_auto_schema(responses={201: serializers.BaseJWTTokenSerializer})
     def post(self, request, *args, **kwargs):
         error = ValidationError(detail="Incorrect username or password.", code=status.HTTP_400_BAD_REQUEST)
 
@@ -37,6 +41,10 @@ class SignUpView(generics.CreateAPIView):
     """Sign up endpoint"""
 
     serializer_class = serializers.SignUpSerializer
+
+    @swagger_auto_schema(responses={201: serializers.BaseJWTTokenSerializer})
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -93,6 +101,10 @@ class RefreshTokenView(generics.CreateAPIView):
     
     def create(self, request, *args, **kwargs):
         _token = db_queries.get_jwttoken_instance_by_refresh_token(request.data["refresh_token"])
+        
+        if _token.created + settings.JWT_SETTINGS["REFRESH_TOKEN_LIFETIME"] < timezone.now():
+            raise AuthenticationFailed(_("Refresh token expired."))
+
         token = self.perform_create(_token.user_id)
         serializer = self.get_serializer(token)
         headers = self.get_success_headers(serializer.data)

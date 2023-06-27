@@ -201,7 +201,7 @@ SWAGGER_SETTINGS = {
 # JWTToken settings
 
 JWT_SETTINGS = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=90),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=60),
     'ALGORITHM': 'HS256',
 
