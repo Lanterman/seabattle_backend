@@ -271,3 +271,15 @@ class BaseJWTTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = auth_models.JWTToken
         fields = ["access_token", "refresh_token", "created", "user"]
+
+
+class RefreshJWTTokenSerializer(serializers.ModelSerializer):
+    """Base token serializer"""
+
+    class Meta:
+        model = auth_models.JWTToken
+        fields = ["access_token", "refresh_token", "created"]
+        extra_kwargs = {
+            "access_token": {"read_only": True},
+            "created": {"read_only": True}
+        }

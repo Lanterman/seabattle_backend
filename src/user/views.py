@@ -27,7 +27,7 @@ class SignInView(generics.CreateAPIView):
         if not user.is_active:
             raise ValidationError(detail="Inactivate user.", code=status.HTTP_400_BAD_REQUEST)
 
-        token = services.create_jwttoken(user=user)
+        token = services.create_jwttoken(user_id=user.id)
         serializer = serializers.BaseJWTTokenSerializer(token)
 
         return response.Response(data=serializer.data, status=status.HTTP_201_CREATED)
@@ -53,7 +53,7 @@ class SignUpView(generics.CreateAPIView):
             hashed_password=services.create_hashed_password(self.request.data["password1"]), **serializer.data
         )
 
-        return services.create_jwttoken(user=user)
+        return services.create_jwttoken(user_id=user.id)
 
 
 class ProfileView(generics.RetrieveUpdateDestroyAPIView):
@@ -84,3 +84,19 @@ class ProfileView(generics.RetrieveUpdateDestroyAPIView):
             pre_data["photo"] = ""
 
         serializer.save(**pre_data)
+
+
+class RefreshTokenView(generics.CreateAPIView):
+    """Refresh authentication JWT tokens endpoint"""
+
+    serializer_class = serializers.RefreshJWTTokenSerializer
+    
+    def create(self, request, *args, **kwargs):
+        _token = db_queries.get_jwttoken_instance_by_refresh_token(request.data["refresh_token"])
+        token = self.perform_create(_token.user_id)
+        serializer = self.get_serializer(token)
+        headers = self.get_success_headers(serializer.data)
+        return response.Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, user_id: int):
+        return services.create_jwttoken(user_id)

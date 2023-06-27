@@ -8,7 +8,7 @@ from config import settings
 
 class JWTTokenAuthBackend(BaseAuthentication):
     """
-    Simple token based authentication.
+    JSON Web token authentication.
 
     Clients should authenticate by passing the token key in the "Authorization"
     HTTP header, prepended with the string "Bearer ".  For example:

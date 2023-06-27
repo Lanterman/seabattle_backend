@@ -53,22 +53,22 @@ def create_user_secret_key(user_id: int) -> hex:
     return secret_key
 
 
-def create_jwttoken(user):
+def create_jwttoken(user_id: int):
     """Create a JWTToken model instance"""
 
-    _secret_key = create_user_secret_key(user_id=user.id)
+    _secret_key = create_user_secret_key(user_id=user_id)
     _access_token= jwt.encode(
-        payload={settings.JWT_SETTINGS["USER_ID_CLAIM"]: user.id, "type_token": "access"},
+        payload={settings.JWT_SETTINGS["USER_ID_CLAIM"]: user_id, "type_token": "access"},
         key=_secret_key, 
         algorithm=settings.JWT_SETTINGS["ALGORITHM"]
     )
     _refresh_token= jwt.encode(
-        payload={settings.JWT_SETTINGS["USER_ID_CLAIM"]: user.id, "type_token": "refresh"}, 
+        payload={settings.JWT_SETTINGS["USER_ID_CLAIM"]: user_id, "type_token": "refresh"}, 
         key=_secret_key, 
         algorithm=settings.JWT_SETTINGS["ALGORITHM"]
     )
 
-    query = db_queries.create_jwttoken(access_token=_access_token, refresh_token=_refresh_token, user_id=user.id)
+    query = db_queries.create_jwttoken(access_token=_access_token, refresh_token=_refresh_token, user_id=user_id)
 
     return query
 
