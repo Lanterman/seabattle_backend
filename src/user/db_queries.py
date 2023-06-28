@@ -24,6 +24,22 @@ def get_user_by_username(username: str) -> models.User or None:
     return query
 
 
+def get_user_by_secret_key(secret_key: str) -> models.User or None:
+    """Get the user by the relation's secret_key field"""
+
+    try:
+        query = auth_models.SecretKey.objects.get(key=secret_key)
+        return query.user_id
+    except auth_models.SecretKey.DoesNotExist:
+        return None
+
+
+def activate_user(user_id: int) -> None:
+    """Activate user account by id"""
+
+    models.User.objects.filter(id=user_id).update(is_active=True)
+
+
 # action with SecretKey model instance
 def create_user_secret_key(secret_key: str, user_id: int) -> None:
     """Create user secret key to SecretKey model"""

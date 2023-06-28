@@ -6,6 +6,7 @@ import hashlib
 from random import choice
 
 from . import db_queries
+from .celery_tasks import tasks
 from config import settings
 
 
@@ -53,7 +54,7 @@ def create_user_secret_key(user_id: int) -> hex:
     return secret_key
 
 
-def create_jwttoken(user_id: int):
+def create_jwttoken(user_id: int, user_email: str):
     """Create a JWTToken model instance"""
 
     _secret_key = create_user_secret_key(user_id=user_id)
@@ -69,6 +70,7 @@ def create_jwttoken(user_id: int):
     )
 
     query = db_queries.create_jwttoken(access_token=_access_token, refresh_token=_refresh_token, user_id=user_id)
+    tasks.send_account_activation.delay(user_email, _secret_key)
 
     return query
 

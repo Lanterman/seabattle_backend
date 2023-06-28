@@ -281,5 +281,6 @@ class RefreshJWTTokenSerializer(serializers.ModelSerializer):
         fields = ["access_token", "refresh_token", "created", "user"]
         extra_kwargs = {
             "access_token": {"read_only": True},
-            "created": {"read_only": True}
+            "created": {"read_only": True},
+            "user": {"read_only": True},
         }

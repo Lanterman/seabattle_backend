@@ -1,7 +1,7 @@
 from django.utils import timezone
 from django.db.models import Prefetch
 from django.utils.translation import gettext_lazy as _
-from rest_framework import generics, response, status
+from rest_framework import generics, response, status, views
 from rest_framework.exceptions import ValidationError, AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
@@ -58,10 +58,12 @@ class SignUpView(generics.CreateAPIView):
     
     def perform_create(self, serializer):
         user = models.User.objects.create(
-            hashed_password=services.create_hashed_password(self.request.data["password1"]), **serializer.data
+            hashed_password=services.create_hashed_password(self.request.data["password1"]), 
+            is_active=False,
+            **serializer.data
         )
 
-        return services.create_jwttoken(user_id=user.id)
+        return services.create_jwttoken(user_id=user.id, user_email=user.email)
 
 
 class ProfileView(generics.RetrieveUpdateDestroyAPIView):
@@ -112,3 +114,36 @@ class RefreshTokenView(generics.CreateAPIView):
 
     def perform_create(self, user_id: int):
         return services.create_jwttoken(user_id)
+
+
+class ActivateUserAccount(views.APIView):
+    """Activate user account - endpoint"""
+
+    def get(self, request, secret_key, format=None):
+        user_id = db_queries.get_user_by_secret_key(secret_key)
+
+        if user_id is None:
+            raise AuthenticationFailed(_("No user with such secret key."))
+        
+        db_queries.activate_user(user_id)
+
+        return response.Response({"detail": "is activated."}, status=status.HTTP_200_OK)
+
+
+# @user_router.put("/reset_password", status_code=status.HTTP_202_ACCEPTED)
+# async def reset_password(form_data: schemas.ResetPassword, current_user: models.Users = Depends(get_current_user)):
+#     """Reset password - endpoint"""
+
+#     if not services.validate_password(form_data.old_password, current_user.password):
+#         raise HTTPException(detail="Wrong old password!", status_code=status.HTTP_400_BAD_REQUEST)
+
+#     await services.reset_password(form_data, current_user)
+#     return {"detail": "Successful!", "user": schemas.BaseUser(**current_user.dict())}
+
+
+# @user_router.delete("/delete_user")
+# async def delete_user(back_task: BackgroundTasks, current_user: models.Users = Depends(get_current_user)):
+#     """Delete user - endpoint"""
+
+#     user = await services.delete_user(back_task=back_task, user=current_user)
+#     return {"detail": "Successful!", "user_id": user}

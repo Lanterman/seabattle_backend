@@ -6,6 +6,7 @@ __pycache__
 
 venv
 db.slqite3
+media
 
 src/game/migrations/*
 src/user/migrations/*
