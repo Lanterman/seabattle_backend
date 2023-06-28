@@ -119,12 +119,12 @@ class RefreshTokenView(generics.CreateAPIView):
 class ActivateUserAccount(views.APIView):
     """Activate user account - endpoint"""
 
-    def get(self, request, secret_key, format=None):
-        user_id = db_queries.get_user_by_secret_key(secret_key)
+    def get(self, request, user_id: int, secret_key: str, format=None):
+        _user_id = db_queries.get_user_id_by_secret_key(secret_key)
 
-        if user_id is None:
+        if _user_id is None or user_id != _user_id:
             raise AuthenticationFailed(_("No user with such secret key."))
-        
+
         db_queries.activate_user(user_id)
 
         return response.Response({"detail": "is activated."}, status=status.HTTP_200_OK)

@@ -24,7 +24,7 @@ def get_user_by_username(username: str) -> models.User or None:
     return query
 
 
-def get_user_by_secret_key(secret_key: str) -> models.User or None:
+def get_user_id_by_secret_key(secret_key: str) -> models.User or None:
     """Get the user by the relation's secret_key field"""
 
     try:

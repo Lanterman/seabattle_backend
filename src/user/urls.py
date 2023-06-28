@@ -7,5 +7,5 @@ urlpatterns = [
     path('sign-up/', views.SignUpView.as_view(), name='register'),
     path("profile/<slug:username>/", views.ProfileView.as_view(), name="user-detail"),
     path("token/refresh/", views.RefreshTokenView.as_view(), name="refresh-tokens"),
-    path("activate_account/<str:secret_key>/", views.ActivateUserAccount.as_view(), name="activate-account"),
+    path("activate_account/<int:user_id>/<str:secret_key>/", views.ActivateUserAccount.as_view(), name="activate-account"),
 ]
