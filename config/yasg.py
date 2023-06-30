@@ -8,7 +8,7 @@ from . import settings
 from src.user.auth.backends import JWTTokenAuthBackend
 
 
-AUTH_HEADER_TYPES = " ".join(settings.JWT_SETTINGS["AUTH_HEADER_TYPES"])
+AUTH_HEADER_TYPES = settings.JWT_SETTINGS["AUTH_HEADER_TYPES"]
 
 contact = openapi.Contact(name="Lanterman", url="https://github.com/Lanterman", email='klivchinskydmitry@gmail.com')
 

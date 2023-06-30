@@ -40,6 +40,18 @@ def activate_user(user_id: int) -> None:
     models.User.objects.filter(id=user_id).update(is_active=True)
 
 
+def reset_password(user_id: int, hashed_password: str) -> None:
+    """Reset user account password"""
+
+    models.User.objects.filter(id=user_id).update(hashed_password=hashed_password)
+
+
+def logout(instance: auth_models.JWTToken) -> None:
+    """Sign out (delete authentication jwt token)"""
+
+    instance.delete()
+
+
 # action with SecretKey model instance
 def create_user_secret_key(secret_key: str, user_id: int) -> None:
     """Create user secret key to SecretKey model"""
@@ -48,8 +60,17 @@ def create_user_secret_key(secret_key: str, user_id: int) -> None:
 
 
 # action with JWTToken model instance
+def get_jwttoken_instance_by_user_id(user_id: int) -> None:
+    """Get authentication a jwt token by a user id"""
+
+    try:
+        return auth_models.JWTToken.objects.get(user_id=user_id)
+    except auth_models.JWTToken.DoesNotExist:
+        raise exceptions.ValidationError(_('JWTtoken does not exist.'))
+
+
 def get_jwttoken_instance_by_refresh_token(refresh_token: str) -> auth_models.JWTToken or None:
-    """Get a JWTToken model instance or None"""
+    """Get a JWTToken model instance or None by refresh token"""
 
     try:
         return auth_models.JWTToken.objects.get(refresh_token=refresh_token)

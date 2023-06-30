@@ -15,6 +15,7 @@ class SignInView(generics.CreateAPIView):
     """Sign in endpoint"""
 
     serializer_class = serializers.SignInSerializer
+    authentication_classes = []
 
     @swagger_auto_schema(responses={201: serializers.BaseJWTTokenSerializer})
     def post(self, request, *args, **kwargs):
@@ -41,6 +42,7 @@ class SignUpView(generics.CreateAPIView):
     """Sign up endpoint"""
 
     serializer_class = serializers.SignUpSerializer
+    authentication_classes = []
 
     @swagger_auto_schema(responses={201: serializers.BaseJWTTokenSerializer})
     def post(self, request, *args, **kwargs):
@@ -64,6 +66,21 @@ class SignUpView(generics.CreateAPIView):
         )
 
         return services.create_jwttoken(user_id=user.id, user_email=user.email)
+
+
+class SignOutView(views.APIView):
+    """Sign out (delete authentication jwt token) endpoint"""
+
+    permission_classes = [IsAuthenticated]
+    
+    @swagger_auto_schema(responses={204: '{"detail": "Successfully logged out."}'})
+    def delete(self, request, format=None):
+        instance = db_queries.get_jwttoken_instance_by_user_id(request.user.id)
+        self.perform_delete(instance)
+        return response.Response({"detail": "Successfully logged out."}, status=status.HTTP_204_NO_CONTENT)
+    
+    def perform_delete(self, instance):
+        db_queries.logout(instance)
 
 
 class ProfileView(generics.RetrieveUpdateDestroyAPIView):
@@ -100,6 +117,15 @@ class RefreshTokenView(generics.CreateAPIView):
     """Refresh authentication JWT tokens endpoint"""
 
     serializer_class = serializers.RefreshJWTTokenSerializer
+    authentication_classes = []
+    
+    @swagger_auto_schema(responses={
+        201: serializers.RefreshJWTTokenSerializer, 
+        400: '["Invalid refresh token."]', 
+        401: '{"detail": "Refresh token expired."}',
+        })
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
     
     def create(self, request, *args, **kwargs):
         _token = db_queries.get_jwttoken_instance_by_refresh_token(request.data["refresh_token"])
@@ -116,9 +142,12 @@ class RefreshTokenView(generics.CreateAPIView):
         return services.create_jwttoken(user_id)
 
 
-class ActivateUserAccount(views.APIView):
+class ActivateUserAccountView(views.APIView):
     """Activate user account - endpoint"""
 
+    authentication_classes = []
+
+    @swagger_auto_schema(responses={200: '{"detail": "is activated."}', 401: '{"detail": "No user with such secret key."}'})
     def get(self, request, user_id: int, secret_key: str, format=None):
         _user_id = db_queries.get_user_id_by_secret_key(secret_key)
 
@@ -130,20 +159,27 @@ class ActivateUserAccount(views.APIView):
         return response.Response({"detail": "is activated."}, status=status.HTTP_200_OK)
 
 
-# @user_router.put("/reset_password", status_code=status.HTTP_202_ACCEPTED)
-# async def reset_password(form_data: schemas.ResetPassword, current_user: models.Users = Depends(get_current_user)):
-#     """Reset password - endpoint"""
 
-#     if not services.validate_password(form_data.old_password, current_user.password):
-#         raise HTTPException(detail="Wrong old password!", status_code=status.HTTP_400_BAD_REQUEST)
+class ResetPasswordView(generics.UpdateAPIView):
+    """Reset a user account password endpoint"""
 
-#     await services.reset_password(form_data, current_user)
-#     return {"detail": "Successful!", "user": schemas.BaseUser(**current_user.dict())}
+    queryset = models.User.objects.all()
+    permission_classes = [permissions.IsAccountOwner]
+    serializer_class = serializers.ResetPasswordSerializer
+    http_method_names = ["put", "head", "options", "trace"]
+    lookup_field = "username"
 
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
 
-# @user_router.delete("/delete_user")
-# async def delete_user(back_task: BackgroundTasks, current_user: models.Users = Depends(get_current_user)):
-#     """Delete user - endpoint"""
+        if not services.validate_password(request.data["old_password"], instance.hashed_password):
+            raise ValidationError(detail="Incorrect old password.", code=status.HTTP_400_BAD_REQUEST)
 
-#     user = await services.delete_user(back_task=back_task, user=current_user)
-#     return {"detail": "Successful!", "user_id": user}
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        hashed_password = services.create_hashed_password(serializer.data["new_password"])
+        self.perform_update(hashed_password)
+        return response.Response({"new_password": hashed_password}, status=status.HTTP_200_OK)
+
+    def perform_update(self, hashed_password: str):
+        db_queries.reset_password(self.request.user.id, hashed_password)

@@ -284,3 +284,43 @@ class RefreshJWTTokenSerializer(serializers.ModelSerializer):
             "created": {"read_only": True},
             "user": {"read_only": True},
         }
+
+
+class ResetPasswordSerializer(serializers.ModelSerializer, ValidateClass):
+    """Reset a user account password"""
+
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+
+    class Meta:
+        model = models.User
+        fields = ["old_password", "new_password", "confirm_password"]
+        exctra_kwargs = {
+            "old_password": {"write_only": True},
+            "confirm_password": {"write_only": True},
+            }
+    
+    def validate_new_password(self, value: str) -> str:
+        value = value.strip()
+        error_list = []
+        old_password = self.initial_data["old_password"]
+
+        if old_password == value:
+            error_list.append(f"The new password cannot be similar to the old one.")
+
+        self.validate_min_length(value, "New password", error_list, 10)
+        self.validate_max_length(value, "New password", error_list, 50)
+        
+        if error_list:
+            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
+        
+        return value
+    
+    def validate_confirm_password(self, value: str) -> str:
+        new_password = self.initial_data["new_password"]
+
+        if new_password != value:
+            raise serializers.ValidationError(detail="Password mismatch!", code=status.HTTP_400_BAD_REQUEST)
+
+        return value
