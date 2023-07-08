@@ -173,7 +173,7 @@ class ResetPasswordView(generics.UpdateAPIView):
         instance = self.get_object()
 
         if not services.validate_password(request.data["old_password"], instance.hashed_password):
-            raise ValidationError(detail="Incorrect old password.", code=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError(detail={"old_password": "Incorrect old password."}, code=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

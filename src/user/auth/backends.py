@@ -17,13 +17,14 @@ class JWTTokenAuthBackend(BaseAuthentication):
     """
 
     keyword = settings.JWT_SETTINGS["AUTH_HEADER_TYPES"]
-    model = None
 
-    def get_model(self):
-        if self.model is not None:
-            return self.model
-        from src.user.auth.models import JWTToken
-        return JWTToken
+    def get_model(self, oauth: bool = False):
+        if oauth:
+            from oauth2_provider.models import AccessToken
+            return AccessToken
+        else:
+            from src.user.auth.models import JWTToken
+            return JWTToken
 
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
@@ -44,9 +45,31 @@ class JWTTokenAuthBackend(BaseAuthentication):
             msg = _('Invalid token header. Token string should not contain invalid characters.')
             raise exceptions.AuthenticationFailed(msg)
 
+        if access_token[-5:] == "oauth":
+            return self.social_oauthenticate_credentials(access_token.split(".")[0])
+        
         return self.authenticate_credentials(access_token)
+    
+    def social_oauthenticate_credentials(self, access_token: str):
+        """Authentication with third party applications"""
+
+        model = self.get_model(True)
+
+        try:
+            token = model.objects.get(token=access_token)
+        except model.DoesNotExist:
+            raise exceptions.AuthenticationFailed(_('Invalid token.'))
+        
+        if timezone.now() > token.expires:
+            raise exceptions.AuthenticationFailed(_('Token expired.'))
+        
+        model.objects.filter(user=token.user).exclude(token=token.token).delete()
+
+        return (token.user, token)
 
     def authenticate_credentials(self, access_token: str):
+        """JWT autentetication"""
+
         model = self.get_model()
         try:
             token = model.objects.select_related('user').get(access_token=access_token)

@@ -54,8 +54,16 @@ INSTALLED_APPS = [
     'corsheaders',
     'debug_toolbar',
     'django_filters',
+
+    # OpenAPI
     'drf_yasg',
 
+    # Oauth2
+    'oauth2_provider',
+    'social_django',
+    'drf_social_oauth2',
+
+    # Apps
     'src.game.apps.GameConfig',
     'src.user.apps.UserConfig',
 ]
@@ -85,6 +93,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -170,7 +180,12 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 15,
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        # Custom auth by JWTToken
         'src.user.auth.backends.JWTTokenAuthBackend',
+
+        # OAuth
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        'drf_social_oauth2.authentication.SocialAuthentication',
     ),
     # 'DEFAULT_THROTTLE_RATES': {
     #     'user': '2/min'
@@ -182,6 +197,37 @@ REST_FRAMEWORK = {
     'DATETIME_INPUT_FORMATS': '%d.%m.%Y %H:%M:%S',
     'COMPACT_JSON': False,
 }
+
+
+# Django auth backend
+
+AUTHENTICATION_BACKENDS = (
+    # GitHub OAuth2
+    'social_core.backends.github.GithubOAuth2',
+
+    # Google OAuth2
+    'social_core.backends.google.GoogleOAuth2',
+
+    # drf-social-oauth2
+    'drf_social_oauth2.backends.DjangoOAuth2',
+
+    # Django
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+# Google configuration
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = "772490145623-e4dulggu79ngum7ua5p9ts64e6j3sm9u.apps.googleusercontent.com"
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = "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"
+
+# GitHub configuration
+SOCIAL_AUTH_GITHUB_KEY = "355d435f53be0a0fa3bf"
+SOCIAL_AUTH_GITHUB_SECRET = "304b686cc30f48edf629e253901c8679bbcdb4f6"
+
+# Define SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE to get extra permissions from Google.
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+]
 
 
 # Swagger settings
@@ -209,12 +255,7 @@ JWT_SETTINGS = {
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
 
-    'AUTH_TOKEN_CLASSES': ('src.user.auth.models.JWTToken',),
-    # 'TOKEN_TYPE_CLAIM': 'token_type',
-
-    # 'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    # 'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
-    # 'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),   
+    'AUTH_TOKEN_CLASSES': ('src.user.auth.models.JWTToken',), 
 }
 
 

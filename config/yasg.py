@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from rest_framework import permissions
 from rest_framework.settings import api_settings
 from drf_yasg.views import get_schema_view
@@ -13,7 +13,8 @@ AUTH_HEADER_TYPES = settings.JWT_SETTINGS["AUTH_HEADER_TYPES"]
 contact = openapi.Contact(name="Lanterman", url="https://github.com/Lanterman", email='klivchinskydmitry@gmail.com')
 
 schema_url_patterns = [
-   path("api/v1/", include('src.urls'))
+   path("api/v1/", include('src.urls')),
+   re_path(r'^auth/', include('drf_social_oauth2.urls', namespace='drf')),
 ]
 
 schema_view = get_schema_view(
