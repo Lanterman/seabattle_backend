@@ -20,8 +20,8 @@ class JWTTokenAuthBackend(BaseAuthentication):
 
     def get_model(self, oauth: bool = False):
         if oauth:
-            from oauth2_provider.models import AccessToken
-            return AccessToken
+            from oauth2_provider.models import AccessToken, RefreshToken
+            return AccessToken, RefreshToken
         else:
             from src.user.auth.models import JWTToken
             return JWTToken
@@ -53,17 +53,15 @@ class JWTTokenAuthBackend(BaseAuthentication):
     def social_oauthenticate_credentials(self, access_token: str):
         """Authentication with third party applications"""
 
-        model = self.get_model(True)
+        access_model, refresh_model = self.get_model(True)
 
         try:
-            token = model.objects.get(token=access_token)
-        except model.DoesNotExist:
+            token = access_model.objects.get(token=access_token)
+        except access_model.DoesNotExist:
             raise exceptions.AuthenticationFailed(_('Invalid token.'))
         
-        if timezone.now() > token.expires:
-            raise exceptions.AuthenticationFailed(_('Token expired.'))
-        
-        model.objects.filter(user=token.user).exclude(token=token.token).delete()
+        access_model.objects.filter(user=token.user).exclude(token=token.token).delete()
+        refresh_model.objects.filter(user=token.user).exclude(token=token.refresh_token).delete()
 
         return (token.user, token)
 
