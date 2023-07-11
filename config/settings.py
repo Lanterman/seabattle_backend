@@ -216,12 +216,14 @@ AUTHENTICATION_BACKENDS = (
 )
 
 # Google configuration
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = "772490145623-e4dulggu79ngum7ua5p9ts64e6j3sm9u.apps.googleusercontent.com"
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = "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"
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('DOC_SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', 
+                                               os.environ['SOCIAL_AUTH_GOOGLE_OAUTH2_KEY'])
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('DOC_SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET', 
+                                                  os.environ['SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET'])
 
 # GitHub configuration
-SOCIAL_AUTH_GITHUB_KEY = "355d435f53be0a0fa3bf"
-SOCIAL_AUTH_GITHUB_SECRET = "304b686cc30f48edf629e253901c8679bbcdb4f6"
+SOCIAL_AUTH_GITHUB_KEY = os.environ.get('DOC_SOCIAL_AUTH_GITHUB_KEY', os.environ['SOCIAL_AUTH_GITHUB_KEY'])
+SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('DOC_SOCIAL_AUTH_GITHUB_SECRET', os.environ['SOCIAL_AUTH_GITHUB_SECRET'])
 
 # Define SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE to get extra permissions from Google.
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
@@ -290,10 +292,10 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # smtp
 
-EMAIL_HOST = 'smtp.mail.ru'
+EMAIL_HOST = os.environ.get('DOC_EMAIL_HOST', os.environ['EMAIL_HOST'])
 EMAIL_PORT = 2525
-EMAIL_HOST_USER = "splen1011@mail.ru"
-EMAIL_HOST_PASSWORD = "ZFYyFUAXyZ6AxtCpJ5bJ"
+EMAIL_HOST_USER = os.environ.get('DOC_EMAIL_HOST_USER', os.environ['EMAIL_HOST_USER'])
+EMAIL_HOST_PASSWORD = os.environ.get('DOC_EMAIL_HOST_PASSWORD', os.environ['EMAIL_HOST_PASSWORD'])
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 

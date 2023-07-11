@@ -1,3 +1,5 @@
+import re
+
 from django.utils import timezone
 from django.db.models import Prefetch
 from django.utils.translation import gettext_lazy as _
@@ -189,7 +191,7 @@ class ResetPasswordView(generics.UpdateAPIView):
 @decorators.permission_classes([IsAuthenticated])
 def get_base_username_by_token(request, *args, **kwargs):
     """Get base user info by access token to header - endpoint"""
-    
-    access_token: str = request.headers["Authorization"].split(" ")[1].split(".")[0]
-    username = db_queries.get_base_username_by_token(access_token)
+
+    rex: list = re.findall(r"\w+", request.headers["Authorization"])
+    username: dict = db_queries.get_base_username_by_token(rex[-2])
     return response.Response(username)
