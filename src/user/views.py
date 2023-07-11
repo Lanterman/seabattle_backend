@@ -1,7 +1,7 @@
 from django.utils import timezone
 from django.db.models import Prefetch
 from django.utils.translation import gettext_lazy as _
-from rest_framework import generics, response, status, views
+from rest_framework import generics, response, status, views, decorators
 from rest_framework.exceptions import ValidationError, AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
@@ -183,3 +183,13 @@ class ResetPasswordView(generics.UpdateAPIView):
 
     def perform_update(self, hashed_password: str):
         db_queries.reset_password(self.request.user.id, hashed_password)
+
+
+@decorators.api_view(["GET"])
+@decorators.permission_classes([IsAuthenticated])
+def get_base_username_by_token(request, *args, **kwargs):
+    """Get base user info by access token to header - endpoint"""
+    
+    access_token: str = request.headers["Authorization"].split(" ")[1].split(".")[0]
+    username = db_queries.get_base_username_by_token(access_token)
+    return response.Response(username)

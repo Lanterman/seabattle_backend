@@ -1,6 +1,7 @@
 from datetime import datetime
 from rest_framework import exceptions
 from django.utils.translation import gettext_lazy as _
+from oauth2_provider.models import AccessToken
 
 from . import models
 from .auth import models as auth_models
@@ -15,6 +16,15 @@ def get_or_none(username: str) -> models.User or None:
         query = None
 
     return query
+
+
+def get_base_username_by_token(token: str) -> list:
+    """Get base user info by access token"""
+
+    try:
+        return AccessToken.objects.select_related("user").values("user__username").get(token=token)
+    except AccessToken.DoesNotExist:
+        raise exceptions.ValidationError(_('Social token does not exist.'))
 
 
 def get_user_by_username(username: str) -> models.User or None:
