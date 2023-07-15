@@ -1,6 +1,7 @@
 import re
 
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.db.models import Prefetch
 from django.utils.translation import gettext_lazy as _
 from rest_framework import generics, response, status, views, decorators
@@ -19,7 +20,7 @@ class SignInView(generics.CreateAPIView):
     serializer_class = serializers.SignInSerializer
     authentication_classes = []
 
-    @swagger_auto_schema(responses={201: serializers.BaseJWTTokenSerializer})
+    @swagger_auto_schema(responses={201: serializers.BaseJWTTokenSerializer}, tags=["auth"], security=[{}])
     def post(self, request, *args, **kwargs):
         error = ValidationError(detail="Incorrect username or password.", code=status.HTTP_400_BAD_REQUEST)
 
@@ -46,7 +47,7 @@ class SignUpView(generics.CreateAPIView):
     serializer_class = serializers.SignUpSerializer
     authentication_classes = []
 
-    @swagger_auto_schema(responses={201: serializers.BaseJWTTokenSerializer})
+    @swagger_auto_schema(responses={201: serializers.BaseJWTTokenSerializer}, tags=["auth"], security=[{}])
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
@@ -75,7 +76,7 @@ class SignOutView(views.APIView):
 
     permission_classes = [IsAuthenticated]
     
-    @swagger_auto_schema(responses={204: '{"detail": "Successfully logged out."}'})
+    @swagger_auto_schema(responses={204: '{"detail": "Successfully logged out."}'}, tags=["auth"])
     def delete(self, request, format=None):
         instance = db_queries.get_jwttoken_instance_by_user_id(request.user.id)
         self.perform_delete(instance)
@@ -85,6 +86,10 @@ class SignOutView(views.APIView):
         db_queries.logout(instance)
 
 
+@method_decorator(name="get", decorator=swagger_auto_schema(tags=["profile"]))
+@method_decorator(name="put", decorator=swagger_auto_schema(tags=["profile"]))
+@method_decorator(name="patch", decorator=swagger_auto_schema(tags=["profile"]))
+@method_decorator(name="delete", decorator=swagger_auto_schema(tags=["profile"]))
 class ProfileView(generics.RetrieveUpdateDestroyAPIView):
     """User profile endpoint"""
 
@@ -125,7 +130,10 @@ class RefreshTokenView(generics.CreateAPIView):
         201: serializers.RefreshJWTTokenSerializer, 
         400: '["Invalid refresh token."]', 
         401: '{"detail": "Refresh token expired."}',
-        })
+        }, 
+        tags=["auth"], 
+        security=[{}],
+    )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
     
@@ -149,7 +157,13 @@ class ActivateUserAccountView(views.APIView):
 
     authentication_classes = []
 
-    @swagger_auto_schema(responses={200: '{"detail": "is activated."}', 401: '{"detail": "No user with such secret key."}'})
+    @swagger_auto_schema(responses={
+        200: '{"detail": "is activated."}', 
+        401: '{"detail": "No user with such secret key."}'
+        }, 
+        tags=["auth"],
+        security=[{}],
+    )
     def get(self, request, user_id: int, secret_key: str, format=None):
         _user_id = db_queries.get_user_id_by_secret_key(secret_key)
 
@@ -161,7 +175,7 @@ class ActivateUserAccountView(views.APIView):
         return response.Response({"detail": "is activated."}, status=status.HTTP_200_OK)
 
 
-
+@method_decorator(name="put", decorator=swagger_auto_schema(tags=["profile"]))
 class ResetPasswordView(generics.UpdateAPIView):
     """Reset a user account password endpoint"""
 

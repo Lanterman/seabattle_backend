@@ -1,6 +1,7 @@
 import uuid
 
 from django.db.models import Count
+from django.utils.decorators import method_decorator
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework import filters as drf_filters
@@ -8,12 +9,15 @@ from rest_framework.response import Response
 from rest_framework.generics import ListCreateAPIView, RetrieveAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from django_filters import rest_framework as dj_filters
+from drf_yasg.utils import swagger_auto_schema
 
 from . import models as game_models, serializers, services, permissions, db_queries, filters
 from ..user import models as user_models
 from config.utilities import redis_instance
 
 
+@method_decorator(name="get", decorator=swagger_auto_schema(tags=["game"]))
+@method_decorator(name="post", decorator=swagger_auto_schema(tags=["game"]))
 class LobbyListView(ListCreateAPIView):
     """List of lobbies and create lobby"""
 
@@ -42,6 +46,7 @@ class LobbyListView(ListCreateAPIView):
         db_queries.create_ships_for_boards(first_board_id, second_board_id)
 
 
+@method_decorator(name="get", decorator=swagger_auto_schema(tags=["game"]))
 class DetailLobbyView(RetrieveAPIView):
     """Detailed description of the lobby"""
 
@@ -80,6 +85,7 @@ class DetailLobbyView(RetrieveAPIView):
         return int(time_from_redis)
 
 
+@method_decorator(name="get", decorator=swagger_auto_schema(tags=["game"]))
 class LeadBoardView(ListAPIView):
     """LeadBoard page API"""
 

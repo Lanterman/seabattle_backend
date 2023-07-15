@@ -14,7 +14,6 @@ contact = openapi.Contact(name="Lanterman", url="https://github.com/Lanterman", 
 
 schema_url_patterns = [
    path("api/v1/", include('src.urls')),
-   re_path(r'^auth/', include('drf_social_oauth2.urls', namespace='drf')),
 ]
 
 schema_view = get_schema_view(
