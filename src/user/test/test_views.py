@@ -1,8 +1,7 @@
 from rest_framework.reverse import reverse
-from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient, APITestCase
 
-from src.user import models
+from src.user import models, services
 
 
 class TestSignInView(APITestCase):
@@ -18,7 +17,7 @@ class TestSignInView(APITestCase):
 
         cls.client = APIClient()
 
-        cls.path = reverse("issue_token")
+        cls.path = reverse("sign-in")
     
     def test_get_method(self):
         with self.assertLogs(level="WARNING"):
@@ -27,11 +26,11 @@ class TestSignInView(APITestCase):
         assert response.status_code == 405, response.status_code
     
     def test_post_method(self):
-        valid_resposne = self.client.post(path=self.path, data={"username": "admin", "password": "admin"})
+        valid_resposne = self.client.post(path=self.path, data={"username": "admin", "password": "karmavdele"})
         assert valid_resposne.status_code == 201, valid_resposne.status_code
 
         with self.assertLogs(level="WARNING"):
-            invalid_resposne = self.client.post(path=self.path, data={"username": "admin1", "password": "admin"})
+            invalid_resposne = self.client.post(path=self.path, data={"username": "admin1", "password": "karmavdele"})
         
         assert invalid_resposne.status_code == 400, invalid_resposne.status_code
 
@@ -63,7 +62,7 @@ class TestSignUpView(APITestCase):
 
         cls.client = APIClient()
 
-        cls.path = reverse("register")
+        cls.path = reverse("sign-up")
     
     def test_get_method(self):
         with self.assertLogs(level="WARNING"):
@@ -112,7 +111,7 @@ class TestProfileView(APITestCase):
 
         cls.user_1 = models.User.objects.get(id=1)
         cls.user_2 = models.User.objects.get(id=2)
-        cls.token = Token.objects.create(user=cls.user_1)
+        cls.token = services.create_jwttoken(cls.user_1.id)
 
         cls.client = APIClient()
 
@@ -140,7 +139,7 @@ class TestProfileView(APITestCase):
         assert response.status_code == 401, response.status_code
     
     def test_get_method_authorization(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.access_token)
 
         response_1 = self.client.get(self.path_1)
         response_2 = self.client.get(self.path_2)
@@ -155,7 +154,7 @@ class TestProfileView(APITestCase):
         assert response.status_code == 401, response.status_code
     
     def test_patch_method_info(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.access_token)
 
         response_1 = self.client.patch(self.path_1, data=self.valid_data)
         assert response_1.status_code == 200, response_1.status_code
@@ -169,7 +168,7 @@ class TestProfileView(APITestCase):
         assert response_2.status_code == 403, response_2.status_code
 
     def test_patch_method_delete_photo(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.access_token)
 
         response_1 = self.client.patch(self.path_1, data={})
         assert response_1.status_code == 200, response_1.status_code
@@ -179,7 +178,7 @@ class TestProfileView(APITestCase):
         assert response_2.status_code == 403, response_2.status_code
     
     def test_patch_method_photo(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token.access_token)
 
         assert self.user_1.photo == "", self.user_1.photo
         assert self.user_2.photo == "", self.user_2.photo

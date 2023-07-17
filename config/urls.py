@@ -1,9 +1,16 @@
 import debug_toolbar
+
 from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf.urls.static import static
+from django.contrib.auth.models import Group
 
 from . import settings, yasg
+
+
+admin.site.unregister(Group)
+admin.site.site_header = "Sea battle administration"
+admin.site.site_title = "Administration"
 
 urlpatterns = [
     path('admin/', admin.site.urls),

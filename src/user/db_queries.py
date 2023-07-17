@@ -1,5 +1,5 @@
-from datetime import datetime
 from rest_framework import exceptions
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from oauth2_provider.models import AccessToken
 
@@ -66,7 +66,7 @@ def logout(instance: auth_models.JWTToken) -> None:
 def create_user_secret_key(secret_key: str, user_id: int) -> None:
     """Create user secret key to SecretKey model"""
 
-    auth_models.SecretKey.objects.update_or_create(user_id=user_id, defaults={"key":secret_key, "created": datetime.now()})
+    auth_models.SecretKey.objects.update_or_create(user_id=user_id, defaults={"key":secret_key, "created": timezone.now()})
 
 
 # action with JWTToken model instance
@@ -93,7 +93,7 @@ def create_jwttoken(access_token: str, refresh_token: str, user_id: int) -> auth
 
     instance, _ = auth_models.JWTToken.objects.update_or_create(
         user_id=user_id,
-        defaults={"access_token":access_token, "refresh_token":refresh_token, "created": datetime.now()}
+        defaults={"access_token":access_token, "refresh_token":refresh_token, "created": timezone.now()}
     )
 
     return instance

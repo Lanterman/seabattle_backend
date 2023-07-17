@@ -1,8 +1,7 @@
 from rest_framework.test import APITestCase
-from rest_framework.authtoken.models import Token
 
-
-from src.user import db_queries, models
+from src.user import db_queries, models, services
+from src.user.auth import models as auth_models
 
 
 class TestGetOrNoneFunction(APITestCase):
@@ -48,22 +47,22 @@ class TestCreateUserTokenFunction(APITestCase):
 
         cls.user_1 = models.User.objects.get(id=1)
         cls.user_2 = models.User.objects.get(id=2)
-        cls.token_1 = Token.objects.create(user=cls.user_1)
+        cls.token_1 = services.create_jwttoken(cls.user_1.id)
 
     def test_existing_token(self):
-        token_1 = Token.objects.get(user=self.user_1)
+        token_1 = auth_models.JWTToken.objects.get(user=self.user_1.id)
         self.assertTrue(token_1, token_1)
 
-        response = db_queries.create_user_token(self.user_1)
+        response = services.create_jwttoken(self.user_1.id)
         self.assertTrue(response, response)
         assert token_1 == response, response
     
     def test_non_existent_token(self):
-        token_2 = Token.objects.filter(user=self.user_2).exists()
+        token_2 = auth_models.JWTToken.objects.filter(user=self.user_2.id).exists()
         self.assertFalse(token_2, token_2)
 
-        response = db_queries.create_user_token(self.user_2)
-        token_2 = Token.objects.get(user=self.user_2)
+        response = services.create_jwttoken(self.user_2.id)
+        token_2 = auth_models.JWTToken.objects.get(user=self.user_2.id)
         self.assertTrue(response, response)
         self.assertTrue(token_2, token_2)
         assert token_2 == response, response

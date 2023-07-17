@@ -1,7 +1,6 @@
-import datetime
-
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 
 from config import settings
 
@@ -13,7 +12,7 @@ class SecretKey(models.Model):
     """User secret key to create JWT token"""
 
     key: str = models.CharField(_("secret key"), max_length=250, unique=True)
-    created: datetime.datetime = models.DateTimeField(_("created"), auto_now_add=True)
+    created: timezone = models.DateTimeField(_("created"), auto_now_add=True)
     user: int = models.ForeignKey(verbose_name="user_id", to=User, on_delete=models.CASCADE, related_name="secret_key")
 
     class Meta:
@@ -26,7 +25,7 @@ class JWTToken(models.Model):
 
     access_token: str = models.CharField(_("access token"), max_length=250, unique=True,)
     refresh_token: str = models.CharField(_("refresh token"), max_length=250, unique=True)
-    created: datetime.datetime = models.DateTimeField(_("created"), auto_now_add=True)
+    created: timezone = models.DateTimeField(_("created"), auto_now_add=True)
     user: int = models.ForeignKey(verbose_name=_("user_id"), to=User, on_delete=models.CASCADE, related_name="auth_token")
 
     class Meta:

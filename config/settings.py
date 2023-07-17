@@ -116,6 +116,8 @@ DATABASES = {
         'HOST': os.environ.get('DOC_HOST_DB', os.environ['HOST_DB']),
         'PORT': os.environ.get('DOC_PORT_DB', os.environ['PORT_DB']),
 
+        'DISABLE_SERVER_SIDE_CURSORS': True,
+
         'TEST': {'NAME': os.path.join(BASE_DIR, "test_db")}
     }
 }
