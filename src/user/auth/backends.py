@@ -13,13 +13,13 @@ class JWTTokenAuthBackend(BaseAuthentication):
     Clients should authenticate by passing the token key in the "Authorization"
     HTTP header, prepended with the string "Bearer ".  For example:
 
-        Authorization: Bearer 401f7ac837da42b97f613d789819ff93537bee6a
+        Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5.eyJ1c2VyX2lkIjoxMjUsInRc3MifQ.CAVyfY41h7Q6xzfR5jEtQGC1bRVWI
     """
 
     keyword = settings.JWT_SETTINGS["AUTH_HEADER_TYPES"]
 
-    def get_model(self, oauth: bool = False):
-        if oauth:
+    def get_model(self, is_oauth: bool = False):
+        if is_oauth:
             from oauth2_provider.models import AccessToken, RefreshToken
             return AccessToken, RefreshToken
         else:
