@@ -44,7 +44,7 @@
         "updated_in": null,
         "photo": "",
         "email": "kliv@mail.ru",
-        "hashed_password": "admin",
+        "hashed_password": "iEmhsIVjCkVh$19b074e240f28205f2bb2304d1e72f3257334dd9e4879392f527d40a8e4db9cb",
         "groups": [],
         "user_permissions": []
     }
@@ -128,6 +128,15 @@
         "created": "2023-07-16T15:25:08.010Z",
         "updated": "2023-07-16T15:25:08.010Z",
         "revoked": null
+    }
+},
+{
+    "model": "user.secretkey",
+    "pk": 1,
+    "fields": {
+        "key": "35a97667edaa49e839eb47e3409005e66bf2816a4ce59fbf88af7f0a1b38b71f",
+        "created": "2023-07-17T20:37:57.634Z",
+        "user": 2
     }
 },
 {

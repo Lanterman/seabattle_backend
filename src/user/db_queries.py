@@ -24,7 +24,7 @@ def get_base_username_by_token(token: str) -> list:
     try:
         return AccessToken.objects.select_related("user").values("user__username").get(token=token)
     except AccessToken.DoesNotExist:
-        raise exceptions.ValidationError(_('Social token does not exist.'))
+        raise exceptions.AuthenticationFailed(_('Social token does not exist.'))
 
 
 def get_user_by_username(username: str) -> models.User or None:
@@ -76,7 +76,7 @@ def get_jwttoken_instance_by_user_id(user_id: int) -> None:
     try:
         return auth_models.JWTToken.objects.get(user_id=user_id)
     except auth_models.JWTToken.DoesNotExist:
-        raise exceptions.ValidationError(_('JWTtoken does not exist.'))
+        raise exceptions.AuthenticationFailed(_('JWTtoken does not exist.'))
 
 
 def get_jwttoken_instance_by_refresh_token(refresh_token: str) -> auth_models.JWTToken or None:
@@ -85,7 +85,7 @@ def get_jwttoken_instance_by_refresh_token(refresh_token: str) -> auth_models.JW
     try:
         return auth_models.JWTToken.objects.get(refresh_token=refresh_token)
     except auth_models.JWTToken.DoesNotExist:
-        raise exceptions.ValidationError(_('Invalid refresh token.'))
+        raise exceptions.AuthenticationFailed(_('Invalid refresh token.'))
 
 
 def create_jwttoken(access_token: str, refresh_token: str, user_id: int) -> auth_models.JWTToken:
