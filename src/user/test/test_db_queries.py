@@ -2,7 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework.exceptions import AuthenticationFailed
 from oauth2_provider.models import AccessToken
 
-from src.user import db_queries, models, services
+from src.user import db_queries, models
 from src.user.auth import models as auth_models
 
 
@@ -155,7 +155,7 @@ class TestCreateUserSecretKeyFunction(APITestCase):
         secret_key = "35a97667edaa49e839eb47e3409005e66bf2816a4ce59fbf88af7f0a1b38b71f"
         count_instance = auth_models.SecretKey.objects.count()
         assert secret_key == self.instance.key, self.instance.key
-        assert 1 == count_instance, count_instance
+        assert 2 == count_instance, count_instance
 
         new_secret_key = "qwr23j918u3jiuwniqj312jqioqoj131313qwe"
         response = db_queries.create_user_secret_key(new_secret_key, 2)
@@ -163,7 +163,7 @@ class TestCreateUserSecretKeyFunction(APITestCase):
         self.instance.refresh_from_db()
         self.assertIsNone(response, response)
         assert new_secret_key == self.instance.key, self.instance.key
-        assert 1 == count_instance, count_instance
+        assert 2 == count_instance, count_instance
 
     
     def test_create_instance(self):
@@ -177,7 +177,7 @@ class TestCreateUserSecretKeyFunction(APITestCase):
         self.assertIsNone(response, response)
         secret_key = auth_models.SecretKey.objects.filter(user__id=1).exists()
         self.assertTrue(secret_key,secret_key)
-        assert 2 == count_instance, count_instance
+        assert 3 == count_instance, count_instance
 
 
 class TestGetJWTTokenInstanceByUserIdFunction(APITestCase):

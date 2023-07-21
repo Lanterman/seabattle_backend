@@ -32,12 +32,7 @@ class ValidateClass:
         """Check field contains only numbers, letters and underscore"""
 
         if re.search(r'\W', value):
-            error_list.append(f"'{field_name}' field can only contain characters!")
-        
-        if error_list:
-            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
-        
-        return value
+            error_list.append(f"'{field_name}' field can only numbers, letters and underscore!")
 
     @staticmethod
     def validate_only_contains(value: str, field_name: str, error_list: list) -> None:
@@ -136,8 +131,11 @@ class UpdateUserInfoSerializer(serializers.ModelSerializer, ValidateClass):
 
         self.validate_first_character(value, "Email", error_list)
         self.validate_only_numbers_contains_and_underscore(check_value, "Email", error_list)
-        self.validate_min_length(value, check_value, error_list)
-        self.validate_max_length(value, check_value, error_list)
+        self.validate_min_length(check_value, "Email", error_list)
+        self.validate_max_length(check_value, "Email", error_list)
+
+        if error_list:
+            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
 
         return value
     
