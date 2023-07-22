@@ -75,6 +75,31 @@
     }
 },
 {
+    "model": "user.user",
+    "pk": 4,
+    "fields": {
+        "password": "",
+        "last_login": null,
+        "is_superuser": false,
+        "username": "no_activate",
+        "first_name": "test",
+        "last_name": "user",
+        "is_staff": true,
+        "is_active": false,
+        "date_joined": "2023-04-08T07:12:24.790Z",
+        "mobile_number": "",
+        "cash": 100,
+        "rating": 60,
+        "created_in": "2023-04-08T07:12:24.792Z",
+        "updated_in": null,
+        "photo": "",
+        "email": "no_activate@mail.ru",
+        "hashed_password": "HQhKrDbBlEBC$a518bdf8a95d3cf92f8a05fa96e713c5ecb64144607feefaccead08544108a3e",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
     "model": "user.jwttoken",
     "pk": 1,
     "fields": {

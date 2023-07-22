@@ -1,3 +1,5 @@
+import json
+
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient, APITestCase
 
@@ -22,31 +24,35 @@ class TestSignInView(APITestCase):
     def test_get_method(self):
         with self.assertLogs(level="WARNING"):
             response = self.client.get(self.path)
-        
+        detail_error = json.loads(response.content)["detail"]
         assert response.status_code == 405, response.status_code
+        assert 'Method "GET" not allowed.' == detail_error, detail_error
     
     def test_post_method(self):
-        valid_resposne = self.client.post(path=self.path, data={"username": "admin", "password": "karmavdele"})
-        assert valid_resposne.status_code == 201, valid_resposne.status_code
-
+        # invalid - no such user
         with self.assertLogs(level="WARNING"):
             invalid_resposne = self.client.post(path=self.path, data={"username": "admin1", "password": "karmavdele"})
-        
-        assert invalid_resposne.status_code == 400, invalid_resposne.status_code
+        detail_error = json.loads(invalid_resposne.content)["detail"]
+        assert invalid_resposne.status_code == 403, invalid_resposne.status_code
+        assert "Incorrect username or password." == detail_error, detail_error
 
+        # invalid - invalid password
         with self.assertLogs(level="WARNING"):
             invalid_resposne = self.client.post(path=self.path, data={"username": "admin", "password": "admin1"})
-        
-        assert invalid_resposne.status_code == 400, invalid_resposne.status_code
+        detail_error = json.loads(invalid_resposne.content)["detail"]
+        assert invalid_resposne.status_code == 403, invalid_resposne.status_code
+        assert "Incorrect username or password." == detail_error, detail_error
 
-        self.user.is_active = False
-        self.user.save()
-        self.user.refresh_from_db()
-
+        # invalid - Inactivate user
         with self.assertLogs(level="WARNING"):
-            invalid_resposne = self.client.post(path=self.path, data={"username": "admin", "password": "admin"})
-        
-        assert invalid_resposne.status_code == 400, invalid_resposne.status_code
+            invalid_resposne = self.client.post(path=self.path, data={"username": "no_activate", "password": "karmavdele"})
+        detail_error = json.loads(invalid_resposne.content)["detail"]
+        assert invalid_resposne.status_code == 403, invalid_resposne.status_code
+        assert "Inactivate user." == detail_error, detail_error
+
+        # valid
+        valid_resposne = self.client.post(path=self.path, data={"username": "admin", "password": "karmavdele"})
+        assert valid_resposne.status_code == 201, valid_resposne.status_code
 
 
 class TestSignUpView(APITestCase):
@@ -98,6 +104,15 @@ class TestSignUpView(APITestCase):
             invalid_resposne = self.client.post(path=self.path, data=invalid_data)
         
         assert invalid_resposne.status_code == 400, invalid_resposne.status_code
+
+
+class TestSignOutView(APITestCase):
+    """Testing SignOutView class methods"""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        
 
 
 class TestProfileView(APITestCase):
@@ -211,3 +226,19 @@ class TestProfileView(APITestCase):
         
         updated_user_3 = models.User.objects.get(id=2)
         assert updated_user_3.photo == self.user_2.photo, updated_user_3.photo
+
+
+class TestRefreshTokenView(APITestCase):
+    """Testing RefreshTokenView class methods"""
+
+
+class TestActivateUserAccountView(APITestCase):
+    """Testing ActivateUserAccountView class methods"""
+
+
+class TestResetPasswordView(APITestCase):
+    """Testing ResetPasswordView class methods"""
+
+
+class TestGetBaseUsernameByToken(APITestCase):
+    """Testing get_base_username_by_token fucntion"""

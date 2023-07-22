@@ -22,7 +22,7 @@ class SignInView(generics.CreateAPIView):
 
     @swagger_auto_schema(responses={201: serializers.BaseJWTTokenSerializer}, tags=["auth"], security=[{}])
     def post(self, request, *args, **kwargs):
-        error = ValidationError(detail="Incorrect username or password.", code=status.HTTP_400_BAD_REQUEST)
+        error = AuthenticationFailed(detail="Incorrect username or password.", code=status.HTTP_400_BAD_REQUEST)
 
         user = db_queries.get_user_by_username(request.data["username"])
 
@@ -33,7 +33,7 @@ class SignInView(generics.CreateAPIView):
             raise error
         
         if not user.is_active:
-            raise ValidationError(detail="Inactivate user.", code=status.HTTP_400_BAD_REQUEST)
+            raise AuthenticationFailed(detail="Inactivate user.", code=status.HTTP_400_BAD_REQUEST)
 
         token = services.create_jwttoken(user_id=user.id)
         serializer = serializers.BaseJWTTokenSerializer(token)
