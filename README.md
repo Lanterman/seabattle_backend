@@ -40,7 +40,7 @@ docker exec -it <backend_container_ID> python manage.py createsuperuser
 #### 3) Follow the link in the browser:
  - ##### to launch the swagger openapi:
     ```
-    http://127.0.0.1:8000/swagger/
+    http://0.0.0.0:8000/swagger/
     ```
  - ##### to launch the drf openapi:
     ```
