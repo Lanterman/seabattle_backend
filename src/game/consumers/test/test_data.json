@@ -110,6 +110,16 @@
     }
 },
 {
+    "model": "user.jwttoken",
+    "pk": 2,
+    "fields": {
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c21yX2lkIjoxMjUsInR5cGVfdG9rZW4iOiJhY2Nlc3MifQ.CAVyfY41h7Q6xzfR5jEtQGC1bcMFFkbd-OGrdiARVWI",
+        "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lk1joxMjUsInR5cGVfdG9rZW4iOiJyZWZyZXNoIn0.40Dbt1BJn9hp7dPAkCTUDohL9B5Sjn-4xIXdLsvF_eU",
+        "created": "2022-08-19T20:37:57.710Z",
+        "user": 4
+    }
+},
+{
     "model": "oauth2_provider.application",
     "pk": 1,
     "fields": {
@@ -171,6 +181,15 @@
         "key": "df748b39b06e8589970dd10d33c8112988884f1002d61fd3774d05365008a643",
         "created": "2023-07-17T20:37:57.634Z",
         "user": 3
+    }
+},
+{
+    "model": "user.secretkey",
+    "pk": 3,
+    "fields": {
+        "key": "df748b39b06e8589970dd10133c8112988884f1002d61fd3774d05365008a643",
+        "created": "2023-07-17T20:37:57.634Z",
+        "user": 4
     }
 },
 {

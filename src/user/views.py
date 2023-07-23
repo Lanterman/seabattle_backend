@@ -128,8 +128,8 @@ class RefreshTokenView(generics.CreateAPIView):
     
     @swagger_auto_schema(responses={
         201: serializers.RefreshJWTTokenSerializer, 
-        400: '["Invalid refresh token."]', 
         401: '{"detail": "Refresh token expired."}',
+        403: '{"detail": "Invalid refresh token."}', 
         }, 
         tags=["auth"], 
         security=[{}],
@@ -159,7 +159,7 @@ class ActivateUserAccountView(views.APIView):
 
     @swagger_auto_schema(responses={
         200: '{"detail": "is activated."}', 
-        401: '{"detail": "No user with such secret key."}'
+        403: '{"detail": "No user with such secret key."}'
         }, 
         tags=["auth"],
         security=[{}],

@@ -75,26 +75,26 @@ class TestCreateUserSecretKeyFunction(APITestCase):
 
     def test_create_user_secret_key(self):
         count_secret_key_to_db = auth_models.SecretKey.objects.count()
-        assert 2 == count_secret_key_to_db, count_secret_key_to_db
+        assert 3 == count_secret_key_to_db, count_secret_key_to_db
 
         # first user
         response = services.create_user_secret_key(self.user_1.id)
         updated_count_secret_key_to_db = auth_models.SecretKey.objects.count()
-        assert 3 == updated_count_secret_key_to_db, updated_count_secret_key_to_db
+        assert 4 == updated_count_secret_key_to_db, updated_count_secret_key_to_db
         assert 64 == len(response), len(response)
         assert str == type(response), type(response)
 
         # second user
         response = services.create_user_secret_key(self.user_2.id)
         updated_count_secret_key_to_db = auth_models.SecretKey.objects.count()
-        assert 3 == updated_count_secret_key_to_db, updated_count_secret_key_to_db
+        assert 4 == updated_count_secret_key_to_db, updated_count_secret_key_to_db
         assert 64 == len(response), len(response)
         assert str == type(response), type(response)
 
         # third user
         response = services.create_user_secret_key(self.user_3.id)
         updated_count_secret_key_to_db = auth_models.SecretKey.objects.count()
-        assert 3 == updated_count_secret_key_to_db, updated_count_secret_key_to_db
+        assert 4 == updated_count_secret_key_to_db, updated_count_secret_key_to_db
         assert 64 == len(response), len(response)
         assert str == type(response), type(response)
 
@@ -115,15 +115,15 @@ class TestCreateJWTTokenFunction(APITestCase):
     def test_create_jwttoken(self):
         count_secret_key_to_db = auth_models.SecretKey.objects.count()
         count_auth_token_to_db = auth_models.JWTToken.objects.count()
-        assert 2 == count_secret_key_to_db, count_secret_key_to_db
-        assert 1 == count_auth_token_to_db, count_auth_token_to_db
+        assert 3 == count_secret_key_to_db, count_secret_key_to_db
+        assert 2 == count_auth_token_to_db, count_auth_token_to_db
 
         # first user
         response = services.create_jwttoken(self.user_1.id)
         new_count_secret_key_to_db = auth_models.SecretKey.objects.count()
         new_count_auth_token_to_db = auth_models.JWTToken.objects.count()
-        assert 3 == new_count_secret_key_to_db, new_count_secret_key_to_db
-        assert 2 == new_count_auth_token_to_db, new_count_auth_token_to_db
+        assert 4 == new_count_secret_key_to_db, new_count_secret_key_to_db
+        assert 3 == new_count_auth_token_to_db, new_count_auth_token_to_db
         assert "JWTToken" == response.__class__.__name__, response.__class__.__name__
         assert 1 == response.user_id, response.user_id
 
@@ -131,8 +131,8 @@ class TestCreateJWTTokenFunction(APITestCase):
         response = services.create_jwttoken(self.user_2.id)
         new_count_secret_key_to_db = auth_models.SecretKey.objects.count()
         new_count_auth_token_to_db = auth_models.JWTToken.objects.count()
-        assert 3 == new_count_secret_key_to_db, new_count_secret_key_to_db
-        assert 3 == new_count_auth_token_to_db, new_count_auth_token_to_db
+        assert 4 == new_count_secret_key_to_db, new_count_secret_key_to_db
+        assert 4 == new_count_auth_token_to_db, new_count_auth_token_to_db
         assert "JWTToken" == response.__class__.__name__, response.__class__.__name__
         assert 2 == response.user_id, response.user_id
 
@@ -140,7 +140,7 @@ class TestCreateJWTTokenFunction(APITestCase):
         response = services.create_jwttoken(self.user_3.id, self.user_3.email)
         new_count_secret_key_to_db = auth_models.SecretKey.objects.count()
         new_count_auth_token_to_db = auth_models.JWTToken.objects.count()
-        assert 3 == new_count_secret_key_to_db, new_count_secret_key_to_db
-        assert 3 == new_count_auth_token_to_db, new_count_auth_token_to_db
+        assert 4 == new_count_secret_key_to_db, new_count_secret_key_to_db
+        assert 4 == new_count_auth_token_to_db, new_count_auth_token_to_db
         assert "JWTToken" == response.__class__.__name__, response.__class__.__name__
         assert 3 == response.user_id, response.user_id
