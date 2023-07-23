@@ -13,6 +13,7 @@ import os
 import json
 import logging
 
+from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -49,13 +50,20 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    'rest_framework.authtoken',
     'channels',
     'corsheaders',
     'debug_toolbar',
     'django_filters',
+
+    # OpenAPI
     'drf_yasg',
 
+    # Oauth2
+    'oauth2_provider',
+    'social_django',
+    'drf_social_oauth2',
+
+    # Apps
     'src.game.apps.GameConfig',
     'src.user.apps.UserConfig',
 ]
@@ -85,6 +93,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -106,18 +116,10 @@ DATABASES = {
         'HOST': os.environ.get('DOC_HOST_DB', os.environ['HOST_DB']),
         'PORT': os.environ.get('DOC_PORT_DB', os.environ['PORT_DB']),
 
+        'DISABLE_SERVER_SIDE_CURSORS': True,
+
         'TEST': {'NAME': os.path.join(BASE_DIR, "test_db")}
     }
-}
-
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [(os.environ.get('DOC_HOST_CL', os.environ['HOST_DB']), 6379)],
-            "group_expiry": 10800,
-        },
-    },
 }
 
 
@@ -169,15 +171,24 @@ MEDIA_ROOT = os.path.join(BASE_DIR.parent, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOGIN_REDIRECT_URL = "/api/v1/"
+
+AUTH_USER_MODEL = "user.User"
+
+
+# REST framework settings
+
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 15,
-        'DEFAULT_AUTHENTICATION_CLASSES': (
-            'rest_framework.authentication.TokenAuthentication',
-        ),
-    #     'rest_framework.authentication.TokenAuthentication',
-    #     'rest_framework_simplejwt.authentication.JWTAuthentication',
-    # ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        # Custom auth by JWTToken
+        'src.user.auth.backends.JWTTokenAuthBackend',
+
+        # OAuth
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        'drf_social_oauth2.authentication.SocialAuthentication',
+    ),
     # 'DEFAULT_THROTTLE_RATES': {
     #     'user': '2/min'
     # },
@@ -188,6 +199,42 @@ REST_FRAMEWORK = {
     'DATETIME_INPUT_FORMATS': '%d.%m.%Y %H:%M:%S',
     'COMPACT_JSON': False,
 }
+
+
+# Django auth backend
+
+AUTHENTICATION_BACKENDS = (
+    # GitHub OAuth2
+    'social_core.backends.github.GithubOAuth2',
+
+    # Google OAuth2
+    'social_core.backends.google.GoogleOAuth2',
+
+    # drf-social-oauth2
+    'drf_social_oauth2.backends.DjangoOAuth2',
+
+    # Django
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+# Google configuration
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('DOC_SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', 
+                                               os.environ['SOCIAL_AUTH_GOOGLE_OAUTH2_KEY'])
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('DOC_SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET', 
+                                                  os.environ['SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET'])
+
+# GitHub configuration
+SOCIAL_AUTH_GITHUB_KEY = os.environ.get('DOC_SOCIAL_AUTH_GITHUB_KEY', os.environ['SOCIAL_AUTH_GITHUB_KEY'])
+SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('DOC_SOCIAL_AUTH_GITHUB_SECRET', os.environ['SOCIAL_AUTH_GITHUB_SECRET'])
+
+# Define SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE to get extra permissions from Google.
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+]
+
+
+# Swagger settings
 
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
@@ -200,14 +247,36 @@ SWAGGER_SETTINGS = {
     }
 }
 
-INTERNAL_IPS = [
-    '127.0.0.1',
-    '0.0.0.0'
-]
 
-LOGIN_REDIRECT_URL = "/api/v1/"
+# JWTToken settings
 
-AUTH_USER_MODEL = "user.User"
+JWT_SETTINGS = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=90),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=60),
+    'ALGORITHM': 'HS256',
+
+    'AUTH_HEADER_TYPES': 'Bearer',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+
+    'AUTH_TOKEN_CLASSES': ('src.user.auth.models.JWTToken',), 
+}
+
+
+# Channels settings
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [(os.environ.get('DOC_HOST_CL', os.environ['HOST_DB']), 6379)],
+            "group_expiry": 10800,
+        },
+    },
+}
+
+
+# Celery settings
 
 REDIS_HOST = os.environ.get('DOC_HOST_CL', os.environ['REDIS_HOST'])
 REDIS_PORT = 6379
@@ -221,3 +290,21 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 # CELERY_RESULT_EXPIRES = 3
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+
+# smtp
+
+EMAIL_HOST = os.environ.get('DOC_EMAIL_HOST', os.environ['EMAIL_HOST'])
+EMAIL_PORT = 2525
+EMAIL_HOST_USER = os.environ.get('DOC_EMAIL_HOST_USER', os.environ['EMAIL_HOST_USER'])
+EMAIL_HOST_PASSWORD = os.environ.get('DOC_EMAIL_HOST_PASSWORD', os.environ['EMAIL_HOST_PASSWORD'])
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+
+
+# Other
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+    '0.0.0.0'
+]

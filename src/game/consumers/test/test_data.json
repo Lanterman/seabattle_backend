@@ -19,7 +19,7 @@
         "updated_in": null,
         "photo": "",
         "email": "admin@mail.ru",
-        "hashed_password": "admin",
+        "hashed_password": "KtQrvyHOiHFU$b18f34385035abe98c305d63d2121ff72a8bca7385a7d217d1891a1c43d397ae",
         "groups": [],
         "user_permissions": []
     }
@@ -38,13 +38,13 @@
         "is_active": true,
         "date_joined": "2023-04-03T15:36:24.376Z",
         "mobile_number": "",
-        "cash": 100,
+        "cash": 50,
         "rating": 60,
         "created_in": "2023-04-03T15:36:24.599Z",
         "updated_in": null,
         "photo": "",
         "email": "kliv@mail.ru",
-        "hashed_password": "admin",
+        "hashed_password": "iEmhsIVjCkVh$19b074e240f28205f2bb2304d1e72f3257334dd9e4879392f527d40a8e4db9cb",
         "groups": [],
         "user_permissions": []
     }
@@ -69,9 +69,127 @@
         "updated_in": null,
         "photo": "",
         "email": "admin1@mail.ru",
-        "hashed_password": "admin",
+        "hashed_password": "HQhKrDbBlEBC$a518bdf8a95d3cf92f8a05fa96e713c5ecb64144607feefaccead08544108a3e",
         "groups": [],
         "user_permissions": []
+    }
+},
+{
+    "model": "user.user",
+    "pk": 4,
+    "fields": {
+        "password": "",
+        "last_login": null,
+        "is_superuser": false,
+        "username": "no_activate",
+        "first_name": "test",
+        "last_name": "user",
+        "is_staff": true,
+        "is_active": false,
+        "date_joined": "2023-04-08T07:12:24.790Z",
+        "mobile_number": "",
+        "cash": 100,
+        "rating": 60,
+        "created_in": "2023-04-08T07:12:24.792Z",
+        "updated_in": null,
+        "photo": "",
+        "email": "no_activate@mail.ru",
+        "hashed_password": "HQhKrDbBlEBC$a518bdf8a95d3cf92f8a05fa96e713c5ecb64144607feefaccead08544108a3e",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "user.jwttoken",
+    "pk": 1,
+    "fields": {
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMjUsInR5cGVfdG9rZW4iOiJhY2Nlc3MifQ.CAVyfY41h7Q6xzfR5jEtQGC1bcMFFkbd-OGrdiARVWI",
+        "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMjUsInR5cGVfdG9rZW4iOiJyZWZyZXNoIn0.40Dbt1BJn9hp7dPAkCTUDohL9B5Sjn-4xIXdLsvF_eU",
+        "created": "2023-08-19T20:37:57.710Z",
+        "user": 3
+    }
+},
+{
+    "model": "user.jwttoken",
+    "pk": 2,
+    "fields": {
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c21yX2lkIjoxMjUsInR5cGVfdG9rZW4iOiJhY2Nlc3MifQ.CAVyfY41h7Q6xzfR5jEtQGC1bcMFFkbd-OGrdiARVWI",
+        "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lk1joxMjUsInR5cGVfdG9rZW4iOiJyZWZyZXNoIn0.40Dbt1BJn9hp7dPAkCTUDohL9B5Sjn-4xIXdLsvF_eU",
+        "created": "2022-08-19T20:37:57.710Z",
+        "user": 4
+    }
+},
+{
+    "model": "oauth2_provider.application",
+    "pk": 1,
+    "fields": {
+        "client_id": "ZZuBpqJxEC69V1OwlPQ9N7tuddNT7aCdVgVfTVGC",
+        "user": 1,
+        "redirect_uris": "",
+        "post_logout_redirect_uris": "",
+        "client_type": "confidential",
+        "authorization_grant_type": "password",
+        "client_secret": "pbkdf2_sha256$600000$30ZI3XluHwFiJYSolO5zQT$wozylJByWjvNJaS/s7bnsUMajdFDTrFFemCMsaqYQcs=",
+        "name": "Google",
+        "skip_authorization": false,
+        "created": "2023-07-16T15:24:57.351Z",
+        "updated": "2023-07-16T15:24:57.351Z",
+        "algorithm": ""
+    }
+},
+{
+    "model": "oauth2_provider.accesstoken",
+    "pk": 1,
+    "fields": {
+        "user": 2,
+        "source_refresh_token": null,
+        "token": "3TjGg3gYhvHWfT31xx5q11IGdA1JXS",
+        "id_token": null,
+        "application": 1,
+        "expires": "2023-07-17T01:25:07.965Z",
+        "scope": "read write",
+        "created": "2023-07-16T15:25:07.966Z",
+        "updated": "2023-08-16T15:25:07.966Z"
+    }
+},
+{
+    "model": "oauth2_provider.refreshtoken",
+    "pk": 1,
+    "fields": {
+        "user": 2,
+        "token": "rmOxWUGNkvozx5gafX9iHuhzkQoNr1",
+        "application": 1,
+        "access_token": 1,
+        "created": "2023-07-16T15:25:08.010Z",
+        "updated": "2023-08-16T15:25:08.010Z",
+        "revoked": null
+    }
+},
+{
+    "model": "user.secretkey",
+    "pk": 1,
+    "fields": {
+        "key": "35a97667edaa49e839eb47e3409005e66bf2816a4ce59fbf88af7f0a1b38b71f",
+        "created": "2023-07-17T20:37:57.634Z",
+        "user": 2
+    }
+},
+{
+    "model": "user.secretkey",
+    "pk": 2,
+    "fields": {
+        "key": "df748b39b06e8589970dd10d33c8112988884f1002d61fd3774d05365008a643",
+        "created": "2023-07-17T20:37:57.634Z",
+        "user": 3
+    }
+},
+{
+    "model": "user.secretkey",
+    "pk": 3,
+    "fields": {
+        "key": "df748b39b06e8589970dd10133c8112988884f1002d61fd3774d05365008a643",
+        "created": "2023-07-17T20:37:57.634Z",
+        "user": 4
     }
 },
 {

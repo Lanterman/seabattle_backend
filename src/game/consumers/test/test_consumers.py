@@ -1,6 +1,5 @@
 from django.urls import path
 from django.test.testcases import TransactionTestCase
-from rest_framework.authtoken.models import Token
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
 from channels.db import database_sync_to_async
@@ -8,7 +7,7 @@ from channels.db import database_sync_to_async
 from .test_data import column_name_list
 from src.game.consumers import consumers, services
 from src.game import models, serializers
-from src.user import models as user_models
+from src.user import models as user_models, services as user_services
 from config.utilities import redis_instance
 from config.middlewares import TokenAuthMiddlewareStack
 
@@ -27,8 +26,8 @@ class Config(TransactionTestCase):
         super().setUp()
         self.user_1 = user_models.User.objects.get(id=1)
         self.user_3 = user_models.User.objects.get(id=3)
-        self.token_1 = Token.objects.create(user_id=self.user_1.id)
-        self.token_3 = Token.objects.create(user_id=self.user_3.id)
+        self.token_1 = user_services.create_jwttoken(user_id=self.user_1.id)
+        self.token_3 = user_services.create_jwttoken(user_id=self.user_3.id)
 
         self.ser_user_1 = serializers.BaseUserSerializer(self.user_1).data
         self.ser_user_3 = serializers.BaseUserSerializer(self.user_3).data
@@ -61,8 +60,8 @@ class TestMainConsumer(Config):
     async def test_created_game(self):
         """Testing created_game event"""
 
-        path_1 = f"ws/main/?token={self.token_1.key}"
-        path_2 = f"ws/main/?token={self.token_3.key}"
+        path_1 = f"ws/main/?token={self.token_1.access_token}"
+        path_2 = f"ws/main/?token={self.token_3.access_token}"
         communicator_1 = await self.launch_websocket_communicator(path=path_1)
         communicator_2 = await self.launch_websocket_communicator(path=path_2)
         assert communicator_1.scope["user"].id == self.user_1.id, communicator_1.scope["user"].id
@@ -79,7 +78,7 @@ class TestMainConsumer(Config):
     async def test_deleted_game(self):
         """Testing deleted_game event"""
 
-        path = f"ws/main/?token={self.token_1.key}"
+        path = f"ws/main/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 
@@ -92,8 +91,8 @@ class TestMainConsumer(Config):
     async def test_add_user_to_game(self):
         """Testing add_user_to_game event"""
 
-        path_1 = f"ws/main/?token={self.token_1.key}"
-        path_2 = f"ws/main/?token={self.token_3.key}"
+        path_1 = f"ws/main/?token={self.token_1.access_token}"
+        path_2 = f"ws/main/?token={self.token_3.access_token}"
         communicator_1 = await self.launch_websocket_communicator(path=path_1)
         communicator_2 = await self.launch_websocket_communicator(path=path_2)
         assert communicator_1.scope["user"].id == self.user_1.id, communicator_1.scope["user"].id
@@ -128,7 +127,7 @@ class TestLobbyConsumer(Config):
     async def test_disconect(self):
         """Testing disconect method"""
 
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
         
@@ -150,7 +149,7 @@ class TestLobbyConsumer(Config):
     async def test_refresh_board(self):
         """Testing refresh_board event"""
 
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
         assert self.board_1.A[1:49] == "'A1': '', 'A2': ' space 7.1', 'A3': ' space 7.1'", self.board_1.A[1:49]
@@ -184,7 +183,7 @@ class TestLobbyConsumer(Config):
     async def test_drop_ship(self):
         """Testing drop_ship event"""
 
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 
@@ -221,7 +220,7 @@ class TestLobbyConsumer(Config):
     async def test_take_shot(self):
         """Testing take_shot event"""
 
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         redis_instance.hset(name=str(self.lobby_1.slug), mapping={"current_turn": 0})
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
@@ -276,7 +275,7 @@ class TestLobbyConsumer(Config):
     async def test_is_ready_to_play(self):
         """Testing is_ready_to_play event"""
 
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         redis_instance.hset(name=str(self.lobby_1.slug), mapping={"is_running": 1})
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
@@ -313,7 +312,7 @@ class TestLobbyConsumer(Config):
     async def test_random_placement(self):
         """Testing random_placement event"""
 
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 
@@ -339,7 +338,7 @@ class TestLobbyConsumer(Config):
         """Testing who_starts event"""
 
         # receive dict
-        path = f"ws/lobby/{self.lobby_2.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_2.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 
@@ -352,7 +351,7 @@ class TestLobbyConsumer(Config):
             await communicator.disconnect()
 
         # receive nothing
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 
@@ -366,7 +365,7 @@ class TestLobbyConsumer(Config):
     async def test_determine_winner(self):
         """Testing determine_winner event"""
 
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 
@@ -392,7 +391,7 @@ class TestLobbyConsumer(Config):
     async def test_countdown(self):
         """Testing countdown event"""
 
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 
@@ -423,7 +422,7 @@ class TestLobbyConsumer(Config):
     async def test_time_is_over(self):
         """Testing time_is_over event"""
 
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         redis_instance.hset(str(self.lobby_1.slug), "is_running", 1)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
@@ -459,7 +458,7 @@ class TestLobbyConsumer(Config):
         """Testing add_user_to_game event"""
 
         # two players in lobby and player is already in lobby
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 
@@ -473,7 +472,7 @@ class TestLobbyConsumer(Config):
             await communicator.disconnect()
         
         # two players in lobby and player is not in lobby
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_3.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_3.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_3.id, communicator.scope["user"].id
 
@@ -489,7 +488,7 @@ class TestLobbyConsumer(Config):
             await communicator.disconnect()
         
         # one players in lobby
-        path = f"ws/lobby/{self.lobby_2.slug}/?token={self.token_3.key}"
+        path = f"ws/lobby/{self.lobby_2.slug}/?token={self.token_3.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_3.id, communicator.scope["user"].id
 
@@ -505,7 +504,7 @@ class TestLobbyConsumer(Config):
     async def test_send_message(self):
         """Testing send_message event"""
 
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 
@@ -522,7 +521,7 @@ class TestLobbyConsumer(Config):
     async def test_is_play_again(self):
         """Testing is_play_again event"""
 
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 
@@ -546,7 +545,7 @@ class TestLobbyConsumer(Config):
     async def test_create_new_game(self):
         """Testing create_new_game event"""
 
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
         number_of_lobby_1 = await database_sync_to_async(models.Lobby.objects.all)()
@@ -587,7 +586,7 @@ class TestLobbyConsumer(Config):
             query = models.Lobby.objects.filter(id=lobby_id).exists()
             return query
 
-        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.key}"
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
         communicator = await self.launch_websocket_communicator(path=path)
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 

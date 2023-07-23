@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib import admin
 
 from . import models
+from .auth import models as auth_models
 
 
 @admin.register(models.User)
@@ -59,3 +60,25 @@ class UserAdmin(admin.ModelAdmin):
             '%d users were successfully denied access to the admin site.',
             updated,
         ) % updated, messages.SUCCESS)
+
+
+@admin.register(auth_models.SecretKey)
+class SecretKeyAdmin(admin.ModelAdmin):
+    """Lobby admin"""
+
+    list_display = ("id", "user", "created")
+    list_display_links = ("id", "user", "created")
+    fields = ("key", "user")
+    list_max_show_all = 250
+    list_per_page = 150
+
+
+@admin.register(auth_models.JWTToken)
+class JWTTokenAdmin(admin.ModelAdmin):
+    """Lobby admin"""
+
+    list_display = ("id", "user", "created")
+    list_display_links = ("id", "user", "created")
+    fields = ("access_token", "refresh_token", "user")
+    list_max_show_all = 250
+    list_per_page = 150

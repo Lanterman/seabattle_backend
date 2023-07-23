@@ -7,17 +7,21 @@ django.setup()
 
 from django.db import close_old_connections
 from django.contrib.auth.models import AnonymousUser
-from rest_framework.authtoken.models import Token
 from channels.db import database_sync_to_async
 from channels.middleware import BaseMiddleware
+from oauth2_provider.models import AccessToken
+
+from src.user.auth.models import JWTToken
 
 
 @database_sync_to_async
 def get_user(token: str):
     """Get user by token"""
-    
     try:
-        token = Token.objects.get(key=token)
+        if token[-5:] == "oauth":
+            token = AccessToken.objects.get(token=token[:-6])
+        else:
+            token = JWTToken.objects.get(access_token=token)
         return token.user
     except:
         return AnonymousUser()

@@ -28,10 +28,15 @@ Coverage of the project with tests - 99%.
 git clone https://github.com/Lanterman/seabattle_backend.git
 git clone https://github.com/Lanterman/seabattle_frontend.git
 ```
-#### 2) Create and run docker-compose
+#### 2) Create and run docker-compose while in the "seabattle_backend" directory
 ```
-docker-compose up --build
+docker-compose up -d --build
 ```
+##### 2.1) To create a superuser, run the following instruction:
+```
+docker exec -it <backend_container_ID> python manage.py createsuperuser
+```
+
 #### 3) Follow the link in the browser:
  - ##### to launch the swagger openapi:
     ```
@@ -39,16 +44,28 @@ docker-compose up --build
     ```
  - ##### to launch the drf openapi:
     ```
-    http://0.0.0.0:8000/api/v1/
+    http://127.0.0.1:8000/api/v1/
     ```
  - ##### to launch the project:
     ```
     http://localhost:3000/
     ```
 
+
+To test the operation of Oauth2 you need:
+ - create super user;
+ - create 2 instances of the 'Applications' model in the admin panel (for Google and GitHub);
+ - in the external file ../frontend/public/env.js, replace the values ​​of the variables 'DRF_GOOGLE_CLIENT_ID', 
+ 'DRF_GOOGLE_SECRET_KEY', 'DRF_GITHUB_CLIENT_ID' and 'DRF_GITHUB_SECRET_KEY' with the values ​​obtained in the 
+ previous step (they MUST be copied and pasted before saving instances application models);
+ - rebuild the images and run with the command
+```
+docker-compose up -d --build
+```
+- Have a good game!!!
+
+
 Future versions of the project will include:
- - advanced authentication with JWT tokens, using third-party applications (gmai, GitHub, etc.);
  - the ability to play with bots (bots will have several difficulty levels, bots write random messages to the chat 
 at certain events);
- - a diagram of move options, which depicts options for players;
- - game history.
+ - a diagram of move options, which depicts options for players.

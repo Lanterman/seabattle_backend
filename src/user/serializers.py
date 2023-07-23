@@ -1,9 +1,9 @@
 import re
 
 from rest_framework import serializers, status
-from rest_framework.authtoken.models import Token
 
 from src.user import models
+from src.user.auth import models as auth_models
 from src.game import serializers as game_serializers
 
 
@@ -32,12 +32,7 @@ class ValidateClass:
         """Check field contains only numbers, letters and underscore"""
 
         if re.search(r'\W', value):
-            error_list.append(f"'{field_name}' field can only contain characters!")
-        
-        if error_list:
-            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
-        
-        return value
+            error_list.append(f"'{field_name}' field can only numbers, letters and underscore!")
 
     @staticmethod
     def validate_only_contains(value: str, field_name: str, error_list: list) -> None:
@@ -136,8 +131,11 @@ class UpdateUserInfoSerializer(serializers.ModelSerializer, ValidateClass):
 
         self.validate_first_character(value, "Email", error_list)
         self.validate_only_numbers_contains_and_underscore(check_value, "Email", error_list)
-        self.validate_min_length(value, check_value, error_list)
-        self.validate_max_length(value, check_value, error_list)
+        self.validate_min_length(check_value, "Email", error_list)
+        self.validate_max_length(check_value, "Email", error_list)
+
+        if error_list:
+            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
 
         return value
     
@@ -265,13 +263,62 @@ class SignUpSerializer(serializers.ModelSerializer, ValidateClass):
         return value
 
 
-class BaseTokenSerializer(serializers.ModelSerializer):
+class BaseJWTTokenSerializer(serializers.ModelSerializer):
     """Base token serializer"""
 
     class Meta:
-        model = Token
-        fields = ["key", "user", "created"]
+        model = auth_models.JWTToken
+        fields = ["access_token", "refresh_token", "created", "user"]
+
+
+class RefreshJWTTokenSerializer(serializers.ModelSerializer):
+    """Base token serializer"""
+
+    class Meta:
+        model = auth_models.JWTToken
+        fields = ["access_token", "refresh_token", "created", "user"]
         extra_kwargs = {
-            "key": {"read_only": True},
+            "access_token": {"read_only": True},
+            "created": {"read_only": True},
             "user": {"read_only": True},
         }
+
+
+class ResetPasswordSerializer(serializers.ModelSerializer, ValidateClass):
+    """Reset a user account password"""
+
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+
+    class Meta:
+        model = models.User
+        fields = ["old_password", "new_password", "confirm_password"]
+        exctra_kwargs = {
+            "old_password": {"write_only": True},
+            "confirm_password": {"write_only": True},
+            }
+    
+    def validate_new_password(self, value: str) -> str:
+        value = value.strip()
+        error_list = []
+        old_password = self.initial_data["old_password"]
+
+        if old_password == value:
+            error_list.append(f"The new password cannot be similar to the old one.")
+
+        self.validate_min_length(value, "New password", error_list, 10)
+        self.validate_max_length(value, "New password", error_list, 50)
+        
+        if error_list:
+            raise serializers.ValidationError(error_list, code=status.HTTP_400_BAD_REQUEST)
+        
+        return value
+    
+    def validate_confirm_password(self, value: str) -> str:
+        new_password = self.initial_data["new_password"]
+
+        if new_password != value:
+            raise serializers.ValidationError(detail="Password mismatch!", code=status.HTTP_400_BAD_REQUEST)
+
+        return value

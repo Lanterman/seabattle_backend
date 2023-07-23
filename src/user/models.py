@@ -21,13 +21,13 @@ class User(AbstractUser):
     created_in: datetime.datetime = models.DateTimeField(auto_now_add=True)
     updated_in: datetime.datetime = models.DateTimeField(blank=True, null=True)
     photo: bytes = models.ImageField(blank=True, upload_to="users/")
-    email = models.EmailField('email address', blank=False, help_text="Required.", unique=True, 
-                              error_messages={"unique": "A user with that email already exists."})
-    hashed_password: hex = models.CharField("password", max_length=128, help_text="Required.")
+    email = models.EmailField(_('email address'), blank=False, help_text="Required.", unique=True, 
+                              error_messages={"unique": _("A user with that email already exists.")})
+    hashed_password: str = models.CharField("password", max_length=128, help_text="Required.")
 
     class Meta:
-        verbose_name = "User"
-        verbose_name_plural = "Users"
+        verbose_name = _("User")
+        verbose_name_plural = _("Users")
 
     def __str__(self):
         return self.username

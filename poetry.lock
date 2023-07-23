@@ -322,6 +322,28 @@ twisted = {version = ">=22.4", extras = ["tls"]}
 tests = ["hypothesis", "pytest", "pytest-asyncio", "django"]
 
 [[package]]
+name = "defusedxml"
+version = "0.7.1"
+description = "XML bomb protection for Python stdlib modules"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package]]
+name = "deprecated"
+version = "1.2.14"
+description = "Python @deprecated decorator to deprecate old python classes, functions or methods."
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[package.dependencies]
+wrapt = ">=1.10,<2"
+
+[package.extras]
+dev = ["tox", "pytest", "pytest-cov", "bump2version (<1)", "sphinx (<2)"]
+
+[[package]]
 name = "django"
 version = "4.2"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
@@ -373,20 +395,18 @@ python-versions = ">=3.7"
 Django = ">=3.2"
 
 [[package]]
-name = "djangochannelsrestframework"
-version = "1.1.0"
-description = "RESTful API for WebSockets using django channels."
+name = "django-oauth-toolkit"
+version = "2.3.0"
+description = "OAuth2 Provider for Django"
 category = "main"
 optional = false
-python-versions = ">=3.8"
+python-versions = "*"
 
 [package.dependencies]
-channels = ">=3.0"
-Django = ">=2.2"
-djangorestframework = ">=3.0"
-
-[package.extras]
-tests = ["pytest (>=7.0.1)", "pytest-django (>=4.5.2)", "pytest-asyncio (>=0.18.1)", "coverage (>=6.3.1)"]
+django = ">=2.2,<4.0.0 || >4.0.0"
+jwcrypto = ">=0.8.0"
+oauthlib = ">=3.1.0"
+requests = ">=2.13.0"
 
 [[package]]
 name = "djangorestframework"
@@ -399,6 +419,20 @@ python-versions = ">=3.6"
 [package.dependencies]
 django = ">=3.0"
 pytz = "*"
+
+[[package]]
+name = "drf-social-oauth2"
+version = "2.1.3"
+description = "drf-social-oauth2 is a frameworks meant to be used with Django and Django Rest Framework. drf-social-oauth2 offers support to oauth2 authentication and authorization. It's one of the easiest frameworks to integrate Oauth2 to your Django Rest Framework application. By using drf-social-oauth2 you can authenticate with major vendors such as Google, Facebook, Instagram, Github, Twitter and a ton more!"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+django-oauth-toolkit = ">=0.12.0"
+djangorestframework = ">=3.10.3"
+python-jose = {version = ">=3.3.0", extras = ["cryptography"]}
+social-auth-app-django = ">=3.1.0"
 
 [[package]]
 name = "drf-yasg"
@@ -420,6 +454,21 @@ uritemplate = ">=3.0.0"
 [package.extras]
 coreapi = ["coreapi (>=2.3.3)", "coreschema (>=0.0.4)"]
 validation = ["swagger-spec-validator (>=2.1.0)"]
+
+[[package]]
+name = "ecdsa"
+version = "0.18.0"
+description = "ECDSA cryptographic signature library (pure python)"
+category = "main"
+optional = false
+python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
+
+[package.dependencies]
+six = ">=1.9.0"
+
+[package.extras]
+gmpy = ["gmpy"]
+gmpy2 = ["gmpy2"]
 
 [[package]]
 name = "hyperlink"
@@ -461,6 +510,18 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
+name = "jwcrypto"
+version = "1.5.0"
+description = "Implementation of JOSE Web standards"
+category = "main"
+optional = false
+python-versions = ">= 3.6"
+
+[package.dependencies]
+cryptography = ">=3.4"
+deprecated = "*"
+
+[[package]]
 name = "kombu"
 version = "5.3.1"
 description = "Messaging library for Python."
@@ -496,6 +557,19 @@ description = "MessagePack serializer"
 category = "main"
 optional = false
 python-versions = "*"
+
+[[package]]
+name = "oauthlib"
+version = "3.2.2"
+description = "A generic, spec-compliant, thorough implementation of the OAuth request-signing logic"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+rsa = ["cryptography (>=3.0.0)"]
+signals = ["blinker (>=1.4.0)"]
+signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "packaging"
@@ -564,6 +638,20 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
+name = "pyjwt"
+version = "2.7.0"
+description = "JSON Web Token implementation in Python"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+crypto = ["cryptography (>=3.4.0)"]
+dev = ["sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.4.0)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)", "pre-commit"]
+docs = ["sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface"]
+tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)"]
+
+[[package]]
 name = "pyopenssl"
 version = "23.2.0"
 description = "Python wrapper module around the OpenSSL library"
@@ -588,6 +676,40 @@ python-versions = ">=3.7"
 
 [package.extras]
 cli = ["click (>=5.0)"]
+
+[[package]]
+name = "python-jose"
+version = "3.3.0"
+description = "JOSE implementation in Python"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+cryptography = {version = ">=3.4.0", optional = true, markers = "extra == \"cryptography\""}
+ecdsa = "!=0.15"
+pyasn1 = "*"
+rsa = "*"
+
+[package.extras]
+cryptography = ["cryptography (>=3.4.0)"]
+pycrypto = ["pycrypto (>=2.6.0,<2.7.0)", "pyasn1"]
+pycryptodome = ["pycryptodome (>=3.3.1,<4.0.0)", "pyasn1"]
+
+[[package]]
+name = "python3-openid"
+version = "3.2.0"
+description = "OpenID support for modern servers and consumers."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+defusedxml = "*"
+
+[package.extras]
+mysql = ["mysql-connector-python"]
+postgresql = ["psycopg2"]
 
 [[package]]
 name = "pytz"
@@ -639,6 +761,32 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use_chardet_on_py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "requests-oauthlib"
+version = "1.3.1"
+description = "OAuthlib authentication support for Requests."
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[package.dependencies]
+oauthlib = ">=3.0.0"
+requests = ">=2.0.0"
+
+[package.extras]
+rsa = ["oauthlib[signedtoken] (>=3.0.0)"]
+
+[[package]]
+name = "rsa"
+version = "4.9"
+description = "Pure-Python RSA implementation"
+category = "main"
+optional = false
+python-versions = ">=3.6,<4"
+
+[package.dependencies]
+pyasn1 = ">=0.1.3"
+
+[[package]]
 name = "service-identity"
 version = "23.1.0"
 description = "Service identity verification for pyOpenSSL & cryptography."
@@ -666,6 +814,42 @@ description = "Python 2 and 3 compatibility utilities"
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
+
+[[package]]
+name = "social-auth-app-django"
+version = "5.2.0"
+description = "Python Social Authentication, Django integration."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+Django = ">=3.2"
+social-auth-core = ">=4.4.1"
+
+[[package]]
+name = "social-auth-core"
+version = "4.4.2"
+description = "Python social authentication made simple."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+cryptography = ">=1.4"
+defusedxml = ">=0.5.0rc1"
+oauthlib = ">=1.0.3"
+PyJWT = ">=2.0.0"
+python3-openid = ">=3.0.10"
+requests = ">=2.9.1"
+requests-oauthlib = ">=0.6.1"
+
+[package.extras]
+all = ["python-jose (>=3.0.0)", "python3-saml (>=1.5.0)", "cryptography (>=2.1.1)"]
+allpy3 = ["python-jose (>=3.0.0)", "python3-saml (>=1.5.0)", "cryptography (>=2.1.1)"]
+azuread = ["cryptography (>=2.1.1)"]
+openidconnect = ["python-jose (>=3.0.0)"]
+saml = ["python3-saml (>=1.5.0)"]
 
 [[package]]
 name = "sqlparse"
@@ -794,6 +978,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "wrapt"
+version = "1.15.0"
+description = "Module for decorators, wrappers and monkey patching."
+category = "main"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+
+[[package]]
 name = "zope.interface"
 version = "6.0"
 description = "Interfaces for Python"
@@ -809,7 +1001,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "06bfa215966f5afd1e836b401bbaca67dbb832bb113739bc01ebb4757b103cf3"
+content-hash = "dede552c952f4c313aea0a09225bb2a10fcfe863da5fc45cbdde906f65e66004"
 
 [metadata.files]
 amqp = []
@@ -834,19 +1026,25 @@ constantly = []
 coverage = []
 cryptography = []
 daphne = []
+defusedxml = []
+deprecated = []
 django = []
 django-cors-headers = []
 django-debug-toolbar = []
 django-filter = []
-djangochannelsrestframework = []
+django-oauth-toolkit = []
 djangorestframework = []
+drf-social-oauth2 = []
 drf-yasg = []
+ecdsa = []
 hyperlink = []
 idna = []
 incremental = []
 inflection = []
+jwcrypto = []
 kombu = []
 msgpack = []
+oauthlib = []
 packaging = []
 pillow = []
 prompt-toolkit = []
@@ -854,14 +1052,21 @@ psycopg2 = []
 pyasn1 = []
 pyasn1-modules = []
 pycparser = []
+pyjwt = []
 pyopenssl = []
 python-dotenv = []
+python-jose = []
+python3-openid = []
 pytz = []
 pyyaml = []
 redis = []
 requests = []
+requests-oauthlib = []
+rsa = []
 service-identity = []
 six = []
+social-auth-app-django = []
+social-auth-core = []
 sqlparse = []
 twisted = []
 twisted-iocpsupport = []
@@ -872,4 +1077,5 @@ uritemplate = []
 urllib3 = []
 vine = []
 wcwidth = []
+wrapt = []
 "zope.interface" = []
