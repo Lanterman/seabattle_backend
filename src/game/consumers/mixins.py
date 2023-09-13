@@ -118,6 +118,15 @@ class IsReadyToPlayMixin:
 class DetermineWinnerMixin:
     """Determine a winner of a game"""
 
+    async def detemine_winner_name(self, enemy_id: int, is_bot: bool) -> str:
+        """Determine the name of the winner"""
+
+        if is_bot:
+            return "Bot"
+        elif enemy_id:
+            return await db_queries.get_user(enemy_id)
+        return self.user.username
+
     async def determine_winner_of_game(self, lobby_slug: uuid.uuid4, username: str) -> None:
         await self.preform_set_winner_in_lobby(lobby_slug, username)
 
@@ -269,6 +278,7 @@ class CalculateRatingAndCash:
 
     async def perform_update_user_statistics(self, winning_user, losing_user) -> None:
         await db_queries.update_user_statistics(winning_user, losing_user)
+
 
 class TakeShotMixin(BaseChooseWhoWillShotMixin):
     """Update a model instance"""

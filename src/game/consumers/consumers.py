@@ -1,9 +1,10 @@
 import logging
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from ..bots import bot_mixins
 
 from config.utilities import redis_instance
-from . import mixins, db_queries, bot_mixins
+from . import mixins, db_queries
 from .. import services
 
 
@@ -35,17 +36,20 @@ class MainConsumer(AsyncJsonWebsocketConsumer, mixins.CreateNewGameMixin):
         """Called when created new game"""
 
         if self.scope["user"].id != event["user_id"]:
+            logging.info("sent 'created_game' message")
             await self.send_json(event)
     
     async def deleted_game(self, event):
         """Called when deleted game"""
 
+        logging.info("sent 'deleted_game' message")
         await self.send_json(event)
     
     async def add_user_to_game(self, event):
         """Called when added user to game"""
 
-        if self.scope["user"].id != event["user_id"]: 
+        if self.scope["user"].id != event["user_id"]:
+            logging.info("sent 'add_user_to_game' message")
             await self.send_json(event)
 
 
@@ -131,9 +135,12 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                 logging.info(f"For lobby '{self.lobby_name}' turn is determined!")
 
         elif content["type"] == "determine_winner":
-            winner = await db_queries.get_user(content["enemy_id"]) if len(content) == 3 else self.user.username
+            winner = await self.detemine_winner_name(content["enemy_id"], content["is_bot"])
             await self.determine_winner_of_game(self.lobby_name, winner)
-            await self.calculate_rating_and_cash_of_game(winner, content["bet"])
+
+            if not content["is_bot"]:
+                await self.calculate_rating_and_cash_of_game(winner, content["bet"], content["is_bot"])
+            
             self.remove_current_turn_in_lobby_from_redis(self.lobby_name)
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "determine_winner", "winner": winner})
 
@@ -172,7 +179,11 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.channel_layer.group_send(self.lobby_group_name, dict_answer)       
 
         elif content["type"] == "create_new_game":
-            if self.user.cash - int(content["bet"]) >= int(content["bet"]):
+            if content["is_bot"]:
+                lobby_slug = await self.bot_creates_new_game(content["name"], content["bet"], content["time_to_move"],
+                                                             content["time_to_placement"])
+                data = {"type": "new_group", "lobby_slug": lobby_slug}
+            elif self.user.cash - int(content["bet"]) >= int(content["bet"]):
                 lobby_slug = await self.create_new_game(content["bet"], content["name"], content["time_to_move"],
                                                         content["time_to_placement"], content["enemy_id"])
                 data = {"type": "new_group", "lobby_slug": lobby_slug}
@@ -190,44 +201,53 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
     async def send_shot(self, event):
         """Called when someone fires at an enemy board"""
 
+        logging.info("sent 'send_shot' message")
         await self.send_json(event)
     
     async def is_ready_to_play(self, event):
         """Called when someone change ready to play field"""
 
+        logging.info("sent 'is_ready_to_play' message")
         await self.send_json(event)
     
     async def who_starts(self, event):
         """Called when a player who shoots first is chosen"""
 
+        logging.info("sent 'who_starts' message")
         await self.send_json(event)
     
     async def determine_winner(self, event):
         """Called when a player destroed all enemy ships"""
 
+        logging.info("sent 'determine_winner' message")
         await self.send_json(event)
     
     async def add_user_to_game(self, event):
         """Called when a add a user to lobby"""
 
+        logging.info("sent 'add_user_to_game' message")
         await self.send_json(event)
     
     async def countdown(self, event):
         """Called when a player destroed all enemy ships"""
 
+        logging.info("sent 'countdown' message")
         await self.send_json(event)
     
     async def send_message(self, event):
         """Called when a player sends a message to the chat"""
 
+        logging.info("sent 'send_message' message")
         await self.send_json(event)
     
     async def is_play_again(self, event):
         """Called when someone decides whether to play again"""
 
+        logging.info("sent 'is_play_again' message")
         await self.send_json(event)
     
     async def new_group(self, event):
         """Called when players want to play again"""
 
+        logging.info("sent 'new_group' message")
         await self.send_json(event)

@@ -105,7 +105,7 @@
     "fields": {
         "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMjUsInR5cGVfdG9rZW4iOiJhY2Nlc3MifQ.CAVyfY41h7Q6xzfR5jEtQGC1bcMFFkbd-OGrdiARVWI",
         "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMjUsInR5cGVfdG9rZW4iOiJyZWZyZXNoIn0.40Dbt1BJn9hp7dPAkCTUDohL9B5Sjn-4xIXdLsvF_eU",
-        "created": "2023-08-19T20:37:57.710Z",
+        "created": "2024-08-19T20:37:57.710Z",
         "user": 3
     }
 },
@@ -133,7 +133,7 @@
         "name": "Google",
         "skip_authorization": false,
         "created": "2023-07-16T15:24:57.351Z",
-        "updated": "2023-07-16T15:24:57.351Z",
+        "updated": "2024-07-16T15:24:57.351Z",
         "algorithm": ""
     }
 },
@@ -149,7 +149,7 @@
         "expires": "2023-07-17T01:25:07.965Z",
         "scope": "read write",
         "created": "2023-07-16T15:25:07.966Z",
-        "updated": "2023-08-16T15:25:07.966Z"
+        "updated": "2024-08-16T15:25:07.966Z"
     }
 },
 {
@@ -161,7 +161,7 @@
         "application": 1,
         "access_token": 1,
         "created": "2023-07-16T15:25:08.010Z",
-        "updated": "2023-08-16T15:25:08.010Z",
+        "updated": "2024-08-16T15:25:08.010Z",
         "revoked": null
     }
 },

@@ -21,6 +21,7 @@ class Lobby(models.Model):
     created_in: datetime.datetime = models.DateTimeField(auto_now_add=True)
     finished_in: datetime.datetime = models.DateTimeField(blank=True, null=True)
     bet: int = models.IntegerField("game bet", choices=Bet.choices, help_text="Required")
+    is_play_with_a_bot: bool = models.BooleanField("is playing with a bot", default=False)
     time_to_move: int = models.IntegerField(
         choices=ChooseTime.choices, default=ChooseTime.THIRTY_SECONDS
         )
