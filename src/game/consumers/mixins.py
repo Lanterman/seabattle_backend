@@ -471,11 +471,12 @@ class RandomPlacementClearShipsMixin(RandomPlacementMixin, ClearCountOfShipsMixi
 
         placed_board = await self.random_placement(board, ships)
         self._clear_count_of_ships(ships)
+        data = {"type": "random_placed", "ships": ships, "board": placed_board, "board_id": board_id}
 
         await self.perform_update_board(board_id, placed_board)
         await self.perform_clear_count_of_ships(board_id)
 
-        await self.send_json(content={"type": "random_placed", "ships": ships, "board": placed_board})
+        await self.send_json(content=data)
 
 
 class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
@@ -489,7 +490,8 @@ class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
         content = {
             "type": "clear_board", 
             "board": board, 
-            "ships": updated_ships
+            "ships": updated_ships,
+            "board_id": board_id
         }
 
         await self.send_json(content=content)

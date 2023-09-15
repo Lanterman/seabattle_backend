@@ -108,6 +108,11 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                 content["ship_count"], content["field_name_list"], content["board"]
             )
         
+        # Сделать ход бота, если попал - отправить игроку уведомления для прорисовки и ходить дальше до 1 промаха  и добавить елемент "is_bot_missed"
+        elif content["type"] == "bot_take_to_shot":
+            logging.info(msg=f"-------------{content}")
+            await self.bot_take_shot(self.lobby_name, content["board_id"], content["time_to_turn"])
+
         elif content["type"] == "take_shot":
             is_my_turn, field_name_dict, enemy_ships = await self.take_shot(
                 self.lobby_name, content["board_id"], content["field_name"]
@@ -119,7 +124,12 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         
         elif content["type"] == "is_ready_to_play":
             is_ready = await self._is_ready_to_play(content["board_id"], content["is_ready"], content["is_enemy_ready"])
-            data = {"type": "is_ready_to_play", "is_ready": is_ready, "user_id": self.user.id}
+            data = {
+                "type": "is_ready_to_play", 
+                "is_ready": is_ready, 
+                "user_id": self.user.id, 
+                "board_id": content["board_id"],
+            }
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "random_placement":
@@ -139,7 +149,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.determine_winner_of_game(self.lobby_name, winner)
 
             if not content["is_bot"]:
-                await self.calculate_rating_and_cash_of_game(winner, content["bet"], content["is_bot"])
+                await self.calculate_rating_and_cash_of_game(winner, content["bet"])
             
             self.remove_current_turn_in_lobby_from_redis(self.lobby_name)
             await self.channel_layer.group_send(self.lobby_group_name, {"type": "determine_winner", "winner": winner})
@@ -151,7 +161,12 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         elif content["type"] == "time_is_over":
             await self.random_placement_and_clear_ships(content["board_id"], content["board"], content["ships"])
             is_ready = await self._is_ready_to_play(content["board_id"], True, True)
-            data = {"type": "is_ready_to_play", "is_ready": is_ready, "user_id": self.user.id}
+            data = {
+                "type": "is_ready_to_play", 
+                "is_ready": is_ready, 
+                "user_id": self.user.id, 
+                "board_id": content["board_id"],
+            }
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "add_user_to_game":
