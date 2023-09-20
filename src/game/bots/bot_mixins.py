@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+import random
 
 from channels.db import database_sync_to_async
 
@@ -35,12 +36,82 @@ class BotMessage:
 class BotTakeShot:
     """A bot take shot"""
 
-    async def bot_take_shot(self, lobby_slug: str, board_id: int, field_name: str) -> tuple:
+    @staticmethod
+    def bot_gets_ship_dict_on_the_board(board: dict) -> dict:
+        """A bot gets ships on the board"""
+
+        ship_dict = {}
+
+        for column_value in board.values():
+            for field_value in column_value.values():
+                if type(field_value) == float:
+                    field_value = int(field_value)
+                    if field_value not in ship_dict:
+                        ship_dict[field_value] = 1
+                    else:
+                        ship_dict[field_value] += 1
+
+        return ship_dict
+    
+    @staticmethod
+    def bot_gets_ship_size_and_name_list(ships: dict) -> dict:
+        """A bot creates a list of ship sizes and their identifier in the tuple"""
+
+        ship_size_and_name_list = []
+
+        for ship_item in ships:
+            ship_size_and_name_list.append((ship_item["size"], ship_item["id"]))
+        
+        return sorted(ship_size_and_name_list, reverse=True)
+
+
+    @staticmethod
+    def bot_selects_target(ship_dict_on_board: dict, ship_size_and_name_list: dict) -> tuple:
+        """Bot selects the best a target"""
+
+        for ship_size, ship_id in ship_size_and_name_list:
+            if ship_id in ship_dict_on_board and ship_dict_on_board[ship_id] > 0:
+                return ship_size 
+
+    @staticmethod
+    def bot_get_field_list(field_dict: dict, board: dict, column_name_list: list, max_index: int) -> None:
+        """Get a list of valid fields for a shot """
+
+        index = max_index - 1 if max_index > 1 else 1
+        for char in column_name_list[::-1]:
+            index = index if index <= max_index else 1
+            for num in range(index, 11, max_index):
+                if board[char][f"{char}{num}"] not in ("hit", "miss"):
+                    type_to_shot = "hit" if type(board[char][f"{char}{num}"]) == float else "miss"
+                    field_dict[f"{char}{num}"] = type_to_shot
+
+            index += 1
+
+
+    async def bot_take_shot(self, lobby_slug: str, board_id: int, time_to_turn: int, ships: dict) -> tuple:
         board = await ws_db_queries.get_board(board_id, self.column_name_list)
         ws_services.confert_to_json(board)
-        type_to_shot = "hit" if type(board["C"]["C1"]) == float else "miss"
-        board["C"]["C1"] = type_to_shot
-        await self.send_json(content={"type": "bot_taken_to_shot", "field_name_dict": {"C1": type_to_shot}})
+        ship_dict_on_board = self.bot_gets_ship_dict_on_the_board(board)
+        ship_size_and_name_list = self.bot_gets_ship_size_and_name_list(ships)
+        max_index = self.bot_selects_target(ship_dict_on_board, ship_size_and_name_list)
+
+        field_dict = {}
+        self.bot_get_field_list(field_dict, board, self.column_name_list, max_index)
+
+        while True:
+            random_shot = random.choice(list(field_dict))
+            field_dict = {random_shot: field_dict[random_shot]}
+            output_data = {"type": "bot_taken_to_shot", "field_dict": field_dict}
+
+            if field_dict[random_shot] == "miss":
+                output_data["is_bot_hitted"] = False
+                await self.send_json(content=output_data)
+                break
+            logging.info(field_dict)
+            await self.send_json(content=output_data)
+
+
+
         # shot_type = self._get_type_shot(board, field_name)
         # field_value = self._shot(board, field_name, shot_type)
         # is_my_turn = True if shot_type == "hit" else False
