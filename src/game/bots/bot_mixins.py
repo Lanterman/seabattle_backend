@@ -1,5 +1,6 @@
 import os
 import re
+import asyncio
 import logging
 import random
 
@@ -8,7 +9,6 @@ from channels.db import database_sync_to_async
 from . import db_queries
 from .. import db_queries as game_queries
 from src.game.consumers import services as ws_services, db_queries as ws_db_queries
-from config.utilities import redis_instance
 
 
 class BotMessage:
@@ -38,14 +38,17 @@ class BotTakeShot:
 
     @staticmethod
     def bot_gets_ship_dict_on_the_board(board: dict) -> dict:
-        """A bot gets ships on the board"""
+        """
+        A bot gets ships on the board. 
+        Return a following dictionary:
+            {<ship_id>.<serial number of a ship of this type>: <number of fields it stands on>}.
+        """
 
         ship_dict = {}
 
         for column_value in board.values():
             for field_value in column_value.values():
                 if type(field_value) == float:
-                    field_value = int(field_value)
                     if field_value not in ship_dict:
                         ship_dict[field_value] = 1
                     else:
@@ -55,7 +58,7 @@ class BotTakeShot:
     
     @staticmethod
     def bot_gets_ship_size_and_name_list(ships: dict) -> dict:
-        """A bot creates a list of ship sizes and their identifier in the tuple"""
+        """A bot creates a sorted list of ship sizes and their identifier in the tuple."""
 
         ship_size_and_name_list = []
 
@@ -69,8 +72,10 @@ class BotTakeShot:
     def bot_selects_target(ship_dict_on_board: dict, ship_size_and_name_list: dict) -> tuple:
         """Bot selects the best a target"""
 
+        ship_id_list = set(int(ship_id) for ship_id in ship_dict_on_board)
+
         for ship_size, ship_id in ship_size_and_name_list:
-            if ship_id in ship_dict_on_board and ship_dict_on_board[ship_id] > 0:
+            if ship_id in ship_id_list:
                 return ship_size 
 
     @staticmethod
@@ -87,28 +92,50 @@ class BotTakeShot:
 
             index += 1
 
-
     async def bot_take_shot(self, lobby_slug: str, board_id: int, time_to_turn: int, ships: dict) -> tuple:
+        """A bot shooting logic. A bot's shooting cycle will end on a first miss"""
+
         board = await ws_db_queries.get_board(board_id, self.column_name_list)
+
         ws_services.confert_to_json(board)
+
         ship_dict_on_board = self.bot_gets_ship_dict_on_the_board(board)
         ship_size_and_name_list = self.bot_gets_ship_size_and_name_list(ships)
         max_index = self.bot_selects_target(ship_dict_on_board, ship_size_and_name_list)
 
         field_dict = {}
         self.bot_get_field_list(field_dict, board, self.column_name_list, max_index)
-
+        # Обновление досок при выстрелах (менять значения полей и передавать ход)
+        # Удалять redis_instance.hdel(lobby_slug, "is_running") хз зачем
+        # Обновлять таймер при передаче хода
+        # Сделать обстрел полей возле места попадания
+        # Если уничтожен корабль, проверять надо ли меня диапазон выстрелов
         while True:
             random_shot = random.choice(list(field_dict))
-            field_dict = {random_shot: field_dict[random_shot]}
-            output_data = {"type": "bot_taken_to_shot", "field_dict": field_dict}
+            # random_shot = "H1"
+            fields = {random_shot: field_dict[random_shot]}
+            output_data = {"type": "bot_taken_to_shot", "field_dict": fields}
+            del field_dict[random_shot]
 
-            if field_dict[random_shot] == "miss":
+            if fields[random_shot] == "miss":
                 output_data["is_bot_hitted"] = False
                 await self.send_json(content=output_data)
-                break
-            logging.info(field_dict)
+                break                
+            
+            wounded_ship = board[random_shot[0]][random_shot]
+            ship_dict_on_board[wounded_ship] -= 1
+            
+            if ship_dict_on_board[wounded_ship] == 0:
+                fields.update(self._add_misses_around_sunken_ship(wounded_ship, board))
+                del ship_dict_on_board[wounded_ship]
+
+                # Если нет больше кораблей, добавить "enemy_ships" ключ к ответу с "0"
+                if not ship_dict_on_board:
+                    logging.info("bye")
+                    break
+                
             await self.send_json(content=output_data)
+            await asyncio.sleep(1)
 
 
 
