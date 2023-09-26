@@ -520,7 +520,7 @@ class DropShipAddSpaceMixin(DropShipOnBoardMixin, AddSpaceAroundShipMixin):
         await self.perform_ship_updates(ship_id, ship_count)
         ship_list = await self.get_serialized_ships(board_id)
 
-        await self.send_json(content={"type": "drop_ship", "board": board, "ships": ship_list})
+        await self.send_json(content={"type": "drop_ship", "board": board, "board_id": board_id, "ships": ship_list})
     
     async def perform_update_board(self, board_id: int, board: dict) -> None:
         await db_queries.update_board(board_id, board)
