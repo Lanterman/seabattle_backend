@@ -8,6 +8,7 @@ from channels.db import database_sync_to_async
 
 from . import db_queries
 from .. import db_queries as game_queries
+from config.utilities import redis_instance
 from src.game.consumers import services as ws_services, db_queries as ws_db_queries
 
 
@@ -57,7 +58,7 @@ class BotTakeShot:
         return ship_dict
     
     @staticmethod
-    def bot_gets_ship_size_and_name_list(ships: dict) -> dict:
+    def bot_gets_ship_size_and_name_list(ships: dict) -> list:
         """A bot creates a sorted list of ship sizes and their identifier in the tuple."""
 
         ship_size_and_name_list = []
@@ -69,19 +70,20 @@ class BotTakeShot:
 
 
     @staticmethod
-    def bot_selects_target(ship_dict_on_board: dict, ship_size_and_name_list: dict) -> tuple:
+    def bot_selects_target(ship_dict_on_board: dict, ship_size_and_name_list: dict) -> int:
         """Bot selects the best a target"""
 
         ship_id_list = set(int(ship_id) for ship_id in ship_dict_on_board)
 
         for ship_size, ship_id in ship_size_and_name_list:
             if ship_id in ship_id_list:
-                return ship_size 
+                return ship_size
 
     @staticmethod
-    def bot_get_field_list(field_dict: dict, board: dict, column_name_list: list, max_index: int) -> None:
+    def bot_get_field_list(board: dict, column_name_list: list, max_index: int) -> dict:
         """Get a list of valid fields for a shot """
 
+        field_dict = {}
         index = max_index - 1 if max_index > 1 else 1
         for char in column_name_list[::-1]:
             index = index if index <= max_index else 1
@@ -91,6 +93,8 @@ class BotTakeShot:
                     field_dict[_field] = board[char][_field]
 
             index += 1
+        
+        return field_dict
     
     @staticmethod
     def bot_defines_plane(field: str, board: dict, column_name_list: list) -> str or None:
@@ -106,24 +110,24 @@ class BotTakeShot:
               (f_index < 9 and board[column_name_list[f_index + 1]][f"{column_name_list[f_index + 1]}{f_num}"] == "hit")):
             return "horizontal"
     
-    def botEasy_gets_fields_around_hit(self, random_shot: str, board: dict, column_name_list: list) -> dict:
+    def botEasy_gets_fields_around_hit(self, current_field: str, board: dict, column_name_list: list) -> dict:
         """A easy bot receives fields around the board"""
 
         field_dict = {}
-        field_number = int(random_shot[1:])
-        column_name = random_shot[0]
+        field_number = int(current_field[1:])
+        column_name = current_field[0]
         column_index = column_name_list.index(column_name)
 
-        plane = self.bot_defines_plane(random_shot, board, column_name_list)
+        plane = self.bot_defines_plane(current_field, board, column_name_list)
 
         if not plane:
-            field = f"{column_name}{field_number - 1}"
-            if field_number > 1 and board[column_name][field] not in ("hit", "miss"):
-                field_dict[field] = board[column_name][field]
+            _field = f"{column_name}{field_number - 1}"
+            if field_number > 1 and board[column_name][_field] not in ("hit", "miss"):
+                field_dict[_field] = board[column_name][_field]
             
-            field = f"{column_name}{field_number + 1}"
-            if field_number < 10 and board[column_name][field] not in ("hit", "miss"):
-                field_dict[field] = board[column_name][field]
+            _field = f"{column_name}{field_number + 1}"
+            if field_number < 10 and board[column_name][_field] not in ("hit", "miss"):
+                field_dict[_field] = board[column_name][_field]
             
             if column_index > 0:
                 _column_name = column_name_list[column_index - 1]
@@ -193,44 +197,55 @@ class BotTakeShot:
         await self.perform_update_boards(True, my_board, enemy_board)
 
     async def bot_take_shot(
-            self, lobby_slug: str, board_id: int, time_to_turn: int, ships: dict, column_name_list: list
+            self, lobby_slug: str, board_id: int, time_to_turn: int, last_hit: str, ships: dict, column_name_list: list
         ) -> tuple:
         """A bot shooting logic. A bot's shooting cycle will end on a first miss"""
 
         board = await ws_db_queries.get_board(board_id, column_name_list)
-
         ws_services.confert_to_json(board)
-
         ship_dict_on_board = self.bot_gets_ship_dict_on_the_board(board)
         ship_size_and_name_list = self.bot_gets_ship_size_and_name_list(ships)
-        max_index = self.bot_selects_target(ship_dict_on_board, ship_size_and_name_list)
+        output_data = {
+                "type": "bot_taken_to_shot", 
+                "field_dict": {}, 
+                "is_my_turn": False,
+                "last_hit": "",
+                "time_left": 1
+            }
+        
+        if not ship_dict_on_board:
+            output_data["enemy_ships"] = 0
+            return await self.send_json(content=output_data)
 
-        field_dict = {}
-        self.bot_get_field_list(field_dict, board, column_name_list, max_index)
-        # Сделать обстрел полей возле места попадания, если потом бот промазал - сохранять этот список
-        # Если уничтожен корабль, проверять надо ли меня диапазон выстрелов
-        # Удалять redis_instance.hdel(lobby_slug, "is_running") хз зачем
+        # Checking whether there is a wounded ship on the user's board
+        if last_hit:
+            field_dict = self.botEasy_gets_fields_around_hit(last_hit, board, column_name_list)
+        else:
+            max_index = self.bot_selects_target(ship_dict_on_board, ship_size_and_name_list)
+            field_dict = self.bot_get_field_list(board, column_name_list, max_index)
+
         while True:
-            # Обновляем время хода
+            # Delete "is_running" key from <lobby_slug> (remove this key from the redis dictionary to update the timer)
+            redis_instance.hdel(lobby_slug, "is_running")
+            
+            # Update move time
             countdown = await self._countdown(self.lobby_name, time_to_turn)
 
             random_shot = random.choice(list(field_dict))
             type_to_shot = "hit" if type(board[random_shot[0]][random_shot]) == float else "miss"
             fields = {random_shot: type_to_shot}
-            output_data = {
-                "type": "bot_taken_to_shot", 
-                "field_dict": fields, 
-                "is_my_turn": False, 
-                "time_left": countdown["time_left"]
-            }
-            logging.info(random_shot)
+
+            output_data["field_dict"] = fields
+            output_data["last_hit"] = last_hit
+            output_data["time_left"] = countdown["time_left"]
+
             if type_to_shot == "miss":
                 output_data["is_my_turn"] = True
                 board[random_shot[0]][random_shot] = type_to_shot
                 await self.bot_passes_move_to_user(lobby_slug)
                 await self.perform_write_shot(board_id, board)
                 await self.send_json(content=output_data)
-                break                
+                return                
             
             found_ship = board[random_shot[0]][random_shot]
             ship_dict_on_board[found_ship] -= 1
@@ -238,15 +253,20 @@ class BotTakeShot:
             await self.perform_write_shot(board_id, board)
             
             if ship_dict_on_board[found_ship] == 0:
-                fields.update(self._add_misses_around_sunken_ship(found_ship, board))
+                last_hit = ""
                 del ship_dict_on_board[found_ship]
-                del field_dict[random_shot]
-                # Если нет больше кораблей, добавить "enemy_ships" ключ к ответу с "0"
-                # if not ship_dict_on_board:
-                #     logging.info("bye")
-                #     break
+
+                fields.update(self._add_misses_around_sunken_ship(found_ship, board))
+
+                if ship_dict_on_board:
+                    max_index = self.bot_selects_target(ship_dict_on_board, ship_size_and_name_list)
+                    field_dict = self.bot_get_field_list(board, column_name_list, max_index)
+                else:
+                    output_data["enemy_ships"] = 0
+                    return await self.send_json(content=output_data)
             else:
                 field_dict = self.botEasy_gets_fields_around_hit(random_shot, board, column_name_list)
+                last_hit = random_shot
 
             await self.send_json(content=output_data)
             await asyncio.sleep(1)

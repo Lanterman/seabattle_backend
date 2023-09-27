@@ -108,10 +108,10 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                 content["ship_count"], content["field_name_list"], content["board"]
             )
         
-        # Сделать ход бота, если попал - отправить игроку уведомления для прорисовки и ходить дальше до 1 промаха  и добавить елемент "is_bot_missed"
         elif content["type"] == "bot_take_to_shot":
             await self.bot_take_shot(
-                self.lobby_name, content["board_id"], content["time_to_turn"], content["ships"], self.column_name_list
+                self.lobby_name, content["board_id"], content["time_to_turn"], 
+                content["last_hit"], content["ships"], self.column_name_list
             )
 
         elif content["type"] == "take_shot":
