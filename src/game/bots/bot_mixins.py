@@ -6,32 +6,10 @@ import random
 
 from channels.db import database_sync_to_async
 
-from . import db_queries
+from . import db_queries, bot_message
 from .. import db_queries as game_queries
 from config.utilities import redis_instance
 from src.game.consumers import services as ws_services, db_queries as ws_db_queries
-
-
-class BotMessage:
-    """Mixin that generates message from the bot"""
-
-    def get_bot_message_with_offer(self, answer: bool) -> str:
-        """Get a bot message with a response to the offer to play again"""
-   
-        if answer:
-            return f"{self.user.username.capitalize()} want to play again."
-        else:
-            return f"{self.user.username.capitalize()} doesn't want to play again."
-    
-    def get_bot_message_with_connected_player(self) -> str:
-        """Get a message from a bot with a connected player"""
-
-        return f"{self.user.username.capitalize()} connected to the game."
-    
-    def get_bot_message_dont_have_enough_money(self) -> str:
-        """Get a message about don't have enough money to play"""
-
-        return f"{self.user.username.capitalize()} don't have enough money to play."
 
 
 class BotTakeShot:
@@ -295,5 +273,5 @@ class BotCreatesNewGame:
         return str(lobby_slug)
 
 
-class GenericBotMixin(BotMessage, BotTakeShot, BotCreatesNewGame):
+class GenericBotMixin(bot_message.BotMainMessage, BotTakeShot, BotCreatesNewGame):
     """Interface class for all other bot mixins"""

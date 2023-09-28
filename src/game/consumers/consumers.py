@@ -146,7 +146,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                 logging.info(f"For lobby '{self.lobby_name}' turn is determined!")
 
         elif content["type"] == "determine_winner":
-            winner = await self.detemine_winner_name(content["enemy_id"], content["is_bot"])
+            winner = await self.detemine_winner_name(content["user_id"], content["is_bot"])
             await self.determine_winner_of_game(self.lobby_name, winner)
 
             if not content["is_bot"]:
@@ -175,7 +175,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             data = {"type": "add_user_to_game", "user": user}
 
             if user:
-                message = self.get_bot_message_with_connected_player()
+                message = self.get_bot_message_with_connected_player(self.user.username)
                 dict_message = await self._send_message(content["lobby_id"], message, True)
                 data["message"] = dict_message["message"]
             
@@ -186,7 +186,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "is_play_again":
-            message = self.get_bot_message_with_offer(content["answer"])
+            message = self.get_bot_message_with_offer(content["answer"], self.user.username)
             dict_message = await self._send_message(content["lobby_id"], message, True)
             dict_answer = {"type": "is_play_again", "is_play_again": content["answer"], "user_id": self.user.id, 
                            "message": dict_message["message"]}
@@ -205,7 +205,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                 data = {"type": "new_group", "lobby_slug": lobby_slug}
             
             else:
-                message = self.get_bot_message_dont_have_enough_money()
+                message = self.get_bot_message_dont_have_enough_money(self.user.username)
                 data = await self._send_message(content["lobby_id"], message, True)
             
             await self.channel_layer.group_send(self.lobby_group_name, data)
