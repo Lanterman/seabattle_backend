@@ -1,6 +1,9 @@
 import logging
 import json
 
+from channels.db import database_sync_to_async
+
+
 
 def confert_to_json(board: dict) -> None:
     """Convert board to json format"""
@@ -38,3 +41,12 @@ def determine_winner_and_loser(winner: str, users) -> tuple:
         return users
     else :
         return users[1], users[0]
+
+
+@database_sync_to_async
+def determine_whoose_boards(user, boards: list) -> tuple:
+        """Determine whoose boards"""
+
+        if user.username == str(boards[0].user_id):
+            return boards[0], boards[1]
+        return boards[1], boards[0]

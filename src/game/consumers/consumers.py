@@ -1,7 +1,7 @@
 import logging
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from ..bots import bot_mixins
+from ..bots import bot_interfaces
 
 from config.utilities import redis_instance
 from . import mixins, db_queries
@@ -67,7 +67,9 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                     mixins.PlayAgainMixin,
                     mixins.CreateNewGameMixin,
                     mixins.CalculateRatingAndCash,
-                    bot_mixins.GenericBotMixin):
+                    
+                    # Add a bot
+                    bot_interfaces.GenericBotInterface):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -110,7 +112,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         
         elif content["type"] == "bot_take_to_shot":
             await self.bot_take_shot(
-                self.lobby_name, content["board_id"], content["time_to_turn"], 
+                self.user, self.lobby_name, content["board_id"], content["time_to_turn"], 
                 content["last_hit"], content["ships"], self.column_name_list
             )
 
@@ -197,7 +199,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         elif content["type"] == "create_new_game":
             if content["is_bot"]:
                 lobby_slug = await self.bot_creates_new_game(content["name"], content["bet"], content["time_to_move"],
-                                                             content["time_to_placement"])
+                                                             content["time_to_placement"], self.user)
                 data = {"type": "new_group", "lobby_slug": lobby_slug}
             elif self.user.cash - int(content["bet"]) >= int(content["bet"]):
                 lobby_slug = await self.create_new_game(content["bet"], content["name"], content["time_to_move"],
