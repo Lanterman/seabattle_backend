@@ -94,7 +94,8 @@ class ProfileView(generics.RetrieveUpdateDestroyAPIView):
     """User profile endpoint"""
 
     queryset = models.User.objects.all().prefetch_related(Prefetch(
-        "lobbies", queryset=game_models.Lobby.objects.filter(finished_in__isnull=False, is_play_with_a_bot=False)
+        "lobbies", queryset=game_models.Lobby.objects.filter(finished_in__isnull=False).exclude(
+            is_play_with_a_bot__isnull=False)
     ))
     permission_classes = [IsAuthenticated, permissions.IsMyProfile]
     lookup_field = "username"

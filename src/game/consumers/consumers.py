@@ -110,10 +110,11 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
                 content["ship_count"], content["field_name_list"], content["board"]
             )
         
+        # A bot makes to shot
         elif content["type"] == "bot_take_to_shot":
             await self.bot_take_shot(
                 self.user, self.lobby_name, content["board_id"], content["time_to_turn"], 
-                content["last_hit"], content["ships"], self.column_name_list
+                content["last_hit"], content["ships"], self.column_name_list, content["bot_level"]
             )
 
         elif content["type"] == "take_shot":
@@ -199,7 +200,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         elif content["type"] == "create_new_game":
             if content["is_bot"]:
                 lobby_slug = await self.bot_creates_new_game(content["name"], content["bet"], content["time_to_move"],
-                                                             content["time_to_placement"], self.user)
+                                                             content["time_to_placement"], self.user, content["is_bot"])
                 data = {"type": "new_group", "lobby_slug": lobby_slug}
             elif self.user.cash - int(content["bet"]) >= int(content["bet"]):
                 lobby_slug = await self.create_new_game(content["bet"], content["name"], content["time_to_move"],

@@ -27,7 +27,7 @@ class LobbyListView(ListCreateAPIView):
     search_fields = ["name"]
 
     def get_queryset(self):
-        return game_models.Lobby.objects.exclude(is_play_with_a_bot=True).annotate(
+        return game_models.Lobby.objects.exclude(is_play_with_a_bot__isnull=False).annotate(
             num_users=Count("users")).filter(num_users=1).prefetch_related("users")
 
     def get_serializer_class(self):
