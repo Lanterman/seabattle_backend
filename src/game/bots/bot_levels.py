@@ -347,25 +347,38 @@ class HighBot:
 
         for num in range(field_number, 1, -1):
             _field = f"{column_name}{num - 1}"
+
             if type(board[column_name][_field]) == float:
                 field_dict[_field] = board[column_name][_field]
+            elif board[column_name][_field] != "hit":
+                break
         
-        _field = f"{column_name}{field_number + 1}"
-        if type(field_number < 10 and board[column_name][_field]) == float:
-            field_dict[_field] = board[column_name][_field]
+        for num in range(field_number, 10):
+            _field = f"{column_name}{num + 1}"
+
+            if type(board[column_name][_field]) == float:
+                field_dict[_field] = board[column_name][_field]
+            elif board[column_name][_field] != "hit":
+                break
         
-        if column_index > 0:
-            _column_name = column_name_list[column_index - 1]
+        for index in range(column_index, 0, -1):
+            _column_name = column_name_list[index - 1]
             _field = f"{_column_name}{field_number}"
+
             if type(board[_column_name][_field]) == float:
                 field_dict[_field] = board[_column_name][_field]
+            elif board[_column_name][_field] != "hit":
+                break
         
-        if column_index < 9:
-            _column_name = column_name_list[column_index + 1]
+        for index in range(column_index, 9):
+            _column_name = column_name_list[index + 1]
             _field = f"{_column_name}{field_number}"
+
             if type(board[_column_name][_field]) == float:
                 field_dict[_field] = board[_column_name][_field]
-        logging.info(field_dict)
+            elif board[_column_name][_field] != "hit":
+                break
+        
         return field_dict
 
     async def high_bot_take_shot(
