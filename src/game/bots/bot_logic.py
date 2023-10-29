@@ -4,9 +4,7 @@ import re
 from channels.db import database_sync_to_async
 
 from . import db_queries, bot_levels
-from config.utilities import redis_instance
 from src.game import db_queries as game_db_queries, models
-from src.game.consumers import db_queries as ws_db_queries, services as ws_services
 
 
 class BotCreatesNewGame:
@@ -34,7 +32,7 @@ class BotCreatesNewGame:
         return str(lobby_slug)
 
 
-class BotTakeShot(bot_levels.EasyBot, bot_levels.MediumBot, bot_levels.HighBot):  # bot_levels.GenericBot
+class BotTakeShot(bot_levels.EasyBot, bot_levels.MediumBot, bot_levels.HighBot, bot_levels.GenericBot):
     """A bot take shot"""
 
     async def bot_take_shot(
@@ -44,7 +42,7 @@ class BotTakeShot(bot_levels.EasyBot, bot_levels.MediumBot, bot_levels.HighBot):
         """A bot shooting logic. A bot's shooting cycle will end on a first miss"""
 
         if bot_level == "EASY":
-            await self.easy_bot_take_shot(user, lobby_slug, board_id, time_to_turn, last_hit, ships, column_name_list)
+            await self.easy_bot_take_shot(user, lobby_slug, board_id, time_to_turn, last_hit, column_name_list)
         
         elif bot_level == "MEDIUM":
             await self.medium_bot_take_shot(user, lobby_slug, board_id, time_to_turn, last_hit, ships, column_name_list)
