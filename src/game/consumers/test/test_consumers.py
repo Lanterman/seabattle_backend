@@ -167,6 +167,7 @@ class TestLobbyConsumer(Config):
 
         test_response = {
             "type": "clear_board", 
+            "board_id": 1,
             "board": self.board_column_list, 
             "ships": [
                 {'id': 1, 'name': 'fourdeck', 'plane': 'horizontal', 'size': 4, 'count': 1}, 
@@ -287,7 +288,7 @@ class TestLobbyConsumer(Config):
         response = await communicator.receive_json_from()
         is_running = redis_instance.hget(str(self.lobby_1.slug), "is_running")
         assert is_running == "1", is_running
-        assert response == {"type": "is_ready_to_play", "is_ready": False, "user_id": self.user_1.id}, response
+        assert response == {"type": "is_ready_to_play", "is_ready": False, "user_id": self.user_1.id, "board_id": 1}, response
 
         # players are not ready
         await communicator.send_json_to(
@@ -296,7 +297,7 @@ class TestLobbyConsumer(Config):
         response = await communicator.receive_json_from()
         is_running = redis_instance.hget(str(self.lobby_1.slug), "is_running")
         assert is_running == "1", is_running
-        assert response == {"type": "is_ready_to_play", "is_ready": True, "user_id": self.user_1.id}, response
+        assert response == {"type": "is_ready_to_play", "is_ready": True, "user_id": self.user_1.id, "board_id": 1}, response
 
         # players are ready
         await communicator.send_json_to(
@@ -305,7 +306,7 @@ class TestLobbyConsumer(Config):
         response = await communicator.receive_json_from()
         is_running = redis_instance.hget(str(self.lobby_1.slug), "is_running")
         assert is_running == None, is_running
-        assert response == {"type": "is_ready_to_play", "is_ready": True, "user_id": self.user_1.id}, response
+        assert response == {"type": "is_ready_to_play", "is_ready": True, "user_id": self.user_1.id, "board_id": 1}, response
         with self.assertLogs(level="INFO"):
             await communicator.disconnect()
     
@@ -371,7 +372,7 @@ class TestLobbyConsumer(Config):
 
         # admin is winner
         redis_instance.hset(str(self.lobby_1.slug), mapping={"time_left": 30, "current_turn": 1})
-        await communicator.send_json_to({"type": "determine_winner", "bet": 50})
+        await communicator.send_json_to({"type": "determine_winner", "bet": 50, "user_id": 1, "is_bot": None})
         response = await communicator.receive_json_from()
         key_in_redis = redis_instance.hget(str(self.lobby_1.slug), "current_turn")
         assert response == {"type": "determine_winner", "winner": "admin"}, response
@@ -379,7 +380,7 @@ class TestLobbyConsumer(Config):
         
         # enemy is winner
         redis_instance.hset(str(self.lobby_1.slug), "time_left", 30)
-        await communicator.send_json_to({"type": "determine_winner", "bet": 50, "enemy_id": 2})
+        await communicator.send_json_to({"type": "determine_winner", "bet": 50, "user_id": 2, "is_bot": None})
         response = await communicator.receive_json_from()
         key_in_redis = redis_instance.hget(str(self.lobby_1.slug), "current_turn")
         assert response == {"type": "determine_winner", "winner": "lanterman"}, response
@@ -445,7 +446,7 @@ class TestLobbyConsumer(Config):
 
         response = await communicator.receive_json_from()
         is_running = redis_instance.hget(str(self.lobby_1.slug), "is_running")
-        assert response == {"type": "is_ready_to_play", "is_ready": True, "user_id": self.user_1.id}, response
+        assert response == {"board_id": 1, "type": "is_ready_to_play", "is_ready": True, "user_id": self.user_1.id}, response
         assert is_running == None, is_running
 
         response = await communicator.receive_nothing()
@@ -557,7 +558,8 @@ class TestLobbyConsumer(Config):
             "time_to_move": 30, 
             "time_to_placement": 60, 
             "enemy_id": 2,
-            "lobby_id": 1
+            "lobby_id": 1,
+            "is_bot": None
         }
 
         await communicator.send_json_to(test_data)
