@@ -178,12 +178,12 @@ class GenericBot:
     
     async def bot_missed(
             self, user, board_id: int, lobby_name: str, random_shot: str, 
-            type_to_shot: str, output_data: dict, board: dict
+            output_data: dict, board: dict
         ) -> None:
         """If a bot missed"""
 
         output_data["is_my_turn"] = True
-        board[random_shot[0]][random_shot] = type_to_shot
+        board[random_shot[0]][random_shot] = "miss"
         await self.bot_passes_move_to_user(lobby_name, user)
         await self.perform_write_shot(board_id, board)
     
@@ -238,7 +238,7 @@ class GenericBot:
 
             # A bot missed
             if type_to_shot == "miss":
-                await self.bot_missed(user, board_id, lobby_slug, random_shot, type_to_shot, output_data, board)
+                await self.bot_missed(user, board_id, lobby_slug, random_shot, output_data, board)
                 return await self.send_json(content=output_data)
             
             # A bot hit

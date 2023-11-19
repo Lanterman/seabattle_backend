@@ -46,7 +46,7 @@ board = {
         "C10": " space 33.3"
     },
     "D": {
-        "D1": 27.4,
+        "D1": 'hit',
         "D2": " space 27.3 space 27.4",
         "D3": "hit",
         "D4": " space 27.3 space 45.2",
@@ -58,7 +58,7 @@ board = {
         "D10": " space 33.3"
     },
     "E": {
-        "E1": " space 27.1 space 27.4",
+        "E1": "miss",
         "E2": " space 27.1 space 27.3 space 27.4",
         "E3": "miss",
         "E4": " space 27.3",
@@ -79,7 +79,7 @@ board = {
         "F7": 27.2,
         "F8": 27.2,
         "F9": 27.2,
-        "F10": " space 27.2"
+        "F10": "miss"
     },
     "G": {
         "G1": 27.1,
@@ -98,7 +98,7 @@ board = {
         "H2": " space 27.1 space 33.1",
         "H3": 33.1,
         "H4": " space 33.1",
-        "H5": " space 39.2",
+        "H5": "miss",
         "H6": 39.2,
         "H7": 39.2,
         "H8": " space 39.2",
