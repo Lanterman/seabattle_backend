@@ -2,7 +2,6 @@ from copy import deepcopy
 from channels.db import database_sync_to_async
 from rest_framework.test import APITestCase, APITransactionTestCase
 
-
 from src.user.models import User
 from src.game import models as game_models
 from src.game.bots import bot_levels
@@ -54,7 +53,7 @@ class TestSyncGenericBot(APITestCase):
         """Testing bot_get_field_dict method"""
 
         field_dict_1 = self.instance.bot_get_field_dict(board, column_name_list, 4)
-        assert len(field_dict_1) == 22, len(field_dict_1)
+        assert len(field_dict_1) == 23, len(field_dict_1)
 
         field_dict_2 = self.instance.bot_get_field_dict(board, column_name_list, 2)
         assert len(field_dict_2) == 47, len(field_dict_2)
@@ -64,7 +63,7 @@ class TestSyncGenericBot(APITestCase):
         copy_board["E"]["E4"] = "miss"
 
         field_dict_1 = self.instance.bot_get_field_dict(copy_board, column_name_list, 4)
-        assert len(field_dict_1) == 20, field_dict_1
+        assert len(field_dict_1) == 21, field_dict_1
     
     def test_bot_defines_plane(self):
         """Testing bot_defines_plane method"""
@@ -86,28 +85,39 @@ class TestSyncGenericBot(APITestCase):
 
         copy_board = deepcopy(board)
 
+        # horizontal hit < 9
         field_dict = self.instance.bot_gets_fields_around_hit("B3", copy_board, column_name_list)
         test_data = {'A3': 27.3}
         assert field_dict == test_data, field_dict
 
-        field_dict = self.instance.bot_gets_fields_around_hit("C1", copy_board, column_name_list)
-        test_data = {'B1': 27.4}
+        copy_board["H"]["H1"] = "hit"
+        field_dict = self.instance.bot_gets_fields_around_hit("I1", copy_board, column_name_list)
+        test_data = {'J1': ' space 27.1', 'G1': 27.1}
         assert field_dict == test_data, field_dict
 
+        # horizontal hit > 0
+        field_dict = self.instance.bot_gets_fields_around_hit("C1", copy_board, column_name_list)
+        test_data = {'A1': 27.4, 'D1': 27.4}
+        assert field_dict == test_data, field_dict
+
+        # horizontal hit > 0 - miss
+        copy_board["G"]["G1"] = "hit"
+        field_dict = self.instance.bot_gets_fields_around_hit("F1", copy_board, column_name_list)
+        test_data = {'I1': 27.1}
+        assert field_dict == test_data, field_dict
+
+        # no plane
         field_dict = self.instance.bot_gets_fields_around_hit("F7", copy_board, column_name_list)
         test_data = {'F6': 27.2, 'F8': 27.2, 'E7': ' space 27.2 space 39.1', 'G7': ' space 27.2 space 39.2'}
         assert field_dict == test_data, field_dict
 
+        # vertical hit 
         copy_board["F"]["F8"] = "hit"
         field_dict = self.instance.bot_gets_fields_around_hit("F9", copy_board, column_name_list)
         test_data = {'F7': 27.2}
         assert field_dict == test_data, field_dict
 
-        copy_board["F"]["F8"] = "hit"
-        field_dict = self.instance.bot_gets_fields_around_hit("F9", copy_board, column_name_list)
-        test_data = {'F7': 27.2}
-        assert field_dict == test_data, field_dict
-
+        # vertical hit 
         copy_board["H"]["H6"] = "hit"
         field_dict = self.instance.bot_gets_fields_around_hit("H7", copy_board, column_name_list)
         test_data = {"H8": " space 39.2"}
@@ -146,11 +156,6 @@ class TestAsyncGenericBot(APITransactionTestCase):
         assert self.board_1.is_my_turn == True, self.board_1.is_my_turn
         assert self.board_2.is_my_turn == False, self.board_2.is_my_turn
     
-    async def test_bot_there_are_no_ships(self):
-        """Testing bot_there_are_no_ships method"""
-
-        # Через обсерверы проверять отправку событий
-    
     async def test_bot_missed(self):
         """Testing bot_missed method"""
 
@@ -167,9 +172,42 @@ class TestAsyncGenericBot(APITransactionTestCase):
         assert self.board_1.is_my_turn == True, self.board_1.is_my_turn
         assert self.board_2.is_my_turn == False, self.board_2.is_my_turn
 
-    
-    async def test_bot_take_shot(self):
-        """Testing _bot_take_shot method"""
 
-        # Проверять записи в бд
-        # Через обсерверы проверять отправку событий
+class TestHighBot(APITestCase):
+    """Testing HighBot class methods"""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+
+        cls.ship_dict_on_board = {27.4: 3, 27.3: 2, 33.3: 3, 45.2: 1, 39.1: 2, 
+                                  27.1: 4, 27.2: 4, 33.1: 3, 39.2: 2, 45.1: 1, 33.2: 3}
+        cls.ship_size_and_name_list = [(4, 27), (3, 33), (2, 39), (1, 45)]
+
+        cls.instance = bot_levels.HighBot()
+
+    def test_high_bot_gets_fields_around_hit(self):
+        """Testing high_bot_gets_fields_around_hit method"""
+
+        copy_board = deepcopy(board)
+
+        # horizontal
+        field_dict = self.instance.high_bot_gets_fields_around_hit("F7", copy_board, column_name_list)
+        test_data = {"F6": 27.2, "F8": 27.2, "F9": 27.2}
+        assert field_dict == test_data, field_dict
+
+        copy_board["F"]["F6"] = "hit"
+        copy_board["F"]["F9"] = "hit"
+        field_dict = self.instance.high_bot_gets_fields_around_hit("F7", copy_board, column_name_list)
+        test_data = {"F8": 27.2}
+        assert field_dict == test_data, field_dict
+
+        copy_board["F"]["F8"] = "hit"
+        field_dict = self.instance.high_bot_gets_fields_around_hit("F7", copy_board, column_name_list)
+        test_data = {}
+        assert field_dict == test_data, field_dict
+
+        # vertical
+        field_dict = self.instance.high_bot_gets_fields_around_hit("H1", copy_board, column_name_list)
+        test_data = {'F1': 27.1, 'G1': 27.1, 'I1': 27.1}
+        assert field_dict == test_data, field_dict

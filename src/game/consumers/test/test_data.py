@@ -22,7 +22,7 @@ board = {
         "A10": " space 33.3"
     },
     "B": {
-        "B1": 27.4,
+        "B1": 'hit',
         "B2": " space 27.3 space 27.4",
         "B3": 27.3,
         "B4": " space 27.3 space 45.2",
@@ -46,7 +46,7 @@ board = {
         "C10": " space 33.3"
     },
     "D": {
-        "D1": 'hit',
+        "D1": 27.4,
         "D2": " space 27.3 space 27.4",
         "D3": "hit",
         "D4": " space 27.3 space 45.2",
