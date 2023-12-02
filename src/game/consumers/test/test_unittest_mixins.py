@@ -236,6 +236,36 @@ class TestIsReadyToPlayMixin(APITransactionTestCase):
         assert is_ready == True, is_ready
 
 
+class TestDetermineWinnerMixin(APITransactionTestCase):
+    """Testing the DetermineWinnerMixin class methods"""
+
+    fixtures = ["./src/game/consumers/test/test_data.json"]
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.user_1 = user_models.User.objects.get(id=1)
+        self.user_2 = user_models.User.objects.get(id=2)
+
+        self.instance = mixins.DetermineWinnerMixin()
+        self.instance.user = self.user_1
+    
+    async def test_detemine_winner_name(self):
+        """Testing the detemine_winner_name method"""
+
+        winner = await self.instance.detemine_winner_name(self.user_1.id, "")
+        assert winner == self.user_1.username, winner
+
+        winner = await self.instance.detemine_winner_name(self.user_2.id, "")
+        assert winner != self.user_1.username, winner
+        assert winner == self.user_2.username, winner
+
+        winner = await self.instance.detemine_winner_name("", "")
+        assert winner == "Bot", winner
+
+        winner = await self.instance.detemine_winner_name("", "HIGH")
+        assert winner == "Bot", winner
+
+
 class TestAddUserToGameMixin(APITransactionTestCase):
     """Testing the AddUserToGameMixin class methods"""
 

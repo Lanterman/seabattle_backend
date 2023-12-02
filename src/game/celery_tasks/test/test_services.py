@@ -2,6 +2,7 @@ from rest_framework.test import APITestCase
 
 from src.game.celery_tasks.services import determine_winner_at_preparation_stage, determine_winner_at_shot_stage
 from src.game.models import Lobby, Board
+from src.game.consumers import db_queries as ws_db_quieres
 
 
 class TestAtPreparationStage(APITestCase):
@@ -19,8 +20,8 @@ class TestAtPreparationStage(APITestCase):
         cls.boards_lobby_1 = Board.objects.filter(lobby_id=cls.lobby_1.id)
         cls.boards_lobby_2 = Board.objects.filter(lobby_id=cls.lobby_2.id)
 
-    def test_first_lobby(self):
-        """Testing first lobby"""
+    def test_first_lobby_without_users_readiness(self):
+        """Testing first lobby without users readiness"""
 
         assert self.lobby_1.winner == "", self.lobby_1.winner
         assert self.boards_lobby_1[0].is_play_again == None, self.boards_lobby_1[0].is_play_again
@@ -30,6 +31,21 @@ class TestAtPreparationStage(APITestCase):
         self.lobby_1.refresh_from_db()
 
         assert self.lobby_1.winner == "Both lose!", self.lobby_1.winner
+        assert self.boards_lobby_1[0].is_play_again == False, self.boards_lobby_1[0].is_play_again
+        assert self.boards_lobby_1[1].is_play_again == False, self.boards_lobby_1[1].is_play_again
+    
+    def test_first_lobby_one_user_is_ready(self):
+        """Testing first lobby where one user is ready to play"""
+
+        assert self.lobby_1.winner == "", self.lobby_1.winner
+        assert self.boards_lobby_1[0].is_play_again == None, self.boards_lobby_1[0].is_play_again
+        assert self.boards_lobby_1[1].is_play_again == None, self.boards_lobby_1[1].is_play_again
+
+        Board.objects.filter(id=2).update(is_ready="True")
+        determine_winner_at_preparation_stage(self.lobby_1.slug)
+        self.lobby_1.refresh_from_db()
+
+        assert self.lobby_1.winner == "lanterman", self.lobby_1.winner
         assert self.boards_lobby_1[0].is_play_again == False, self.boards_lobby_1[0].is_play_again
         assert self.boards_lobby_1[1].is_play_again == False, self.boards_lobby_1[1].is_play_again
     

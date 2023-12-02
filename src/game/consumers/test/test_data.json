@@ -204,6 +204,7 @@
         "time_to_move": 30,
         "time_to_placement": 30,
         "password": "admin",
+        "is_play_with_a_bot": null,
         "winner": "",
         "users": [
             1,
@@ -223,6 +224,7 @@
         "time_to_move": 30,
         "time_to_placement": 30,
         "password": "",
+        "is_play_with_a_bot": null,
         "winner": "lanterman",
         "users": [
             1
