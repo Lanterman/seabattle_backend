@@ -1,3 +1,5 @@
+from random import choice
+
 class BotMainMessage:
     """Creating messages related to notifications and alerts for users"""
 
@@ -20,5 +22,282 @@ class BotMainMessage:
         return f"{username.capitalize()} don't have enough money to play."
 
 
-class Bot:
+# Chat in a game with a bot 
+class ChatEasyBotMessage:
+    """Creating messages in a game with an easy bot"""
+
+    def get_easy_bot_message_user_dont_hit(self) -> str:
+        """Get a message a user don't hit a ship"""
+
+        list_message = [
+            "It's okay! The match isn't over yet.",
+            "Don't worry. You're just learning to play!",
+            "Everything is fine! Great minds aren't born, they are made!"
+        ]
+
+        return choice(list_message)
+    
+    def get_easy_bot_message_user_destroyed_ship(self) -> str:
+        """Get a message a user destroyed a ship"""
+
+        list_message = [
+            "This's good! You destroyed one of my ships!",
+            "Not bad! You're succeeding!",
+            "Wow! Well done!"
+        ]
+
+        return choice(list_message)
+    
+    def get_easy_bot_message_bot_dont_hit(self) -> str:
+        """Get a message a bot don't hit a ship"""
+
+        list_message = [
+            "Don't worry! This isn't the end!",
+            "Wow! I finally made the clean hit!",
+            "I'm sorry! I'm didn't want it!"
+        ]
+
+        return choice(list_message)
+    
+    def get_easy_bot_message_bot_destroyed_ship(self) -> str:
+        """Get a message a bot destroyed a ship"""
+
+        list_message = [
+            "I'm making progress!",
+            "Yeah. Minus one!",
+            "I'm sorry! I'm didn't want it!"
+        ]
+
+        return choice(list_message)
+    
+    def get_easy_bot_message_bot_won(self) -> str:
+        """Get a message bot won"""
+
+        list_message = [
+            "Don't worry. This is just the game!",
+            "Oops. I'm didn't want it!",
+            "Everything's okay! You'll win a next game."
+        ]
+
+        return choice(list_message)
+    
+    def get_easy_bot_message_user_won(self) -> str:
+        """Get a message user won"""
+
+        list_message = [
+            "Congratulations! You won!",
+            "Not bad! You're succeeding!",
+            "Wow! Well done!"
+        ]
+
+        return choice(list_message)
+
+
+class ChatMediumBotMessage:
+    """Creating messages in a game with a medium bot"""
+
+    def get_medium_bot_message_user_dont_hit(self) -> str:
+        """Get a message a user don't hit a ship"""
+
+        list_message = [
+            "",
+            "",
+            ""
+        ]
+
+        return choice(list_message)
+    
+    def get_medium_bot_message_user_destroyed_ship(self) -> str:
+        """Get a message a user destroyed a ship"""
+
+        list_message = [
+            "",
+            "",
+            ""
+        ]
+
+        return choice(list_message)
+    
+    def get_medium_bot_message_bot_dont_hit(self) -> str:
+        """Get a message a bot don't hit a ship"""
+
+        list_message = [
+            "",
+            "",
+            ""
+        ]
+
+        return choice(list_message)
+    
+    def get_medium_bot_message_bot_destroyed_ship(self) -> str:
+        """Get a message a bot destroyed a ship"""
+
+        list_message = [
+            "",
+            "",
+            ""
+        ]
+
+        return choice(list_message)
+    
+    def get_medium_bot_message_bot_won(self) -> str:
+        """Get a message bot won"""
+
+        list_message = [
+            "",
+            "",
+            ""
+        ]
+
+        return choice(list_message)
+    
+    def get_medium_bot_message_user_won(self) -> str:
+        """Get a message user won"""
+
+        list_message = [
+            "",
+            "",
+            ""
+        ]
+
+        return choice(list_message)
+
+
+class ChatHighBotMessage:
+    """Creating messages in a game with a hign bot"""
+
+    def get_high_bot_message_user_dont_hit(self) -> str:
+        """Get a message a user don't hit a ship"""
+        
+        list_message = [
+            "",
+            "",
+            ""
+        ]
+
+        return choice(list_message)
+    
+    def get_high_bot_message_user_destroyed_ship(self) -> str:
+        """Get a message a user destroyed a ship"""
+        
+        list_message = [
+            "",
+            "",
+            ""
+        ]
+
+        return choice(list_message)
+    
+    def get_high_bot_message_bot_dont_hit(self) -> str:
+        """Get a message a bot don't hit a ship"""
+        
+        list_message = [
+            "Great bot gave you a chance!",
+            "Your turn, loser!",
+            "Don't try to laugh at me!"
+        ]
+
+        return choice(list_message)
+    
+    def get_high_bot_message_bot_destroyed_ship(self) -> str:
+        """Get a message a bot destroyed a ship"""
+        
+        list_message = [
+            "Loser!",
+            "This is just the beginning!",
+            "I'm a pussy destroyer!!!"
+        ]
+
+        return choice(list_message)
+    
+    def get_high_bot_message_bot_won(self) -> str:
+        """Get a message bot won"""
+        
+        list_message = [
+            "This is to be expected!",
+            "Don't cry. I'm just better that you!",
+            "Another victory for me. Congratulations to myself!"
+        ]
+
+        return choice(list_message)
+    
+    def get_high_bot_message_user_won(self) -> str:
+        """Get a message user won"""
+        
+        list_message = [
+            "You are lucky today. This won't happen anymore!",
+            "Shit! I'm unlucky in this game.",
+            "Wow! Finally you won!"
+        ]
+
+        return choice(list_message)
+
+
+class GenericChatBotMessage(ChatEasyBotMessage, ChatMediumBotMessage, ChatHighBotMessage):
     """Creating messages related to playing with a bot"""
+
+    def get_bot_message_user_dont_hit(self, bot_level: str) -> str:
+        """Get a message a user don't hit a ship"""
+
+        if bot_level == "EASY":
+            return self.get_easy_bot_message_user_dont_hit()
+        elif bot_level == "MEDIUM":
+            return self.get_medium_bot_message_user_dont_hit()
+        elif bot_level == "HIGH":
+            return self.get_high_bot_message_user_dont_hit()
+        raise ValueError()
+    
+    def get_bot_message_user_destroyed_ship(self, bot_level: str) -> str:
+        """Get a message a user destroyed a ship"""
+
+        if bot_level == "EASY":
+            return self.get_easy_bot_message_user_destroyed_ship()
+        elif bot_level == "MEDIUM":
+            return self.get_medium_bot_message_user_destroyed_ship()
+        elif bot_level == "HIGH":
+            return self.get_high_bot_message_user_destroyed_ship()
+        raise ValueError()
+    
+    def get_bot_message_bot_dont_hit(self, bot_level: str) -> str:
+        """Get a message a bot don't hit a ship"""
+
+        if bot_level == "EASY":
+            return self.get_easy_bot_message_bot_dont_hit()
+        elif bot_level == "MEDIUM":
+            return self.get_medium_bot_message_bot_dont_hit()
+        elif bot_level == "HIGH":
+            return self.get_high_bot_message_bot_dont_hit()
+        raise ValueError()
+    
+    def get_bot_message_bot_destroyed_ship(self, bot_level: str) -> str:
+        """Get a message a bot destroyed a ship"""
+
+        if bot_level == "EASY":
+            return self.get_easy_bot_message_bot_destroyed_ship()
+        elif bot_level == "MEDIUM":
+            return self.get_medium_bot_message_bot_destroyed_ship()
+        elif bot_level == "HIGH":
+            return self.get_high_bot_message_bot_destroyed_ship()
+        raise ValueError()
+    
+    def get_bot_message_bot_won(self, bot_level: str) -> str:
+        """Get a message bot won"""
+
+        if bot_level == "EASY":
+            return self.get_easy_bot_message_bot_won()
+        elif bot_level == "MEDIUM":
+            return self.get_medium_bot_message_bot_won()
+        elif bot_level == "HIGH":
+            return self.get_high_bot_message_bot_won()
+        raise ValueError()
+    
+    def get_bot_message_user_won(self, bot_level: str) -> str:
+        """Get a message user won"""
+
+        if bot_level == "EASY":
+            return self.get_easy_bot_message_user_won()
+        elif bot_level == "MEDIUM":
+            return self.get_medium_bot_message_user_won()
+        elif bot_level == "HIGH":
+            return self.get_high_bot_message_user_won()
+        raise ValueError()

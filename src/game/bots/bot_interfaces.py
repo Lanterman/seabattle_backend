@@ -9,5 +9,8 @@ class BotDifficultyLevelsInterface(bot_levels.EasyBot, bot_levels.MediumBot, bot
     """Interface of bot difficulty levels for the game itself"""
 
 
-class GenericBotInterface(bot_message.BotMainMessage, bot_logic.BotTakeShot, bot_logic.BotCreatesNewGame):
+class GenericBotInterface(bot_message.BotMainMessage,
+                          bot_message.GenericChatBotMessage,
+                          bot_logic.BotTakeShot, 
+                          bot_logic.BotCreatesNewGame):
     """Interface class for all other bot mixins"""
