@@ -1,3 +1,4 @@
+import random
 import logging
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
@@ -113,7 +114,7 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
         # A bot makes to shot
         elif content["type"] == "bot_take_to_shot":
             await self.bot_take_shot(
-                self.user, self.lobby_name, content["board_id"], content["time_to_turn"], 
+                self.user, content["lobby_id"], self.lobby_name, content["board_id"], content["time_to_turn"], 
                 content["last_hit"], content["ships"], self.column_name_list, content["bot_level"]
             )
 
@@ -124,6 +125,13 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
             countdown = await self._countdown(self.lobby_name, content["time_to_turn"])
             data = {"type": "send_shot", "field_name_dict": field_name_dict, "user_id": self.user.id, 
                       "is_my_turn": is_my_turn, "enemy_ships": enemy_ships, "time_left": countdown["time_left"]}
+            
+            if content["bot_level"] and random.randrange(0, 2) == 1:
+                bot_message = self.get_bot_message_with_user_action(content["bot_level"], field_name_dict)
+                if bot_message:
+                    dict_message = await self._send_message(content["lobby_id"], bot_message, True)
+                    data["bot_message"] =  dict_message["message"]
+            
             await self.channel_layer.group_send(self.lobby_group_name, data)
         
         elif content["type"] == "is_ready_to_play":
@@ -150,7 +158,15 @@ class LobbyConsumer(AsyncJsonWebsocketConsumer,
 
         elif content["type"] == "determine_winner":
             winner = await self.detemine_winner_name(content["user_id"], content["is_bot"])
-            await self.determine_winner_of_game(self.lobby_name, winner)
+            data = {"winner": winner}
+
+            if content["is_bot"]:
+                _mthd = self.get_bot_message_user_won if winner == self.user.username else self.get_bot_message_bot_won
+                bot_message = _mthd(content["is_bot"])
+                dict_message = await self._send_message(content["lobby_id"], bot_message, True)
+                data["bot_message"] =  dict_message["message"]
+
+            await self.determine_winner_of_game(self.lobby_name, data["winner"])
 
             if not content["is_bot"]:
                 await self.calculate_rating_and_cash_of_game(winner, content["bet"])

@@ -53,8 +53,8 @@ class ChatEasyBotMessage:
 
         list_message = [
             "Don't worry! This isn't the end!",
-            "Wow! I finally made the clean hit!",
-            "I'm sorry! I'm didn't want it!"
+            "Wow! I miss!",
+            "You turn!"
         ]
 
         return choice(list_message)
@@ -100,9 +100,9 @@ class ChatMediumBotMessage:
         """Get a message a user don't hit a ship"""
 
         list_message = [
-            "",
-            "",
-            ""
+            "Is it all?",
+            "Maybe you'll win me later.",
+            "Miss. He he."
         ]
 
         return choice(list_message)
@@ -111,9 +111,9 @@ class ChatMediumBotMessage:
         """Get a message a user destroyed a ship"""
 
         list_message = [
-            "",
-            "",
-            ""
+            "Nice work.",
+            "Good. It's finally happend).",
+            "Minus one. Good."
         ]
 
         return choice(list_message)
@@ -122,9 +122,9 @@ class ChatMediumBotMessage:
         """Get a message a bot don't hit a ship"""
 
         list_message = [
-            "",
-            "",
-            ""
+            "Your turn!",
+            "I almost hit!",
+            "I give you a chance!"
         ]
 
         return choice(list_message)
@@ -133,9 +133,9 @@ class ChatMediumBotMessage:
         """Get a message a bot destroyed a ship"""
 
         list_message = [
-            "",
-            "",
-            ""
+            "I'm the best!",
+            "Yeap! I'm make a success",
+            "Oops!"
         ]
 
         return choice(list_message)
@@ -144,9 +144,9 @@ class ChatMediumBotMessage:
         """Get a message bot won"""
 
         list_message = [
-            "",
-            "",
-            ""
+            "I'm a champion!",
+            "I won!",
+            "You lose!"
         ]
 
         return choice(list_message)
@@ -155,9 +155,9 @@ class ChatMediumBotMessage:
         """Get a message user won"""
 
         list_message = [
-            "",
-            "",
-            ""
+            "Good work!",
+            "I'm so glad you finally do it!",
+            "Maybe are we play again?"
         ]
 
         return choice(list_message)
@@ -170,9 +170,9 @@ class ChatHighBotMessage:
         """Get a message a user don't hit a ship"""
         
         list_message = [
-            "",
-            "",
-            ""
+            "Losser",
+            "It is all?",
+            "I'm giving you a chance to give in."
         ]
 
         return choice(list_message)
@@ -181,9 +181,9 @@ class ChatHighBotMessage:
         """Get a message a user destroyed a ship"""
         
         list_message = [
-            "",
-            "",
-            ""
+            "So Yoa are lucky!",
+            "This is your last chance to win me!",
+            "Stop. This is my game. I have to win you!"
         ]
 
         return choice(list_message)
@@ -236,7 +236,16 @@ class ChatHighBotMessage:
 class GenericChatBotMessage(ChatEasyBotMessage, ChatMediumBotMessage, ChatHighBotMessage):
     """Creating messages related to playing with a bot"""
 
-    def get_bot_message_user_dont_hit(self, bot_level: str) -> str:
+    def get_bot_message_with_user_action(self, bot_level: str, field_dict: dict) -> str | None:
+        """Get a message with a user action"""
+        
+        if len(field_dict) > 1:
+            return self.get_bot_message_user_destroyed_ship(bot_level)
+        elif list(field_dict.values())[0] == "miss":
+            return self.get_bot_message_user_dont_hit(bot_level)
+        return
+
+    def get_bot_message_user_dont_hit(self, bot_level: str) -> str: 
         """Get a message a user don't hit a ship"""
 
         if bot_level == "EASY":
@@ -247,7 +256,7 @@ class GenericChatBotMessage(ChatEasyBotMessage, ChatMediumBotMessage, ChatHighBo
             return self.get_high_bot_message_user_dont_hit()
         raise ValueError()
     
-    def get_bot_message_user_destroyed_ship(self, bot_level: str) -> str:
+    def get_bot_message_user_destroyed_ship(self, bot_level: str) -> str: 
         """Get a message a user destroyed a ship"""
 
         if bot_level == "EASY":
@@ -258,7 +267,7 @@ class GenericChatBotMessage(ChatEasyBotMessage, ChatMediumBotMessage, ChatHighBo
             return self.get_high_bot_message_user_destroyed_ship()
         raise ValueError()
     
-    def get_bot_message_bot_dont_hit(self, bot_level: str) -> str:
+    def get_bot_message_bot_dont_hit(self, bot_level: str) -> str: 
         """Get a message a bot don't hit a ship"""
 
         if bot_level == "EASY":
@@ -269,7 +278,7 @@ class GenericChatBotMessage(ChatEasyBotMessage, ChatMediumBotMessage, ChatHighBo
             return self.get_high_bot_message_bot_dont_hit()
         raise ValueError()
     
-    def get_bot_message_bot_destroyed_ship(self, bot_level: str) -> str:
+    def get_bot_message_bot_destroyed_ship(self, bot_level: str) -> str: 
         """Get a message a bot destroyed a ship"""
 
         if bot_level == "EASY":
@@ -280,7 +289,7 @@ class GenericChatBotMessage(ChatEasyBotMessage, ChatMediumBotMessage, ChatHighBo
             return self.get_high_bot_message_bot_destroyed_ship()
         raise ValueError()
     
-    def get_bot_message_bot_won(self, bot_level: str) -> str:
+    def get_bot_message_bot_won(self, bot_level: str) -> str: 
         """Get a message bot won"""
 
         if bot_level == "EASY":

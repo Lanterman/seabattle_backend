@@ -177,18 +177,23 @@ class GenericBot:
         await self.send_json(content=output_data)
     
     async def bot_missed(
-            self, user, board_id: int, lobby_name: str, random_shot: str, 
-            output_data: dict, board: dict
+            self, user, lobby_id: int, bot_level: str, board_id: int, lobby_name: str, 
+            random_shot: str, output_data: dict, board: dict
         ) -> None:
         """If a bot missed"""
 
+        if random.randrange(0, 2) == 1:
+            bot_message = self.get_bot_message_bot_dont_hit(bot_level)
+            dict_message = await self._send_message(lobby_id, bot_message, True)
+            output_data["bot_message"] =  dict_message["message"]
+        
         output_data["is_my_turn"] = True
         board[random_shot[0]][random_shot] = "miss"
         await self.bot_passes_move_to_user(lobby_name, user)
         await self.perform_write_shot(board_id, board)
     
     async def _bot_take_shot(
-            self, user, lobby_slug: str, board_id: int, time_to_turn: int, last_hit: str, 
+            self, user, lobby_id: int, lobby_slug: str, bot_level: str, board_id: int, time_to_turn: int, last_hit: str,
             ships: dict, column_name_list: list, method_gets_fields_around_hit = None, max_index: int = None
         ) -> tuple:
         """A bot shooting logic. A bot's shooting cycle will end on a first miss"""
@@ -202,7 +207,8 @@ class GenericBot:
                 "field_dict": {}, 
                 "is_my_turn": False,
                 "last_hit": "",
-                "time_left": 1
+                "time_left": 1,
+                "bot_message": ""
             }
         
         if not ship_dict_on_board:
@@ -238,7 +244,7 @@ class GenericBot:
 
             # A bot missed
             if type_to_shot == "miss":
-                await self.bot_missed(user, board_id, lobby_slug, random_shot, output_data, board)
+                await self.bot_missed(user, lobby_id, bot_level, board_id, lobby_slug, random_shot, output_data, board)
                 return await self.send_json(content=output_data)
             
             # A bot hit
@@ -247,17 +253,27 @@ class GenericBot:
             board[random_shot[0]][random_shot] = type_to_shot
             await self.perform_write_shot(board_id, board)
             
+            # if the ship was destroyed
             if ship_dict_on_board[found_ship] == 0:
                 last_hit = ""
                 del ship_dict_on_board[found_ship]
 
                 fields.update(self._add_misses_around_sunken_ship(found_ship, board))
 
+                # if all ships were destroyed
                 if ship_dict_on_board:
+                    bot_message = self.get_bot_message_bot_destroyed_ship(bot_level)
+                    dict_message = await self._send_message(lobby_id, bot_message, True)
+                    output_data["bot_message"] =  dict_message["message"]
+
                     max_index = max_index if max_index else self.bot_selects_target(ship_dict_on_board, ship_size_and_name_list)
                     field_dict = self.bot_get_field_dict(board, column_name_list, max_index)
+
+                # if not all ships were destroyed
                 else:
                     return await self.bot_there_are_no_ships(output_data)
+            
+            # if the ship wasn't destroyed
             else:
                 field_dict = method_gets_fields_around_hit(random_shot, board, column_name_list)
                 last_hit = random_shot
@@ -270,12 +286,12 @@ class EasyBot(GenericBot):
     """Easy bot level"""
 
     async def easy_bot_take_shot(
-            self, user, lobby_slug: str, board_id: int, time_to_turn: int, last_hit: str, 
+            self, user, lobby_id: int, lobby_slug: str, board_id: int, time_to_turn: int, last_hit: str, 
             ships: dict, column_name_list: list
         ) -> tuple:
         """A easy bot shooting logic."""
 
-        await self._bot_take_shot(user, lobby_slug, board_id, time_to_turn, last_hit, 
+        await self._bot_take_shot(user, lobby_id, lobby_slug, "EASY", board_id, time_to_turn, last_hit, 
             ships, column_name_list, max_index=1)
 
 
@@ -283,12 +299,12 @@ class MediumBot(GenericBot):
     """Medium bot level"""
 
     async def medium_bot_take_shot(
-            self, user, lobby_slug: str, board_id: int, time_to_turn: int, last_hit: str, 
+            self, user, lobby_id: int, lobby_slug: str, board_id: int, time_to_turn: int, last_hit: str, 
             ships: dict, column_name_list: list
         ) -> tuple:
         """A medium bot shooting logic."""
 
-        await self._bot_take_shot(user, lobby_slug, board_id, time_to_turn, last_hit, 
+        await self._bot_take_shot(user, lobby_id, lobby_slug, "MEDIUM", board_id, time_to_turn, last_hit, 
             ships, column_name_list)
 
 
@@ -340,10 +356,10 @@ class HighBot(GenericBot):
         return field_dict
 
     async def high_bot_take_shot(
-            self, user, lobby_slug: str, board_id: int, time_to_turn: int, last_hit: str, 
-            ships: dict, column_name_list: list
+            self, user, lobby_id: int, lobby_slug: str, board_id: int, time_to_turn: int, 
+            last_hit: str, ships: dict, column_name_list: list
         ) -> tuple:
         """A high bot shooting logic"""
 
-        await self._bot_take_shot(user, lobby_slug, board_id, time_to_turn, last_hit, 
+        await self._bot_take_shot(user, lobby_id, lobby_slug, "HIGH", board_id, time_to_turn, last_hit, 
             ships, column_name_list, self.high_bot_gets_fields_around_hit)

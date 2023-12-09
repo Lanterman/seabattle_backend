@@ -36,19 +36,19 @@ class BotTakeShot(bot_levels.EasyBot, bot_levels.MediumBot, bot_levels.HighBot):
     """A bot take shot"""
 
     async def bot_take_shot(
-            self, user, lobby_slug: str, board_id: int, time_to_turn: int, last_hit: str, 
-            ships: dict, column_name_list: list, bot_level: str
+            self, user, lobby_id: int, lobby_slug: str, board_id: int, time_to_turn: int, 
+            last_hit: str, ships: dict, column_name_list: list, bot_level: str
         ) -> tuple:
         """A bot shooting logic. A bot's shooting cycle will end on a first miss"""
 
         if bot_level == "EASY":
-            await self.easy_bot_take_shot(user, lobby_slug, board_id, time_to_turn, last_hit, ships, column_name_list)
+            await self.easy_bot_take_shot(user, lobby_id, lobby_slug, board_id, time_to_turn, last_hit, ships, column_name_list)
         
         elif bot_level == "MEDIUM":
-            await self.medium_bot_take_shot(user, lobby_slug, board_id, time_to_turn, last_hit, ships, column_name_list)
+            await self.medium_bot_take_shot(user, lobby_id, lobby_slug, board_id, time_to_turn, last_hit, ships, column_name_list)
         
         elif bot_level == "HIGH":
-            await self.high_bot_take_shot(user, lobby_slug, board_id, time_to_turn, last_hit, ships, column_name_list)
+            await self.high_bot_take_shot(user, lobby_id, lobby_slug, board_id, time_to_turn, last_hit, ships, column_name_list)
         
         else:
             raise ValueError()
