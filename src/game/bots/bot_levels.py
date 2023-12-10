@@ -177,15 +177,10 @@ class GenericBot:
         await self.send_json(content=output_data)
     
     async def bot_missed(
-            self, user, lobby_id: int, bot_level: str, board_id: int, lobby_name: str, 
+            self, user, board_id: int, lobby_name: str, 
             random_shot: str, output_data: dict, board: dict
         ) -> None:
         """If a bot missed"""
-
-        if random.randrange(0, 2) == 1:
-            bot_message = self.get_bot_message_bot_dont_hit(bot_level)
-            dict_message = await self._send_message(lobby_id, bot_message, True)
-            output_data["bot_message"] =  dict_message["message"]
         
         output_data["is_my_turn"] = True
         board[random_shot[0]][random_shot] = "miss"
@@ -244,7 +239,7 @@ class GenericBot:
 
             # A bot missed
             if type_to_shot == "miss":
-                await self.bot_missed(user, lobby_id, bot_level, board_id, lobby_slug, random_shot, output_data, board)
+                await self.bot_missed(user, board_id, lobby_slug, random_shot, output_data, board)
                 return await self.send_json(content=output_data)
             
             # A bot hit

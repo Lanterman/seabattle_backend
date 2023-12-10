@@ -146,6 +146,7 @@ class TestBotLobbyConsumer(Config):
 
         test_input = {
             "type": "bot_take_to_shot", 
+            "lobby_id": 1,
             "board_id": 1, 
             "last_hit": "", 
             "time_to_turn": 30, 
@@ -169,6 +170,7 @@ class TestBotLobbyConsumer(Config):
 
         test_input = {
             "type": "bot_take_to_shot", 
+            "lobby_id": 1,
             "board_id": 1, 
             "last_hit": "", 
             "time_to_turn": 30, 
@@ -192,6 +194,7 @@ class TestBotLobbyConsumer(Config):
 
         test_input = {
             "type": "bot_take_to_shot", 
+            "lobby_id": 1,
             "board_id": 1, 
             "last_hit": "", 
             "time_to_turn": 30, 
@@ -219,6 +222,7 @@ class TestBotLobbyConsumer(Config):
 
         test_input = {
             "type": "bot_take_to_shot", 
+            "lobby_id": 1,
             "board_id": 1, 
             "last_hit": "H1", 
             "time_to_turn": 30, 
@@ -246,6 +250,7 @@ class TestBotLobbyConsumer(Config):
 
         test_input = {
             "type": "bot_take_to_shot", 
+            "lobby_id": 1,
             "board_id": 1, 
             "last_hit": "H1", 
             "time_to_turn": 30, 
@@ -273,6 +278,7 @@ class TestBotLobbyConsumer(Config):
 
         test_input = {
             "type": "bot_take_to_shot", 
+            "lobby_id": 1,
             "board_id": 1, 
             "last_hit": "H1", 
             "time_to_turn": 30, 
@@ -425,8 +431,18 @@ class TestLobbyConsumer(Config):
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 
         # miss
-        await communicator.send_json_to({"type": "take_shot", "board_id": 1, "field_name": "A2", "time_to_turn": 30})
-        resposne = await communicator.receive_json_from()
+        await communicator.send_json_to({
+            "type": "take_shot", 
+            "lobby_id": 1,
+            "board_id": 1, 
+            "bot_level": "EASY",
+            "field_name": "A2", 
+            "time_to_turn": 30
+        })
+        response = await communicator.receive_json_from()
+
+        if "bot_message" in response.keys():
+            response.pop("bot_message")
 
         data = {
             "type": "send_shot", 
@@ -437,12 +453,22 @@ class TestLobbyConsumer(Config):
             "time_left": 30
         }
         
-        assert resposne == data, resposne
+        assert response == data, response
 
         # hit
-        await communicator.send_json_to({"type": "take_shot", "board_id": 1, "field_name": "A3", "time_to_turn": 30})
-        resposne = await communicator.receive_json_from()
+        await communicator.send_json_to({
+            "type": "take_shot", 
+            "lobby_id": 1,
+            "board_id": 1, 
+            "bot_level": "EASY",
+            "field_name": "A3", 
+            "time_to_turn": 30
+        })
+        response = await communicator.receive_json_from()
 
+        if "bot_message" in response.keys():
+            response.pop("bot_message")
+        
         data = {
             "type": "send_shot", 
             "field_name_dict": {"A3": "miss"}, 
@@ -452,11 +478,21 @@ class TestLobbyConsumer(Config):
             "time_left": 30
         }
 
-        assert resposne == data, resposne
+        assert response == data, response
 
         # hit (destroy ship)
-        await communicator.send_json_to({"type": "take_shot", "board_id": 1, "field_name": "C1", "time_to_turn": 30})
-        resposne = await communicator.receive_json_from()
+        await communicator.send_json_to({
+            "type": "take_shot", 
+            "lobby_id": 1,
+            "board_id": 1, 
+            "bot_level": "EASY",
+            "field_name": "C1", 
+            "time_to_turn": 30
+        })
+        response = await communicator.receive_json_from()
+
+        if "bot_message" in response.keys():
+            response.pop("bot_message")
 
         data = {
             "type": "send_shot", 
@@ -467,7 +503,8 @@ class TestLobbyConsumer(Config):
             "time_left": 30
         }
 
-        assert resposne == data, resposne
+        assert response == data, response
+
         with self.assertLogs(level="INFO"):
             await communicator.disconnect()
     
@@ -581,6 +618,20 @@ class TestLobbyConsumer(Config):
         await communicator.send_json_to({"type": "determine_winner", "bet": 50, "user_id": 2, "is_bot": None})
         response = await communicator.receive_json_from()
         key_in_redis = redis_instance.hget(str(self.lobby_1.slug), "current_turn")
+        assert response == {"type": "determine_winner", "winner": "lanterman"}, response
+        assert key_in_redis == None, key_in_redis
+
+        # bot is winner
+        redis_instance.hset(str(self.lobby_1.slug), "time_left", 30)
+        await communicator.send_json_to({
+            "type": "determine_winner", "bet": 50, "user_id": 2, "is_bot": "EASY", "lobby_id": 1
+        })
+        response = await communicator.receive_json_from()
+        key_in_redis = redis_instance.hget(str(self.lobby_1.slug), "current_turn")
+        
+        if "bot_message" in response.keys():
+            response.pop("bot_message")
+
         assert response == {"type": "determine_winner", "winner": "lanterman"}, response
         assert key_in_redis == None, key_in_redis
 

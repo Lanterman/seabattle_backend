@@ -260,10 +260,10 @@ class TestDetermineWinnerMixin(APITransactionTestCase):
         assert winner == self.user_2.username, winner
 
         winner = await self.instance.detemine_winner_name("", "")
-        assert winner == "Bot", winner
+        assert winner == " bot", winner
 
         winner = await self.instance.detemine_winner_name("", "HIGH")
-        assert winner == "Bot", winner
+        assert winner == "HIGH bot", winner
 
 
 class TestAddUserToGameMixin(APITransactionTestCase):

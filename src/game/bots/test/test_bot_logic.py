@@ -49,3 +49,22 @@ class TestBotCreatesNewGame(APITransactionTestCase):
         assert count_lobby == 3, count_lobby
         assert count_board == 6, count_board
         assert count_ship == 24, count_ship
+
+
+class TestBotTakeToShot(APITransactionTestCase):
+    """Testing BotCreatesNewGame class methods"""
+
+    fixtures = ["./src/game/consumers/test/test_data.json"]
+
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.user = User.objects.get(id=1)
+
+        self.instance = bot_logic.BotTakeShot()
+    
+    async def test_bot_take_shot(self) -> None:
+        """Testing method bot_take_shot (only ValueError)"""
+
+        with self.assertRaises(ValueError):
+            await self.instance.bot_take_shot(self.user, 1, "slug", 1, 30, "", {}, [], "easy" )
