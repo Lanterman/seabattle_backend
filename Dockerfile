@@ -14,6 +14,9 @@ ENV PYTHONUNBUFFERED=1
 # update pip
 RUN pip install --upgrade pip
 
+# 
+RUN pip install --default-timeout=100 future
+
 # copy and install requirement
 # caching dependencies and the layer will be reloaded when requiremtns.txt changes
 COPY ./requirements.txt .

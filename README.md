@@ -17,6 +17,17 @@ does not pass to the enemy (if the player hit the enemy ship, then he has the ri
 Victory goes to the one who first destroys all enemy ships, with the loss connection will not have time to switch, will 
 not make a move in the allotted time, or will want to give up. Each move is given a certain amount of time.
 
+Implemented functions:
+ - playing with other users in real time; 
+ - game with bots (3 levels of difficulty of bots, when performing certain actions - the bot writes in the chat); 
+ - leaderboard; 
+ - a user profile has been implemented (it is possible to change user information, photos and passwords); 
+ - 2 types of authentication: 
+   1. JWT authentication (custom implementation); 
+   2. OAuth2 (via GitHub and Gmail); 
+ - user creation confirmation via email (Celery/Redis); 
+ - OpenAPI (swagger, DRW, standard Django Admin).
+
 
 Project tested with: APITestCase, APITransactionTestCase, WebsocketCommunicator, pytest. 
 Coverage of the project with tests - 99%.
@@ -61,6 +72,5 @@ To test the operation of Oauth2 you need:
 
 
 Future versions of the project will include:
- - the ability to play with bots (bots will have several difficulty levels, bots write random messages to the chat 
-at certain events);
- - a diagram of move options, which depicts options for players.
+ - a diagram of move options, which depicts options for players;
+ - make the logic of advertising and recommendations on the left side of the screen.
