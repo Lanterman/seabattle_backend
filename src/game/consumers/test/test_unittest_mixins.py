@@ -236,6 +236,36 @@ class TestIsReadyToPlayMixin(APITransactionTestCase):
         assert is_ready == True, is_ready
 
 
+class TestDetermineWinnerMixin(APITransactionTestCase):
+    """Testing the DetermineWinnerMixin class methods"""
+
+    fixtures = ["./src/game/consumers/test/test_data.json"]
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.user_1 = user_models.User.objects.get(id=1)
+        self.user_2 = user_models.User.objects.get(id=2)
+
+        self.instance = mixins.DetermineWinnerMixin()
+        self.instance.user = self.user_1
+    
+    async def test_detemine_winner_name(self):
+        """Testing the detemine_winner_name method"""
+
+        winner = await self.instance.detemine_winner_name(self.user_1.id, "")
+        assert winner == self.user_1.username, winner
+
+        winner = await self.instance.detemine_winner_name(self.user_2.id, "")
+        assert winner != self.user_1.username, winner
+        assert winner == self.user_2.username, winner
+
+        winner = await self.instance.detemine_winner_name("", "")
+        assert winner == " bot", winner
+
+        winner = await self.instance.detemine_winner_name("", "HIGH")
+        assert winner == "HIGH bot", winner
+
+
 class TestAddUserToGameMixin(APITransactionTestCase):
     """Testing the AddUserToGameMixin class methods"""
 
@@ -590,17 +620,17 @@ class TestTakeShotMixin(APITransactionTestCase):
         assert updated_board_1.C[1:26] == "'C1': 'hit', 'C2': 'miss'", updated_board_1.C[1:26]
         assert updated_board_1.C[1:26] != self.board_1.C[1:26], updated_board_1.C[1:26]
 
-        assert self.board_1.H[1:32] == "'H1': 19.1, 'H2': ' space 19.1'", self.board_1.H[1:32]
+        assert self.board_1.H[1:32] == "'H1': 'hit', 'H2': ' space 19.1", self.board_1.H[1:32]
 
-        response = await self.instance.take_shot(self.lobby_slug, self.board_1.id, "H1")
+        response = await self.instance.take_shot(self.lobby_slug, self.board_1.id, "G1")
         updated_board_1 = await database_sync_to_async(models.Board.objects.get)(id=1)
         updated_board_2 = await database_sync_to_async(models.Board.objects.get)(id=2)
-        assert response == (True, {'H1': 'hit'}, None), response
+        assert response == (True, {'G1': 'hit'}, None), response
         assert self.board_1.is_my_turn == updated_board_1.is_my_turn, updated_board_1.is_my_turn
         assert self.board_2.is_my_turn == updated_board_2.is_my_turn, updated_board_2.is_my_turn
         assert self.board_1.is_my_turn != updated_board_2.is_my_turn, updated_board_2.is_my_turn
-        assert updated_board_1.H[1:33] == "'H1': 'hit', 'H2': ' space 19.1'", updated_board_1.H[1:33]
-        assert updated_board_1.H[1:33] != self.board_1.H[1:33], updated_board_1.H[1:33]
+        assert updated_board_1.G[1:33] == "'G1': 'hit', 'G2': ' space 19.1'", updated_board_1.H[1:33]
+        assert updated_board_1.G[1:33] != self.board_1.G[1:33], updated_board_1.G[1:33]
 
 
 class TestRandomPlacementMixin(APITestCase):

@@ -54,7 +54,7 @@ class BaseLobbySerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Lobby
-        fields = ["url", "name", "slug", "created_in", "finished_in", "password", "winner"]
+        fields = ["url", "name", "slug", "is_play_with_a_bot", "created_in", "finished_in", "password", "winner"]
         extra_kwargs = {"url": {"lookup_field": "slug"}}
 
 
@@ -74,7 +74,7 @@ class CreateLobbySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Lobby
-        fields = ["name", "bet", "time_to_move", "time_to_placement", "password", "slug"]
+        fields = ["name", "bet", "is_play_with_a_bot", "time_to_move", "time_to_placement", "password", "slug"]
         extra_kwargs = {
             "slug": {"read_only": True},
             "name": {"write_only": True},
@@ -109,7 +109,8 @@ class RetrieveLobbySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Lobby
-        fields = ["id", "name", "bet", "winner", "password", "time_to_move", "time_to_placement", "users", "boards", "messages"]
+        fields = ["id", "name", "bet", "is_play_with_a_bot", "winner", "password", 
+                  "time_to_move", "time_to_placement", "users", "boards", "messages"]
 
 
 class RetrieveLobbyWithUsersSerializer(serializers.ModelSerializer):

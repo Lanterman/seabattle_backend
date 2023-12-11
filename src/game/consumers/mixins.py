@@ -80,25 +80,6 @@ class ClearCountOfShipsMixin:
         await db_queries.clear_count_of_ships(board_id)
 
 
-class BaseChooseWhoWillShotMixin:
-    """Basic class that chooses a player who will shot"""
-
-    @staticmethod
-    async def get_lobby_boards(lobby_slug: uuid.uuid4) -> list:
-        return await db_queries.get_lobby_boards(lobby_slug)
-
-    @database_sync_to_async
-    def determine_whoose_boards(self, boards: list) -> tuple:
-        """Determine whoose boards"""
-
-        if self.user.username == str(boards[0].user_id):
-            return boards[0], boards[1]
-        return boards[1], boards[0]
-
-    async def perform_update_boards(self, bool_value: bool, my_board, enemy_board) -> None:
-        await db_queries.update_boards(bool_value, my_board, enemy_board)
-
-
 class IsReadyToPlayMixin:
     """Update a model instance"""
 
@@ -117,6 +98,16 @@ class IsReadyToPlayMixin:
 
 class DetermineWinnerMixin:
     """Determine a winner of a game"""
+
+    async def detemine_winner_name(self, user_id: int, bot_level: str) -> str:
+        """Determine the name of the winner"""
+
+        if user_id:
+            if user_id != self.user.id:
+                return await db_queries.get_user(user_id)
+            else:
+                return self.user.username
+        return f"{bot_level} bot"
 
     async def determine_winner_of_game(self, lobby_slug: uuid.uuid4, username: str) -> None:
         await self.preform_set_winner_in_lobby(lobby_slug, username)
@@ -270,7 +261,8 @@ class CalculateRatingAndCash:
     async def perform_update_user_statistics(self, winning_user, losing_user) -> None:
         await db_queries.update_user_statistics(winning_user, losing_user)
 
-class TakeShotMixin(BaseChooseWhoWillShotMixin):
+
+class TakeShotMixin:
     """Update a model instance"""
 
     @staticmethod
@@ -312,9 +304,9 @@ class TakeShotMixin(BaseChooseWhoWillShotMixin):
         return field_name_dict
     
     async def hand_over_to_the_enemy(self, lobby_slug: uuid.uuid4) -> None:
-        boards = await self.get_lobby_boards(lobby_slug)
-        my_board, enemy_board = await self.determine_whoose_boards(boards)
-        await self.perform_update_boards(False, my_board, enemy_board)
+        boards = await db_queries.get_lobby_boards(lobby_slug)
+        my_board, enemy_board = await services.determine_whoose_boards(self.user, boards)
+        await db_queries.update_boards(False, my_board, enemy_board)
 
     async def take_shot(self, lobby_slug: uuid.uuid4, board_id: int, field_name: str) -> tuple:
         board = await db_queries.get_board(board_id, self.column_name_list)
@@ -427,7 +419,7 @@ class RandomPlacementMixin(AddSpaceAroundShipMixin):
         await db_queries.update_board(board_id, column_dictionary)
 
 
-class ChooseWhoWillShotFirstMixin(BaseChooseWhoWillShotMixin):
+class ChooseWhoWillShotFirstMixin:
     """Concrete mixin that chooses a player who will shot first"""
 
     @staticmethod
@@ -442,12 +434,12 @@ class ChooseWhoWillShotFirstMixin(BaseChooseWhoWillShotMixin):
     async def choose_first_shooter(self, lobby_slug: uuid.uuid4) -> bool or None:
         """Choose who will take first shot"""
 
-        boards = await self.get_lobby_boards(lobby_slug)
-        my_board, enemy_board = await self.determine_whoose_boards(boards)
+        boards = await db_queries.get_lobby_boards(lobby_slug)
+        my_board, enemy_board = await services.determine_whoose_boards(self.user, boards)
 
         if not await self.is_turn_determined(my_board, enemy_board):
             random_bool_value = random.choice((True, False))
-            await self.perform_update_boards(random_bool_value, my_board, enemy_board)
+            await db_queries.update_boards(random_bool_value, my_board, enemy_board)
             return random_bool_value
 
 
@@ -461,11 +453,12 @@ class RandomPlacementClearShipsMixin(RandomPlacementMixin, ClearCountOfShipsMixi
 
         placed_board = await self.random_placement(board, ships)
         self._clear_count_of_ships(ships)
+        data = {"type": "random_placed", "ships": ships, "board": placed_board, "board_id": board_id}
 
         await self.perform_update_board(board_id, placed_board)
         await self.perform_clear_count_of_ships(board_id)
 
-        await self.send_json(content={"type": "random_placed", "ships": ships, "board": placed_board})
+        await self.send_json(content=data)
 
 
 class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
@@ -479,7 +472,8 @@ class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
         content = {
             "type": "clear_board", 
             "board": board, 
-            "ships": updated_ships
+            "ships": updated_ships,
+            "board_id": board_id
         }
 
         await self.send_json(content=content)
@@ -508,7 +502,7 @@ class DropShipAddSpaceMixin(DropShipOnBoardMixin, AddSpaceAroundShipMixin):
         await self.perform_ship_updates(ship_id, ship_count)
         ship_list = await self.get_serialized_ships(board_id)
 
-        await self.send_json(content={"type": "drop_ship", "board": board, "ships": ship_list})
+        await self.send_json(content={"type": "drop_ship", "board": board, "board_id": board_id, "ships": ship_list})
     
     async def perform_update_board(self, board_id: int, board: dict) -> None:
         await db_queries.update_board(board_id, board)

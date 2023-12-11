@@ -27,7 +27,7 @@ class LobbyListView(ListCreateAPIView):
     search_fields = ["name"]
 
     def get_queryset(self):
-        return game_models.Lobby.objects.annotate(
+        return game_models.Lobby.objects.exclude(is_play_with_a_bot__isnull=False).annotate(
             num_users=Count("users")).filter(num_users=1).prefetch_related("users")
 
     def get_serializer_class(self):
@@ -38,7 +38,10 @@ class LobbyListView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         if self.request.user.cash < int(self.request.data["bet"]):
-            raise ValidationError(detail={"bet": ["You don't have enough money to play"]}, code=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError(
+                detail={"bet": ["You don't have enough money to play"]}, 
+                code=status.HTTP_400_BAD_REQUEST
+                )
 
         lobby = serializer.save()
         lobby.users.add(self.request.user)
@@ -51,7 +54,8 @@ class DetailLobbyView(RetrieveAPIView):
     """Detailed description of the lobby"""
 
     queryset = game_models.Lobby.objects.all().prefetch_related("users", "boards", "boards__ships", "messages")
-    permission_classes = [IsAuthenticated, permissions.IsLobbyFree, permissions.IsEnoughMoney]
+    permission_classes = [IsAuthenticated, permissions.IsPlayWithBot, permissions.IsLobbyFree, 
+                          permissions.IsEnoughMoney]
     serializer_class = serializers.RetrieveLobbySerializer
     lookup_field = "slug"
 

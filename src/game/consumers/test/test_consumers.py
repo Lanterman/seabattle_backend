@@ -5,7 +5,7 @@ from channels.testing import WebsocketCommunicator
 from channels.db import database_sync_to_async
 
 from .test_data import column_name_list
-from src.game.consumers import consumers, services
+from src.game.consumers import consumers, services, db_queries
 from src.game import models, serializers
 from src.user import models as user_models, services as user_services
 from config.utilities import redis_instance
@@ -109,8 +109,212 @@ class TestMainConsumer(Config):
         await communicator_2.disconnect()
 
 
+class TestBotLobbyConsumer(Config):
+    """Testing LobbyConsumer consumer's bot_take_to_shot event"""
+
+    def setUp(self):
+        super().setUp()
+        self.lobby_1 = models.Lobby.objects.get(id=1)
+        self.board_1 = models.Board.objects.get(id=1)
+        self.board_1_ships = models.Ship.objects.filter(board_id_id=self.board_1.id)
+
+        self.ser_board_1 = serializers.BoardSerializer(self.board_1).data
+        self.ser_board_1_ships = serializers.ShipSerializer(self.board_1_ships, many=True).data
+
+        self.board_column_list = {key: value for key, value in self.ser_board_1.items() if key in column_name_list}
+    
+    async def update_test_board(self, board_column_list: list, ship_list: list):
+        """Update test board"""
+
+        for column_name in board_column_list:
+            for key in board_column_list[column_name]:
+                item = board_column_list[column_name][key]
+                if type(item) == float and item not in ship_list:
+                    board_column_list[column_name][key] = "hit"
+                if item in ship_list:
+                    ship_list.pop(0)
+        
+        await db_queries.update_board(1, board_column_list)
+
+    async def test_easy_bot_take_to_shot(self):
+        """Testing easy bot """
+
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
+        communicator = await self.launch_websocket_communicator(path=path)
+        redis_instance.hset(name=str(self.lobby_1.slug), mapping={"current_turn": 0})
+        assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
+
+        test_input = {
+            "type": "bot_take_to_shot", 
+            "lobby_id": 1,
+            "board_id": 1, 
+            "last_hit": "", 
+            "time_to_turn": 30, 
+            "bot_level": "EASY", 
+            "ships": self.ser_board_1_ships
+            }
+
+        await communicator.send_json_to(test_input)
+        response = await communicator.receive_json_from()
+        assert len(response["field_dict"]) > 0, response["field_dict"]
+
+        await communicator.disconnect()
+    
+    async def test_medium_bot_take_to_shot(self):
+        """Testing medium bot """
+
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
+        communicator = await self.launch_websocket_communicator(path=path)
+        redis_instance.hset(name=str(self.lobby_1.slug), mapping={"current_turn": 0})
+        assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
+
+        test_input = {
+            "type": "bot_take_to_shot", 
+            "lobby_id": 1,
+            "board_id": 1, 
+            "last_hit": "", 
+            "time_to_turn": 30, 
+            "bot_level": "MEDIUM", 
+            "ships": self.ser_board_1_ships
+            }
+
+        await communicator.send_json_to(test_input)
+        response = await communicator.receive_json_from()
+        assert len(response["field_dict"]) > 0, response["field_dict"]
+
+        await communicator.disconnect()
+    
+    async def test_high_bot_take_to_shot(self):
+        """Testing high bot take to shot"""
+
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
+        communicator = await self.launch_websocket_communicator(path=path)
+        redis_instance.hset(name=str(self.lobby_1.slug), mapping={"current_turn": 0})
+        assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
+
+        test_input = {
+            "type": "bot_take_to_shot", 
+            "lobby_id": 1,
+            "board_id": 1, 
+            "last_hit": "", 
+            "time_to_turn": 30, 
+            "bot_level": "HIGH", 
+            "ships": self.ser_board_1_ships
+            }
+
+        test_input["last_hit"] = "G1"
+        await communicator.send_json_to(test_input)
+        response = await communicator.receive_json_from()
+        assert len(response["field_dict"]) > 0, response["field_dict"]
+
+        await communicator.disconnect()
+    
+    async def test_high_bot_destroy_ship(self):
+        """Testing high bot destroy ship"""
+
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
+        communicator = await self.launch_websocket_communicator(path=path)
+        redis_instance.hset(name=str(self.lobby_1.slug), mapping={"current_turn": 0})
+        assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
+
+        await self.update_test_board(self.board_column_list, [19.1, 1.4])
+        await self.board_1.arefresh_from_db()
+
+        test_input = {
+            "type": "bot_take_to_shot", 
+            "lobby_id": 1,
+            "board_id": 1, 
+            "last_hit": "H1", 
+            "time_to_turn": 30, 
+            "bot_level": "HIGH", 
+            "ships": self.ser_board_1_ships
+            }
+
+        await communicator.send_json_to(test_input)
+        response = await communicator.receive_json_from()
+        assert response["last_hit"] == "H1", response["last_hit"]
+        assert len(response["field_dict"]) > 1, response["field_dict"]
+
+        await communicator.disconnect()
+    
+    async def test_high_bot_destroy_all_ships(self):
+        """Testing high bot destroy all ships"""
+
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
+        communicator = await self.launch_websocket_communicator(path=path)
+        redis_instance.hset(name=str(self.lobby_1.slug), mapping={"current_turn": 0})
+        assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
+
+        await self.update_test_board(self.board_column_list, [19.1])
+        await self.board_1.arefresh_from_db()
+
+        test_input = {
+            "type": "bot_take_to_shot", 
+            "lobby_id": 1,
+            "board_id": 1, 
+            "last_hit": "H1", 
+            "time_to_turn": 30, 
+            "bot_level": "HIGH", 
+            "ships": self.ser_board_1_ships
+            }
+
+        await communicator.send_json_to(test_input)
+        response = await communicator.receive_json_from()
+        assert response["last_hit"] == "H1", response["last_hit"]
+        assert len(response["field_dict"]) > 1, response["field_dict"]
+
+        await communicator.disconnect()
+    
+    async def test_bot_with_there_are_no_ships(self):
+        """Testing bot with there are not ships"""
+
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
+        communicator = await self.launch_websocket_communicator(path=path)
+        redis_instance.hset(name=str(self.lobby_1.slug), mapping={"current_turn": 0})
+        assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
+
+        await self.update_test_board(self.board_column_list, [])
+        await self.board_1.arefresh_from_db()
+
+        test_input = {
+            "type": "bot_take_to_shot", 
+            "lobby_id": 1,
+            "board_id": 1, 
+            "last_hit": "H1", 
+            "time_to_turn": 30, 
+            "bot_level": "HIGH", 
+            "ships": self.ser_board_1_ships
+            }
+
+        await communicator.send_json_to(test_input)
+        response = await communicator.receive_json_from()
+        assert response["last_hit"] == "", response["last_hit"]
+        assert response["field_dict"] == {}, response["field_dict"]
+
+        await communicator.disconnect()
+    
+    async def test_no_this_bot_level(self):
+        """Testing no this bot level"""
+
+        path = f"ws/lobby/{self.lobby_1.slug}/?token={self.token_1.access_token}"
+        communicator = await self.launch_websocket_communicator(path=path)
+        redis_instance.hset(name=str(self.lobby_1.slug), mapping={"current_turn": 0})
+        assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
+
+        test_input = {
+            "type": "bot_take_to_shot", 
+            "board_id": 1, 
+            "last_hit": "", 
+            "time_to_turn": 30, 
+            "bot_level": "MEDIU1M", 
+            "ships": self.ser_board_1_ships
+            }
+
+        await communicator.send_json_to(test_input)
+        await communicator.receive_nothing()
+
 class TestLobbyConsumer(Config):
-    """Testing MainPageConsumer consumer"""
+    """Testing LobbyConsumer consumer"""
 
     def setUp(self):
         super().setUp()
@@ -167,6 +371,7 @@ class TestLobbyConsumer(Config):
 
         test_response = {
             "type": "clear_board", 
+            "board_id": 1,
             "board": self.board_column_list, 
             "ships": [
                 {'id': 1, 'name': 'fourdeck', 'plane': 'horizontal', 'size': 4, 'count': 1}, 
@@ -226,8 +431,18 @@ class TestLobbyConsumer(Config):
         assert communicator.scope["user"].id == self.user_1.id, communicator.scope["user"].id
 
         # miss
-        await communicator.send_json_to({"type": "take_shot", "board_id": 1, "field_name": "A2", "time_to_turn": 30})
-        resposne = await communicator.receive_json_from()
+        await communicator.send_json_to({
+            "type": "take_shot", 
+            "lobby_id": 1,
+            "board_id": 1, 
+            "bot_level": "EASY",
+            "field_name": "A2", 
+            "time_to_turn": 30
+        })
+        response = await communicator.receive_json_from()
+
+        if "bot_message" in response.keys():
+            response.pop("bot_message")
 
         data = {
             "type": "send_shot", 
@@ -238,12 +453,22 @@ class TestLobbyConsumer(Config):
             "time_left": 30
         }
         
-        assert resposne == data, resposne
+        assert response == data, response
 
         # hit
-        await communicator.send_json_to({"type": "take_shot", "board_id": 1, "field_name": "A3", "time_to_turn": 30})
-        resposne = await communicator.receive_json_from()
+        await communicator.send_json_to({
+            "type": "take_shot", 
+            "lobby_id": 1,
+            "board_id": 1, 
+            "bot_level": "EASY",
+            "field_name": "A3", 
+            "time_to_turn": 30
+        })
+        response = await communicator.receive_json_from()
 
+        if "bot_message" in response.keys():
+            response.pop("bot_message")
+        
         data = {
             "type": "send_shot", 
             "field_name_dict": {"A3": "miss"}, 
@@ -253,11 +478,21 @@ class TestLobbyConsumer(Config):
             "time_left": 30
         }
 
-        assert resposne == data, resposne
+        assert response == data, response
 
         # hit (destroy ship)
-        await communicator.send_json_to({"type": "take_shot", "board_id": 1, "field_name": "C1", "time_to_turn": 30})
-        resposne = await communicator.receive_json_from()
+        await communicator.send_json_to({
+            "type": "take_shot", 
+            "lobby_id": 1,
+            "board_id": 1, 
+            "bot_level": "EASY",
+            "field_name": "C1", 
+            "time_to_turn": 30
+        })
+        response = await communicator.receive_json_from()
+
+        if "bot_message" in response.keys():
+            response.pop("bot_message")
 
         data = {
             "type": "send_shot", 
@@ -268,7 +503,8 @@ class TestLobbyConsumer(Config):
             "time_left": 30
         }
 
-        assert resposne == data, resposne
+        assert response == data, response
+
         with self.assertLogs(level="INFO"):
             await communicator.disconnect()
     
@@ -287,7 +523,7 @@ class TestLobbyConsumer(Config):
         response = await communicator.receive_json_from()
         is_running = redis_instance.hget(str(self.lobby_1.slug), "is_running")
         assert is_running == "1", is_running
-        assert response == {"type": "is_ready_to_play", "is_ready": False, "user_id": self.user_1.id}, response
+        assert response == {"type": "is_ready_to_play", "is_ready": False, "user_id": self.user_1.id, "board_id": 1}, response
 
         # players are not ready
         await communicator.send_json_to(
@@ -296,7 +532,7 @@ class TestLobbyConsumer(Config):
         response = await communicator.receive_json_from()
         is_running = redis_instance.hget(str(self.lobby_1.slug), "is_running")
         assert is_running == "1", is_running
-        assert response == {"type": "is_ready_to_play", "is_ready": True, "user_id": self.user_1.id}, response
+        assert response == {"type": "is_ready_to_play", "is_ready": True, "user_id": self.user_1.id, "board_id": 1}, response
 
         # players are ready
         await communicator.send_json_to(
@@ -305,7 +541,7 @@ class TestLobbyConsumer(Config):
         response = await communicator.receive_json_from()
         is_running = redis_instance.hget(str(self.lobby_1.slug), "is_running")
         assert is_running == None, is_running
-        assert response == {"type": "is_ready_to_play", "is_ready": True, "user_id": self.user_1.id}, response
+        assert response == {"type": "is_ready_to_play", "is_ready": True, "user_id": self.user_1.id, "board_id": 1}, response
         with self.assertLogs(level="INFO"):
             await communicator.disconnect()
     
@@ -371,7 +607,7 @@ class TestLobbyConsumer(Config):
 
         # admin is winner
         redis_instance.hset(str(self.lobby_1.slug), mapping={"time_left": 30, "current_turn": 1})
-        await communicator.send_json_to({"type": "determine_winner", "bet": 50})
+        await communicator.send_json_to({"type": "determine_winner", "bet": 50, "user_id": 1, "is_bot": None})
         response = await communicator.receive_json_from()
         key_in_redis = redis_instance.hget(str(self.lobby_1.slug), "current_turn")
         assert response == {"type": "determine_winner", "winner": "admin"}, response
@@ -379,9 +615,23 @@ class TestLobbyConsumer(Config):
         
         # enemy is winner
         redis_instance.hset(str(self.lobby_1.slug), "time_left", 30)
-        await communicator.send_json_to({"type": "determine_winner", "bet": 50, "enemy_id": 2})
+        await communicator.send_json_to({"type": "determine_winner", "bet": 50, "user_id": 2, "is_bot": None})
         response = await communicator.receive_json_from()
         key_in_redis = redis_instance.hget(str(self.lobby_1.slug), "current_turn")
+        assert response == {"type": "determine_winner", "winner": "lanterman"}, response
+        assert key_in_redis == None, key_in_redis
+
+        # bot is winner
+        redis_instance.hset(str(self.lobby_1.slug), "time_left", 30)
+        await communicator.send_json_to({
+            "type": "determine_winner", "bet": 50, "user_id": 2, "is_bot": "EASY", "lobby_id": 1
+        })
+        response = await communicator.receive_json_from()
+        key_in_redis = redis_instance.hget(str(self.lobby_1.slug), "current_turn")
+        
+        if "bot_message" in response.keys():
+            response.pop("bot_message")
+
         assert response == {"type": "determine_winner", "winner": "lanterman"}, response
         assert key_in_redis == None, key_in_redis
 
@@ -445,7 +695,7 @@ class TestLobbyConsumer(Config):
 
         response = await communicator.receive_json_from()
         is_running = redis_instance.hget(str(self.lobby_1.slug), "is_running")
-        assert response == {"type": "is_ready_to_play", "is_ready": True, "user_id": self.user_1.id}, response
+        assert response == {"board_id": 1, "type": "is_ready_to_play", "is_ready": True, "user_id": self.user_1.id}, response
         assert is_running == None, is_running
 
         response = await communicator.receive_nothing()
@@ -557,7 +807,8 @@ class TestLobbyConsumer(Config):
             "time_to_move": 30, 
             "time_to_placement": 60, 
             "enemy_id": 2,
-            "lobby_id": 1
+            "lobby_id": 1,
+            "is_bot": None
         }
 
         await communicator.send_json_to(test_data)
@@ -572,6 +823,14 @@ class TestLobbyConsumer(Config):
         response = await communicator.receive_json_from()
         assert response["type"] == "send_message", response["type"]
         assert response["message"]["message"] == "Admin don't have enough money to play.", response
+
+        test_data["bet"] = 50
+        test_data["is_bot"] = "MEDIUM"
+        await communicator.send_json_to(test_data)
+        response = await communicator.receive_json_from()
+        assert len(response) == 2, response
+        assert response["type"] == "new_group", response["type"]
+        assert type(response["lobby_slug"]) == str, response
 
         with self.assertLogs(level="INFO"):
             await communicator.disconnect()

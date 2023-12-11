@@ -30,6 +30,14 @@ class ChooseTime(models.IntegerChoices):
     NINTY_SECONDS = 90, "90 sec"
 
 
+class ChooseBotLevel(models.TextChoices):
+    """Choose time"""
+
+    EASY = "EASY", "EASY"
+    MEDIUM = "MEDIUM", "MEDIUM"
+    HIGH = "HIGH", "HIGH"
+
+
 def clear_enemy_board(user, boards) -> tuple:
     """Сlears the enemy table from ships and the space around them"""
 

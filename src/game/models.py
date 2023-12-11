@@ -5,7 +5,7 @@ from typing import Optional
 from django.db import models
 from django.urls.base import reverse
 from config import settings, utilities
-from .services import Bet, ChooseTime
+from .services import Bet, ChooseTime, ChooseBotLevel
 
 
 User = settings.AUTH_USER_MODEL
@@ -21,6 +21,9 @@ class Lobby(models.Model):
     created_in: datetime.datetime = models.DateTimeField(auto_now_add=True)
     finished_in: datetime.datetime = models.DateTimeField(blank=True, null=True)
     bet: int = models.IntegerField("game bet", choices=Bet.choices, help_text="Required")
+    is_play_with_a_bot: bool = models.CharField(
+        "is playing with a bot", choices=ChooseBotLevel.choices, blank=True, null=True
+        )
     time_to_move: int = models.IntegerField(
         choices=ChooseTime.choices, default=ChooseTime.THIRTY_SECONDS
         )
