@@ -185,7 +185,7 @@ class GenericBot:
         output_data["is_my_turn"] = True
         board[random_shot[0]][random_shot] = "miss"
         await self.bot_passes_move_to_user(lobby_name, user)
-        await self.perform_write_shot(board_id, board)
+        await ws_db_queries.write_shot(board_id, board)
     
     async def _bot_take_shot(
             self, user, lobby_id: int, lobby_slug: str, bot_level: str, board_id: int, time_to_turn: int, last_hit: str,
@@ -246,7 +246,7 @@ class GenericBot:
             found_ship = board[random_shot[0]][random_shot]
             ship_dict_on_board[found_ship] -= 1
             board[random_shot[0]][random_shot] = type_to_shot
-            await self.perform_write_shot(board_id, board)
+            await ws_db_queries.write_shot(board_id, board)
             
             # if the ship was destroyed
             if ship_dict_on_board[found_ship] == 0:

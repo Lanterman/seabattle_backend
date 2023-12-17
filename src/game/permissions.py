@@ -32,6 +32,6 @@ class IsEnoughMoney(BasePermission):
     message = "You don't have enough money to play"
 
     def has_object_permission(self, request, view, obj):
-        if request.user.cash >= obj.bet:
+        if request.user.cash >= obj.bet or obj.winner:
             return True
         return False
