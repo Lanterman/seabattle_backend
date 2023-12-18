@@ -448,7 +448,9 @@ class RandomPlacementClearShipsMixin(RandomPlacementMixin, ClearCountOfShipsMixi
     Concrete mixin for random placement ships on a board model instance and update ship model instances count field
     """
 
-    async def random_placement_and_clear_ships(self, board_id: int, board: dict, ships: list) -> None:
+    async def random_placement_and_clear_ships(
+            self, board_id: int, board: dict, ships: list, bot_level: str | None = None
+        ) -> None:
         """Random placement ships on a board and update ships count field"""
 
         placed_board = await self.random_placement(board, ships)
@@ -458,7 +460,8 @@ class RandomPlacementClearShipsMixin(RandomPlacementMixin, ClearCountOfShipsMixi
         await self.perform_update_board(board_id, placed_board)
         await self.perform_clear_count_of_ships(board_id)
 
-        await self.send_json(content=data)
+        if bot_level is None: 
+            await self.send_json(content=data)
 
 
 class RefreshBoardShipsMixin(RefreshBoardMixin, RefreshShipsMixin):
